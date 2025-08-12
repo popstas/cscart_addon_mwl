@@ -14,6 +14,9 @@ This project implements a CS-Cart Multivendor add-on for the `bright_theme` them
 - Export wishlist to XLSX on a single wishlist page
 - Upload XLSX template for a wishlist
 
+## Rules on new features:
+- Add documentation for new features to README.md
+
 ## Development Practices
 - Structure the add-on according to the [CS-Cart developer guide](https://docs.cs-cart.com/latest/developer_guide/addons/index.html).
 - Place PHP code under `app/addons/<addon_name>/` and templates under `design/themes/bright_theme/templates/addons/<addon_name>/`.
