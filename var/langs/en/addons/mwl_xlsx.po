@@ -1,0 +1,32 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: mwl_xlsx\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgctxt "Addons::name::mwl_xlsx"
+msgid "Multi Wishlist"
+msgstr "Multi Wishlist"
+
+msgctxt "Addons::description::mwl_xlsx"
+msgid "Create and manage multiple wishlists."
+msgstr "Create and manage multiple wishlists."
+
+msgctxt "Languages::mwl_xlsx.my_lists"
+msgid "My wishlists"
+msgstr "My wishlists"
+
+msgctxt "Languages::mwl_xlsx.new_list"
+msgid "New list…"
+msgstr "New list…"
+
+msgctxt "Languages::mwl_xlsx.enter_list_name"
+msgid "Enter list name"
+msgstr "Enter list name"
+
+msgctxt "Languages::mwl_xlsx.added"
+msgid "Added to wishlist"
+msgstr "Added to wishlist"
+
