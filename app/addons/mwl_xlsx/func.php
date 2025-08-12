@@ -53,11 +53,25 @@ function fn_mwl_xlsx_get_list_products($list_id)
 
 function fn_mwl_xlsx_add($list_id, $product_id, $options = [], $amount = 1)
 {
-    db_replace_into('mwl_xlsx_list_products', [
+    $serialized = serialize($options);
+    $exists = db_get_field(
+        "SELECT 1 FROM ?:mwl_xlsx_list_products WHERE list_id = ?i AND product_id = ?i AND product_options = ?s",
+        $list_id,
+        $product_id,
+        $serialized
+    );
+
+    if ($exists) {
+        return false;
+    }
+
+    db_query("INSERT INTO ?:mwl_xlsx_list_products ?e", [
         'list_id'        => $list_id,
         'product_id'     => $product_id,
-        'product_options'=> serialize($options),
+        'product_options'=> $serialized,
         'amount'         => $amount,
         'timestamp'      => TIME
     ]);
+
+    return true;
 }

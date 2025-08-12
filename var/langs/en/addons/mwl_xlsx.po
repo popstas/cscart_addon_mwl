@@ -32,3 +32,7 @@ msgctxt "Languages::mwl_xlsx.empty_list"
 msgid "Wishlist is empty"
 msgstr "Wishlist is empty"
 
+msgctxt "Languages::mwl_xlsx.already_exists"
+msgid "Product already in list"
+msgstr "Product already in list"
+
