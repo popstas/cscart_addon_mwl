@@ -28,3 +28,7 @@ msgctxt "Languages::mwl_xlsx.added"
 msgid "Added to wishlist"
 msgstr "Added to wishlist"
 
+msgctxt "Languages::mwl_xlsx.empty_list"
+msgid "Wishlist is empty"
+msgstr "Wishlist is empty"
+
