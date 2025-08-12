@@ -41,5 +41,5 @@ if ($mode === 'create_list' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
 if ($mode === 'add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     fn_mwl_xlsx_add($_REQUEST['list_id'], $_REQUEST['product_id'], $_REQUEST['product_options'] ?? [], 1);
-    exit(json_encode(['success' => true]));
+    exit(json_encode(['success' => true, 'message' => __('mwl_xlsx.added')]));
 }

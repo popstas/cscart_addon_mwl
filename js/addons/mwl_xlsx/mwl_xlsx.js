@@ -37,11 +37,12 @@
         $.ceAjax('request', fn_url('mwl_xlsx.add'), {
             method: 'post',
             data: { product_id: product_id, list_id: list_id },
-            callback: function() {
+            callback: function(data) {
+                var message = (data && data.message) ? data.message : (_.tr('mwl_xlsx.added') || 'Added to wishlist');
                 $.ceNotification('show', {
                     type: 'N',
                     title: '',
-                    message: _.tr('mwl_xlsx.added'),
+                    message: message,
                     message_state: 'I',
                     overlay: true
                 });
