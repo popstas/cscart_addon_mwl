@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<addon scheme="4.0">
+    <id>mwl_xlsx</id>
+    <version>0.1.0</version>
+    <priority>500</priority>
+    <position>0</position>
+
+    <!-- Устанавливать во всех редакциях с витриной -->
+    <auto_install>MULTIVENDOR,ULTIMATE</auto_install>
+    <default_language>en</default_language>
+
+    <name>Multi Wishlist</name>
+    <description>Adds multiple wishlists per user without core changes (hooks, own tables, UI on product buttons).</description>
+
+    <!-- Установочные/деинсталляционные SQL -->
+    <queries>
+        <!-- install -->
+        <item for="install"><![CDATA[
+        CREATE TABLE IF NOT EXISTS `?:mwl_xlsx_lists` (
+        `list_id` INT AUTO_INCREMENT PRIMARY KEY,
+        `user_id` INT UNSIGNED NOT NULL DEFAULT 0,
+        `session_id` VARCHAR(64) NOT NULL DEFAULT '',
+        `name` VARCHAR(255) NOT NULL,
+        `is_private` TINYINT(1) NOT NULL DEFAULT 0,
+        `created_at` DATETIME NOT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+        ]]></item>
+
+        <item for="install"><![CDATA[
+        CREATE TABLE IF NOT EXISTS `?:mwl_xlsx_list_products` (
+        `list_id` INT NOT NULL,
+        `product_id` INT NOT NULL,
+        `product_options` TEXT,
+        `amount` INT NOT NULL DEFAULT 1,
+        `timestamp` INT NOT NULL,
+        PRIMARY KEY (`list_id`, `product_id`, `timestamp`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+        ]]></item>
+
+        <!-- uninstall -->
+        <item for="uninstall"><![CDATA[
+        DROP TABLE IF EXISTS `?:mwl_xlsx_list_products`;
+        ]]></item>
+
+        <item for="uninstall"><![CDATA[
+        DROP TABLE IF EXISTS `?:mwl_xlsx_lists`;
+        ]]></item>
+    </queries>
+
+
+    <!-- Языковые переменные -->
+    <languages>
+        <item>
+            <name>en</name>
+            <values>
+                <value id="mwl_xlsx.name">Multi Wishlist</value>
+                <value id="mwl_xlsx.description">Create and manage multiple wishlists.</value>
+                <value id="mwl_xlsx.my_lists">My wishlists</value>
+                <value id="mwl_xlsx.new_list">New list…</value>
+                <value id="mwl_xlsx.enter_list_name">Enter list name</value>
+                <value id="mwl_xlsx.added">Added to wishlist</value>
+            </values>
+        </item>
+        <item>
+            <name>ru</name>
+            <values>
+                <value id="mwl_xlsx.name">Несколько списков желаний</value>
+                <value id="mwl_xlsx.description">Создание и управление несколькими списками желаний.</value>
+                <value id="mwl_xlsx.my_lists">Мои списки желаний</value>
+                <value id="mwl_xlsx.new_list">Новый список…</value>
+                <value id="mwl_xlsx.enter_list_name">Введите название списка</value>
+                <value id="mwl_xlsx.added">Добавлено в список желаний</value>
+            </values>
+        </item>
+    </languages>
+
+    <!-- Настройки можно добавить позже
+    <settings>
+        <sections>
+            <section id="general" name="General">
+                <items>
+                    <item id="allow_sharing" type="checkbox" name="Allow sharing by link" value="Y"/>
+                    <item id="default_list_name" type="input" name="Default list name" value="Favorites"/>
+                </items>
+            </section>
+        </sections>
+    </settings>
+    -->
+</addon>
