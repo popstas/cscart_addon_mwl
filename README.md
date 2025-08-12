@@ -3,10 +3,12 @@
 ### Features
 - Create and name wishlists for the current user or session.
 - Add individual products to a chosen wishlist from product listings.
-- View existing wishlists on the **My wishlists** page.
+- View existing wishlists on the **My wishlists** page with product counts and links.
+- Browse products in a specific wishlist on its dedicated page.
 
 ### Add-on URLs
 - `index.php?dispatch=mwl_xlsx.manage` – list user wishlists.
+- `index.php?dispatch=mwl_xlsx.list&list_id=LIST_ID` – view products in a wishlist.
 - `index.php?dispatch=mwl_xlsx.create_list` – create a wishlist (POST).
 - `index.php?dispatch=mwl_xlsx.add` – add a product to a wishlist (POST).
 

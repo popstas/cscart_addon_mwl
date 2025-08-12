@@ -12,6 +12,22 @@ if ($mode === 'manage') {
     Tygh::$app['view']->assign('lists', $lists);
 }
 
+if ($mode === 'list') {
+    $list_id = (int) $_REQUEST['list_id'];
+    $list = db_get_row("SELECT * FROM ?:mwl_xlsx_lists WHERE list_id = ?i", $list_id);
+    if (!$list) {
+        return [CONTROLLER_STATUS_NO_PAGE];
+    }
+
+    $product_ids = db_get_fields("SELECT product_id FROM ?:mwl_xlsx_list_products WHERE list_id = ?i", $list_id);
+    list($products) = fn_get_products(['pid' => $product_ids, 'skip_view' => true, 'extend' => ['description']]);
+
+    Tygh::$app['view']->assign([
+        'list' => $list,
+        'products' => $products,
+    ]);
+}
+
 if ($mode === 'create_list' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = [
         'user_id'    => $auth['user_id'] ?? 0,

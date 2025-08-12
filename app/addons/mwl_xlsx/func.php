@@ -11,7 +11,7 @@ function fn_mwl_xlsx_get_lists($user_id = null, $session_id = null)
     }
 
     return db_get_array(
-        "SELECT * FROM ?:mwl_xlsx_lists WHERE ?w ORDER BY created_at ASC",
+        "SELECT l.*, COUNT(lp.product_id) as products_count FROM ?:mwl_xlsx_lists AS l LEFT JOIN ?:mwl_xlsx_list_products AS lp ON l.list_id = lp.list_id WHERE ?w GROUP BY l.list_id ORDER BY created_at ASC",
         $user_id ? ['user_id' => $user_id] : ['session_id' => $session_id]
     );
 }
