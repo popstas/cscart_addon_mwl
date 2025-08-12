@@ -9,4 +9,8 @@
         {include file="common/no_items.tpl"}
     {/if}
 {/capture}
-{include file="common/mainbox_simple.tpl" title=__("mwl_xlsx.my_lists") content=$smarty.capture.mainbox}
+
+{include file="blocks/wrappers/mainbox_simple.tpl"
+    title=__("mwl_xlsx.my_lists")
+    content=$smarty.capture.mainbox
+}
