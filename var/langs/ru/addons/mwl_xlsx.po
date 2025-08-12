@@ -30,3 +30,11 @@ msgctxt "Languages::mwl_xlsx.added"
 msgid "Added to wishlist"
 msgstr "Добавлено в список желаний"
 
+msgctxt "Languages::mwl_xlsx.empty_list"
+msgid "Wishlist is empty"
+msgstr "Список пуст"
+
+msgctxt "Languages::mwl_xlsx.already_exists"
+msgid "Product already in list"
+msgstr "Товар уже в списке"
+
