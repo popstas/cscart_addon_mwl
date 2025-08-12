@@ -1,10 +1,8 @@
 msgid ""
-msgstr ""
-"Project-Id-Version: mwl_xlsx\n"
-"Language: en\n"
-"MIME-Version: 1.0\n"
+msgstr "Project-Id-Version: tygh\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
+"Language-Team: English\n"
+"Language: en_US"
 
 msgctxt "Addons::name::mwl_xlsx"
 msgid "Multi Wishlist"
