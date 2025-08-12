@@ -20,6 +20,8 @@ This project implements a CS-Cart Multivendor add-on for the `bright_theme` them
 - Register the add-on with a `addon.xml` scheme file as described in [Add-on Scheme](https://docs.cs-cart.com/latest/developer_guide/addons/addon_scheme.html).
 - Use hooks and template overrides as outlined in [Custom Templates via Add-on](https://docs.cs-cart.com/latest/developer_guide/addons/tutorials/custom_templates_via_addon.html).
 - Define and use language variables with `__()` and store them under `var/langs/<language>/addons/<addon_name>.po` as per [Language Variables in Add-on](https://docs.cs-cart.com/latest/developer_guide/addons/language_variables_in_addon.html).
+- Availabe icons classes placed at `docs/unitheme_icons.md`
+- Some of the hooks placed at `docs/hooks.md`
 
 ## Dependencies
 - Manage PHP dependencies with Composer.

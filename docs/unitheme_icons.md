@@ -1,0 +1,147 @@
+ut2-icon-home_page
+ut2-icon-about_page
+ut2-icon-article
+ut2-icon-review_page
+ut2-icon-phone_in_talk
+ut2-icon-chat
+ut2-icon-view_cozy
+ut2-icon-handshake
+ut2-icon-map
+ut2-icon-where_to_vote
+ut2-icon-location_on
+ut2-icon-rocket_launch
+ut2-icon-diamond
+ut2-icon-workspace_premium
+ut2-icon-tick
+ut2-icon-tune
+ut2-icon-Home
+ut2-icon-local_offer
+ut2-icon-timelapse
+ut2-icon-camera
+ut2-icon-camer-g
+ut2-icon-straighten
+ut2-icon-square_foot
+ut2-icon-addchart
+ut2-icon-addchart-active
+ut2-icon-calendar
+ut2-icon-products-multicolumns
+ut2-icon-products-without-options
+ut2-icon-short-list
+ut2-icon-search
+ut2-icon-outline-menu
+ut2-icon-baseline-favorite-border
+ut2-icon-baseline-favorite
+ut2-icon-baseline-equalizer
+ut2-icon-baseline-visibility
+ut2-icon-baseline-visibility-off
+ut2-icon-baseline-touch_app
+ut2-icon-outline-touch_app
+ut2-icon-baseline-settings
+ut2-icon-outline-expand_less
+ut2-icon-outline-expand_more
+ut2-icon-arrow_back_black
+ut2-icon-arrow_forward_black
+ut2-icon-baseline-loop
+ut2-icon-baseline-close
+ut2-icon-close
+ut2-icon-outline-arrow_back
+ut2-icon-outline-arrow_forward
+ut2-icon-left-sight
+ut2-icon-left
+ut2-icon-width
+ut2-icon-right
+ut2-icon-right-sight
+ut2-icon-star
+ut2-icon-star-half
+ut2-icon-outline-star
+ut2-icon-outline-account-circle
+ut2-icon-outline-settings
+ut2-icon-more_vert
+ut2-icon-more_horiz
+ut2-icon-priority
+ut2-icon-sort
+ut2-icon-copy
+ut2-icon-share-1
+ut2-icon-share
+ut2-icon-filter-empty
+ut2-icon-outline-info-circle
+ut2-icon-outline-info
+ut2-icon-outline-check-circle
+ut2-icon-help_outline
+ut2-icon-highlight_off
+ut2-icon-outline-schedule-circle
+ut2-icon-restore
+ut2-icon-outline-chat
+ut2-icon-outline-announcement
+ut2-icon-outline-language
+ut2-icon-outline-new_releases
+ut2-icon-outline-support
+ut2-icon-outline-where_to_vote
+ut2-icon-outline-location_on
+ut2-icon-outline-thumb_up
+ut2-icon-outline-headset_mic
+ut2-icon-outline-stars
+ut2-icon-outline-archive
+ut2-icon-outline-card_giftcard
+ut2-icon-outline-work_outline
+ut2-icon-outline-tv
+ut2-icon-outline
+ut2-icon-outline-email
+ut2-icon-outline-watch
+ut2-icon-outline-local_offer
+ut2-icon-local_activity
+ut2-icon-notifications_none
+ut2-icon-play_circle_outline
+ut2-icon-outline-verified_user
+ut2-icon-baseline-credit_card
+ut2-icon-baseline-phone
+ut2-icon-baseline-local_shipping
+ut2-icon-outline-local_shipping
+ut2-icon-local_phone
+ut2-icon-baseline-verified_user
+ut2-icon-baseline-backspace
+ut2-icon-baseline-archive
+ut2-icon-baseline-delete
+ut2-icon-baseline-person
+ut2-icon-facebook
+ut2-icon-vk
+ut2-icon-twitter
+ut2-icon-skype
+ut2-icon-pinterest
+ut2-icon-viber
+ut2-icon-whatsapp
+ut2-icon-linkedin
+ut2-icon-youtube
+ut2-icon-baseline-whatshot
+ut2-icon-messenger
+ut2-icon-snapchat
+ut2-icon-mailru
+ut2-icon-thumblr
+ut2-icon-amazon
+ut2-icon-ok
+ut2-icon-telegram
+ut2-icon-instagram
+ut2-icon-tiktok
+ut2-icon-outline-cart
+ut2-icon-baseline-cart
+ut2-icon-outline-shopping_basket
+ut2-icon-baseline-shopping_basket
+ut2-icon-local_mall
+ut2-icon-local_mall_black
+ut2-icon-cart_shopping_icon
+ut2-icon-cart_shopping_icon2
+ut2-icon-cart_shopping_icon3
+ut2-icon-cart_shopping_icon4
+ut2-icon-baseline-favorite_line .path1
+ut2-icon-baseline-favorite_line .path2
+ut2-icon-baseline-favorite_line .path3
+ut2-icon-baseline-favorite_filled-line .path1
+ut2-icon-baseline-favorite_filled-line .path2
+ut2-icon-addchart_black_line .path1
+ut2-icon-addchart_black_line .path2
+ut2-icon-addchart_black_line .path3
+ut2-icon-addchart_black_filled-line .path1
+ut2-icon-addchart_black_filled-line .path2
+ut2-icon-addchart_black_filled-line .path3
+ut2-icon-baseline-visibility_line .path1
+ut2-icon-baseline-visibility_line .path3
