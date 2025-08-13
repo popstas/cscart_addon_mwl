@@ -33,6 +33,45 @@
         return false;
     });
 
+    $(document).on('click', '[data-ca-mwl-rename]', function() {
+        var $li = $(this).closest('[data-ca-mwl-list-id]');
+        var list_id = $li.data('caMwlListId');
+        var current_name = $li.find('[data-ca-mwl-list-name]').text();
+        var name = prompt(_.tr('mwl_xlsx.enter_list_name') || 'Enter list name', current_name);
+        if (name && name !== current_name) {
+            $.ceAjax('request', fn_url('mwl_xlsx.rename_list'), {
+                method: 'post',
+                data: { list_id: list_id, name: name },
+                callback: function(data) {
+                    if (data && data.success) {
+                        $li.find('[data-ca-mwl-list-name]').text(data.name);
+                    }
+                }
+            });
+        }
+        return false;
+    });
+
+    $(document).on('click', '[data-ca-mwl-delete]', function() {
+        var $li = $(this).closest('[data-ca-mwl-list-id]');
+        var list_id = $li.data('caMwlListId');
+        if (confirm(_.tr('mwl_xlsx.confirm_remove') || 'Remove this list?')) {
+            $.ceAjax('request', fn_url('mwl_xlsx.delete_list'), {
+                method: 'post',
+                data: { list_id: list_id },
+                callback: function(data) {
+                    if (data && data.success) {
+                        $li.remove();
+                        if (!$('[data-ca-mwl-list-id]').length) {
+                            location.reload();
+                        }
+                    }
+                }
+            });
+        }
+        return false;
+    });
+
     function addToList(product_id, list_id) {
         $.ceAjax('request', fn_url('mwl_xlsx.add'), {
             method: 'post',

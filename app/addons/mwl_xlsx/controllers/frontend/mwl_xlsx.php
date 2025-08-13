@@ -98,6 +98,21 @@ if ($mode === 'create_list' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit(json_encode(['list_id' => $list_id, 'name' => $data['name']]));
 }
 
+if ($mode === 'rename_list' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $user_id = $auth['user_id'] ?? null;
+    $session_id = $user_id ? null : Tygh::$app['session']->getID();
+    $name = trim((string) $_REQUEST['name']);
+    $updated = $name === '' ? false : fn_mwl_xlsx_update_list_name((int) $_REQUEST['list_id'], $name, $user_id, $session_id);
+    exit(json_encode(['success' => $updated, 'name' => $name]));
+}
+
+if ($mode === 'delete_list' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $user_id = $auth['user_id'] ?? null;
+    $session_id = $user_id ? null : Tygh::$app['session']->getID();
+    $deleted = fn_mwl_xlsx_delete_list((int) $_REQUEST['list_id'], $user_id, $session_id);
+    exit(json_encode(['success' => $deleted]));
+}
+
 if ($mode === 'add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $added = fn_mwl_xlsx_add($_REQUEST['list_id'], $_REQUEST['product_id'], $_REQUEST['product_options'] ?? [], 1);
     $message = $added ? __('mwl_xlsx.added') : __('mwl_xlsx.already_exists');

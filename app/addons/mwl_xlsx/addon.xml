@@ -60,6 +60,9 @@
                 <value id="mwl_xlsx.new_list">New list…</value>
                 <value id="mwl_xlsx.enter_list_name">Enter list name</value>
                 <value id="mwl_xlsx.added">Added to wishlist</value>
+                <value id="mwl_xlsx.rename">Rename</value>
+                <value id="mwl_xlsx.remove">Remove</value>
+                <value id="mwl_xlsx.confirm_remove">Remove this list?</value>
             </values>
         </item>
         <item>
@@ -72,6 +75,9 @@
                 <value id="mwl_xlsx.new_list">Новый список…</value>
                 <value id="mwl_xlsx.enter_list_name">Введите название списка</value>
                 <value id="mwl_xlsx.added">Добавлено в список желаний</value>
+                <value id="mwl_xlsx.rename">Переименовать</value>
+                <value id="mwl_xlsx.remove">Удалить</value>
+                <value id="mwl_xlsx.confirm_remove">Удалить этот список?</value>
             </values>
         </item>
     </languages>
