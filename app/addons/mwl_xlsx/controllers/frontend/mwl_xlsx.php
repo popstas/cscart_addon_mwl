@@ -1,6 +1,7 @@
 <?php
 
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
+use Tygh\Registry;
 
 if ($mode === 'manage') {
     if (!empty($auth['user_id'])) {
@@ -16,7 +17,7 @@ if ($mode === 'manage') {
     ]);
 }
 
-if ($mode === 'list') {
+if ($mode === 'list' || $mode === 'view') {
     $list_id = (int) $_REQUEST['list_id'];
     if (!empty($auth['user_id'])) {
         $list = db_get_row("SELECT * FROM ?:mwl_xlsx_lists WHERE list_id = ?i AND user_id = ?i", $list_id, $auth['user_id']);
@@ -121,7 +122,7 @@ if ($mode === 'add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $list_name = db_get_field('SELECT name FROM ?:mwl_xlsx_lists WHERE list_id = ?i', $list_id);
         $message = __('mwl_xlsx.added', [
             '[list_name]' => htmlspecialchars($list_name, ENT_QUOTES, 'UTF-8'),
-            '[list_url]'  => fn_url('mwl_xlsx.list?list_id=' . $list_id)
+            '[list_url]'  => fn_url(fn_mwl_xlsx_url($list_id))
         ]);
     } else {
         $message = __('mwl_xlsx.already_exists');
@@ -140,7 +141,7 @@ if ($mode === 'add_list' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $list_name = db_get_field('SELECT name FROM ?:mwl_xlsx_lists WHERE list_id = ?i', $list_id);
     $message = __('mwl_xlsx.added', [
         '[list_name]' => htmlspecialchars($list_name, ENT_QUOTES, 'UTF-8'),
-        '[list_url]'  => fn_url('mwl_xlsx.list?list_id=' . $list_id)
+        '[list_url]'  => fn_url(fn_mwl_xlsx_url($list_id))
     ]);
 
     exit(json_encode(['success' => true, 'message' => $message]));

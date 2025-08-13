@@ -3,6 +3,12 @@ use Tygh\Registry;
 
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
 
+function fn_mwl_xlsx_url($list_id)
+{
+    $list_id = (int) $list_id;
+    return "media-lists/{$list_id}";
+}
+
 function fn_mwl_xlsx_get_lists($user_id = null, $session_id = null)
 {
     // If user is not authorized and session_id wasn't provided, use current session id
