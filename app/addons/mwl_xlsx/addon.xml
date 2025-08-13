@@ -9,8 +9,8 @@
     <auto_install>MULTIVENDOR,ULTIMATE</auto_install>
     <default_language>en</default_language>
 
-    <name>Multi Wishlist</name>
-    <description>Adds multiple wishlists per user without core changes (hooks, own tables, UI on product buttons).</description>
+    <name>Media Lists</name>
+    <description>Adds multiple media lists per user without core changes (hooks, own tables, UI on product buttons).</description>
 
     <uninstall>fn_mwl_xlsx_uninstall</uninstall>
 
@@ -69,35 +69,37 @@
         <item>
             <name>en</name>
             <values>
-                <value id="mwl_xlsx.name">Multi Wishlist</value>
-                <value id="mwl_xlsx.description">Create and manage multiple wishlists.</value>
-                <value id="mwl_xlsx.wishlists">Wishlists</value>
-                <value id="mwl_xlsx.my_lists">My wishlists</value>
+                <value id="mwl_xlsx.name">Media Lists</value>
+                <value id="mwl_xlsx.description">Create and manage multiple media lists.</value>
+                <value id="mwl_xlsx.wishlists">Media lists</value>
+                <value id="mwl_xlsx.my_lists">My media lists</value>
                 <value id="mwl_xlsx.new_list">New list…</value>
                 <value id="mwl_xlsx.enter_list_name">Enter list name</value>
                 <value id="mwl_xlsx.added"><![CDATA[Added to <a href="[list_url]">[list_name]</a>]]></value>
-                <value id="mwl_xlsx.added_plain">Added to wishlist</value>
+                <value id="mwl_xlsx.added_plain">Added to media list</value>
                 <value id="mwl_xlsx.rename">Rename</value>
                 <value id="mwl_xlsx.remove">Remove</value>
                 <value id="mwl_xlsx.confirm_remove">Remove this list?</value>
-                <value id="mwl_xlsx.add_all_to_wishlist">Add all to wishlist</value>
+                <value id="mwl_xlsx.add_all_to_wishlist">Add all to media list</value>
+                <value id="mwl_xlsx.add_to_wishlist">Add to media list</value>
             </values>
         </item>
         <item>
             <name>ru</name>
             <values>
-                <value id="mwl_xlsx.name">Несколько списков желаний</value>
-                <value id="mwl_xlsx.description">Создание и управление несколькими списками желаний.</value>
-                <value id="mwl_xlsx.wishlists">Списки желаний</value>
-                <value id="mwl_xlsx.my_lists">Мои списки желаний</value>
-                <value id="mwl_xlsx.new_list">Новый список…</value>
-                <value id="mwl_xlsx.enter_list_name">Введите название списка</value>
+                <value id="mwl_xlsx.name">Несколько подборок</value>
+                <value id="mwl_xlsx.description">Создание и управление несколькими подборками.</value>
+                <value id="mwl_xlsx.wishlists">Подборки</value>
+                <value id="mwl_xlsx.my_lists">Мои подборки</value>
+                <value id="mwl_xlsx.new_list">Новая подборка…</value>
+                <value id="mwl_xlsx.enter_list_name">Введите название подборки</value>
                 <value id="mwl_xlsx.added"><![CDATA[Добавлено в <a href="[list_url]">[list_name]</a>]]></value>
-                <value id="mwl_xlsx.added_plain">Добавлено в список желаний</value>
+                <value id="mwl_xlsx.added_plain">Добавлено в подборку</value>
                 <value id="mwl_xlsx.rename">Переименовать</value>
                 <value id="mwl_xlsx.remove">Удалить</value>
-                <value id="mwl_xlsx.confirm_remove">Удалить этот список?</value>
-                <value id="mwl_xlsx.add_all_to_wishlist">Добавить все в список желаний</value>
+                <value id="mwl_xlsx.confirm_remove">Удалить эту подборку?</value>
+                <value id="mwl_xlsx.add_all_to_wishlist">Добавить все в подборку</value>
+                <value id="mwl_xlsx.add_to_wishlist">Добавить в подборку</value>
             </values>
         </item>
     </languages>

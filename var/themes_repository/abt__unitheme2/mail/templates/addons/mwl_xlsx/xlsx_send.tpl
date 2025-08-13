@@ -1,2 +1,2 @@
-{* Email template for sending wishlist XLSX *}
+{* Email template for sending media list XLSX *}
 

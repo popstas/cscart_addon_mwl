@@ -1,18 +1,18 @@
-# Multi Wishlist Add-on Guidelines
+# Media List Add-on Guidelines
 
-This project implements a CS-Cart Multivendor add-on for the `abt__unitheme2` theme: **Multi Wishlist**.
+This project implements a CS-Cart Multivendor add-on for the `abt__unitheme2` theme: **Media Lists**.
 
 ## Glossary
-- "Media list" / "подборка": **wishlist**
+- "Media list" / "подборка": **media list**
 
 ## Core Features
-- Add a single product to a wishlist
-- Add all selected products to a wishlist (default limit: 20 items)
-- Name wishlists
-- Wishlist list page
-- Export wishlist to XLSX on the wishlist list page
-- Export wishlist to XLSX on a single wishlist page
-- Upload XLSX template for a wishlist
+- Add a single product to a media list
+- Add all selected products to a media list (default limit: 20 items)
+- Name media lists
+- Media lists page
+- Export media list to XLSX on the media lists page
+- Export media list to XLSX on a single media list page
+- Upload XLSX template for a media list
 
 ## Rules on new features:
 - Add documentation for new features to README.md

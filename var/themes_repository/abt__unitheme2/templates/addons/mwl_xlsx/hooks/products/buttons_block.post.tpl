@@ -13,7 +13,7 @@
             <option value="_new">+ {__("mwl_xlsx.new_list")}</option>
         </select>
         <button class="ty-btn" data-ca-add-to-mwl_xlsx data-ca-product-id="{$product.product_id}">
-            {__("add_to_wishlist")}
+            {__("mwl_xlsx.add_to_wishlist")}
         </button>
     </div>
 {/if}
