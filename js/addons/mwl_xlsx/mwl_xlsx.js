@@ -19,6 +19,7 @@
                     method: 'post',
                     data: { name: name },
                     callback: function(data) {
+                        data = parseResponse(data);
                         list_id = data.list_id;
                         $select.prepend($('<option>', { value: list_id, text: data.name }));
                         $select.val(list_id);
@@ -52,10 +53,11 @@
         var list_id = $renameDialog.data('caMwlListId');
         var name = $('#mwl_xlsx_rename_input').val().trim();
         if (name) {
-                $.ceAjax('request', fn_url('mwl_xlsx.rename_list'), {
+            $.ceAjax('request', fn_url('mwl_xlsx.rename_list'), {
                 method: 'post',
                 data: { list_id: list_id, name: name },
                 callback: function(data) {
+                    data = parseResponse(data);
                     if (data && data.success) {
                         location.reload();
                     }
@@ -82,15 +84,16 @@
 
     $(document).on('click', '[data-ca-mwl-delete-confirm]', function() {
         var list_id = $deleteDialog.data('caMwlListId');
-            $.ceAjax('request', fn_url('mwl_xlsx.delete_list'), {
-                method: 'post',
-                data: { list_id: list_id },
-                callback: function(data) {
-                    if (data && data.success) {
-                        location.reload();
-                    }
+        $.ceAjax('request', fn_url('mwl_xlsx.delete_list'), {
+            method: 'post',
+            data: { list_id: list_id },
+            callback: function(data) {
+                data = parseResponse(data);
+                if (data && data.success) {
+                    location.reload();
                 }
-            });
+            }
+        });
         $deleteDialog.ceDialog('close');
         return false;
     });
@@ -105,6 +108,7 @@
             method: 'post',
             data: { product_id: product_id, list_id: list_id },
             callback: function(data) {
+                data = parseResponse(data);
                 var message = (data && data.message) ? data.message : (_.tr('mwl_xlsx.added') || 'Added to wishlist');
                 $.ceNotification('show', {
                     type: 'N',
@@ -115,6 +119,16 @@
                 });
             }
         });
+    }
+
+    function parseResponse(data) {
+        if (data && typeof data.text === 'string') {
+            try {
+                return JSON.parse(data.text);
+            } catch (e) {
+            }
+        }
+        return data || {};
     }
 })(Tygh, Tygh.$);
 
