@@ -45,7 +45,7 @@ if ($mode === 'export') {
 
     $products = fn_mwl_xlsx_get_list_products($list_id, CART_LANGUAGE);
 
-    $feature_names = fn_mwl_xlsx_collect_feature_names($products);
+    $feature_names = fn_mwl_xlsx_collect_feature_names($products, CART_LANGUAGE);
     $feature_ids = array_keys($feature_names);
 
     $xlsx = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
@@ -56,7 +56,7 @@ if ($mode === 'export') {
 
     foreach ($products as $p) {
         $row = [$p['product']];
-        $values = fn_mwl_xlsx_get_feature_text_values($p['product_features'] ?? []);
+        $values = fn_mwl_xlsx_get_feature_text_values($p['product_features'] ?? [], CART_LANGUAGE);
         foreach ($feature_ids as $feature_id) {
             $row[] = $values[$feature_id] ?? null;
         }

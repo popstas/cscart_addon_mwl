@@ -32,42 +32,49 @@ function fn_mwl_xlsx_get_list_products($list_id, $lang_code = CART_LANGUAGE)
         return [];
     }
 
-    $params = [
-        'pid'   => array_keys($items),
-        'extend'=> ['description', 'images'],
-    ];
-    list($products) = fn_get_products($params, Tygh::$app['session']['auth'], 0, $lang_code);
-    fn_gather_additional_products_data($products, [
-        'get_icon'            => true,
-        'get_detailed'        => true,
-        'get_options'         => true,
-        'get_features'        => true,
-        'features_display_on' => 'A',
-    ], $lang_code);
-
-    foreach ($products as $product_id => &$product) {
-        $product['selected_options'] = empty($items[$product_id]['product_options']) ? [] : @unserialize($items[$product_id]['product_options']);
-        $product['amount'] = $items[$product_id]['amount'];
+    $auth = Tygh::$app['session']['auth'];
+    $products = [];
+    foreach ($items as $product_id => $item) {
+        $product = fn_get_product_data($product_id, $auth, $lang_code, [
+            'get_features'        => true,
+            'features_display_on' => 'A',
+        ]);
+        if ($product) {
+            $product['selected_options'] = empty($item['product_options']) ? [] : @unserialize($item['product_options']);
+            $product['amount'] = $item['amount'];
+            $products[] = $product;
+        }
     }
 
     return $products;
 }
 
-function fn_mwl_xlsx_collect_feature_names(array $products)
+function fn_mwl_xlsx_collect_feature_names(array $products, $lang_code = CART_LANGUAGE)
 {
-    $names = [];
+    $feature_ids = [];
     foreach ($products as $product) {
-        if (empty($product['product_features'])) {
-            continue;
-        }
-        foreach ($product['product_features'] as $feature_id => $feature) {
-            $names[$feature_id] = $feature['description'];
+        if (!empty($product['product_features'])) {
+            $feature_ids = array_merge($feature_ids, array_keys($product['product_features']));
         }
     }
+
+    if (!$feature_ids) {
+        return [];
+    }
+
+    list($features) = fn_get_product_features([
+        'feature_id' => array_unique($feature_ids),
+    ], 0, $lang_code);
+
+    $names = [];
+    foreach ($features as $feature) {
+        $names[$feature['feature_id']] = $feature['description'];
+    }
+
     return $names;
 }
 
-function fn_mwl_xlsx_get_feature_text_values(array $features)
+function fn_mwl_xlsx_get_feature_text_values(array $features, $lang_code = CART_LANGUAGE)
 {
     $values = [];
     foreach ($features as $feature_id => $feature) {
@@ -81,6 +88,7 @@ function fn_mwl_xlsx_get_feature_text_values(array $features)
             $values[$feature_id] = null;
         }
     }
+
     return $values;
 }
 
