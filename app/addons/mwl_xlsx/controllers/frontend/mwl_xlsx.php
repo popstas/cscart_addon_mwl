@@ -114,7 +114,18 @@ if ($mode === 'delete_list' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if ($mode === 'add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $added = fn_mwl_xlsx_add($_REQUEST['list_id'], $_REQUEST['product_id'], $_REQUEST['product_options'] ?? [], 1);
-    $message = $added ? __('mwl_xlsx.added') : __('mwl_xlsx.already_exists');
+    $list_id = (int) $_REQUEST['list_id'];
+    $added = fn_mwl_xlsx_add($list_id, $_REQUEST['product_id'], $_REQUEST['product_options'] ?? [], 1);
+
+    if ($added) {
+        $list_name = db_get_field('SELECT name FROM ?:mwl_xlsx_lists WHERE list_id = ?i', $list_id);
+        $message = __('mwl_xlsx.added', [
+            '[list_name]' => htmlspecialchars($list_name, ENT_QUOTES, 'UTF-8'),
+            '[list_url]'  => fn_url('mwl_xlsx.list?list_id=' . $list_id)
+        ]);
+    } else {
+        $message = __('mwl_xlsx.already_exists');
+    }
+
     exit(json_encode(['success' => true, 'message' => $message]));
 }
