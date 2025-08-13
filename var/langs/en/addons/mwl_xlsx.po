@@ -44,3 +44,15 @@ msgctxt "Languages::mwl_xlsx.export"
 msgid "Export XLSX"
 msgstr "Export XLSX"
 
+msgctxt "Languages::mwl_xlsx.rename"
+msgid "Rename"
+msgstr "Rename"
+
+msgctxt "Languages::mwl_xlsx.remove"
+msgid "Remove"
+msgstr "Remove"
+
+msgctxt "Languages::mwl_xlsx.confirm_remove"
+msgid "Remove this list?"
+msgstr "Remove this list?"
+

@@ -126,3 +126,32 @@ function fn_mwl_xlsx_add($list_id, $product_id, $options = [], $amount = 1)
 
     return true;
 }
+
+function fn_mwl_xlsx_update_list_name($list_id, $name, $user_id = null, $session_id = null)
+{
+    if (!$user_id && !$session_id) {
+        $session_id = Tygh::$app['session']->getID();
+    }
+    $condition = $user_id ? ['list_id' => $list_id, 'user_id' => $user_id] : ['list_id' => $list_id, 'session_id' => $session_id];
+    $exists = db_get_field('SELECT list_id FROM ?:mwl_xlsx_lists WHERE ?w', $condition);
+    if ($exists) {
+        db_query('UPDATE ?:mwl_xlsx_lists SET name = ?s WHERE list_id = ?i', $name, $list_id);
+        return true;
+    }
+    return false;
+}
+
+function fn_mwl_xlsx_delete_list($list_id, $user_id = null, $session_id = null)
+{
+    if (!$user_id && !$session_id) {
+        $session_id = Tygh::$app['session']->getID();
+    }
+    $condition = $user_id ? ['list_id' => $list_id, 'user_id' => $user_id] : ['list_id' => $list_id, 'session_id' => $session_id];
+    $exists = db_get_field('SELECT list_id FROM ?:mwl_xlsx_lists WHERE ?w', $condition);
+    if ($exists) {
+        db_query('DELETE FROM ?:mwl_xlsx_lists WHERE list_id = ?i', $list_id);
+        db_query('DELETE FROM ?:mwl_xlsx_list_products WHERE list_id = ?i', $list_id);
+        return true;
+    }
+    return false;
+}
