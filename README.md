@@ -7,6 +7,7 @@
 - View existing wishlists on the **My wishlists** page.
 - Each wishlist shows the number of products and links to its own page.
 - View products of a wishlist on a dedicated page.
+- Export wishlists to XLSX files from the wishlist list page.
 
 ### Add-on URLs
 - `index.php?dispatch=mwl_xlsx.manage` – list user wishlists.
@@ -15,7 +16,6 @@
 
 ### TODO
 - [ ] Add all selected products to a wishlist (default limit: 20 items).
-- [ ] Export wishlist to XLSX on the wishlist list page.
 - [ ] Export wishlist to XLSX on a single wishlist page.
 - [ ] Upload XLSX template for a wishlist.
 
