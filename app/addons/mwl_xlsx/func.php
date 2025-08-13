@@ -33,29 +33,23 @@ function fn_mwl_xlsx_get_list_products($list_id, $lang_code = CART_LANGUAGE)
     }
 
     $auth = Tygh::$app['session']['auth'];
+    $products = [];
+    foreach ($items as $product_id => $item) {
+        $product = fn_get_product_data($product_id, $auth, $lang_code);
+        if ($product) {
+            $features = fn_get_product_features_list([
+                'product_id'          => $product_id,
+                'features_display_on' => 'A',
+            ], 0, $lang_code);
 
-    list($products) = fn_get_products([
-        'pid' => array_keys($items),
-    ], $auth, 0, $lang_code);
-
-    fn_gather_additional_products_data($products, [
-        'get_features'        => true,
-        'features_display_on' => 'A',
-    ]);
-
-    $result = [];
-    foreach (array_keys($items) as $product_id) {
-        if (!isset($products[$product_id])) {
-            continue;
+            $product['product_features'] = $features;
+            $product['selected_options'] = empty($item['product_options']) ? [] : @unserialize($item['product_options']);
+            $product['amount'] = $item['amount'];
+            $products[] = $product;
         }
-        $product = $products[$product_id];
-        $item = $items[$product_id];
-        $product['selected_options'] = empty($item['product_options']) ? [] : @unserialize($item['product_options']);
-        $product['amount'] = $item['amount'];
-        $result[] = $product;
     }
 
-    return $result;
+    return $products;
 }
 
 function fn_mwl_xlsx_collect_feature_names(array $products, $lang_code = CART_LANGUAGE)
