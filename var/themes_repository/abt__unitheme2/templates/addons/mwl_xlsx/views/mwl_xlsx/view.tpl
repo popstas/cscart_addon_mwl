@@ -1,4 +1,5 @@
 {capture name="mainbox"}
+    <a class="mwl_xlsx-export" href="{fn_url("mwl_xlsx.export?list_id=`$list.list_id`")}" title="{__("mwl_xlsx.export")}"><img src="{$images_dir}/addons/mwl_xlsx/xlsx.svg" alt="{__("mwl_xlsx.export")}" width="20" height="20" /></a>
     {if $products}
         {include file="blocks/list_templates/products_list.tpl"
             products=$products
