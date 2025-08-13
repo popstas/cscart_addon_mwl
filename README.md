@@ -3,6 +3,7 @@
 ### Features
 - Create and name wishlists for the current user or session.
 - Add individual products to a chosen wishlist from product listings.
+- Add all products from a category page to a wishlist (up to 20 items).
 - Remember the last selected wishlist when adding products.
 - Avoid duplicate products when adding to a wishlist.
 - Show a notification with a link to the wishlist after adding a product.
@@ -21,7 +22,6 @@
 - `index.php?dispatch=mwl_xlsx.delete_list` – remove a wishlist (POST).
 
 ### TODO
-- [ ] Add all selected products to a wishlist (default limit: 20 items).
 - [ ] Export wishlist to XLSX on a single wishlist page.
 - [ ] Upload XLSX template for a wishlist.
 

@@ -64,6 +64,7 @@
                 <value id="mwl_xlsx.rename">Rename</value>
                 <value id="mwl_xlsx.remove">Remove</value>
                 <value id="mwl_xlsx.confirm_remove">Remove this list?</value>
+                <value id="mwl_xlsx.add_all_to_wishlist">Add all to wishlist</value>
             </values>
         </item>
         <item>
@@ -80,6 +81,7 @@
                 <value id="mwl_xlsx.rename">Переименовать</value>
                 <value id="mwl_xlsx.remove">Удалить</value>
                 <value id="mwl_xlsx.confirm_remove">Удалить этот список?</value>
+                <value id="mwl_xlsx.add_all_to_wishlist">Добавить все в список желаний</value>
             </values>
         </item>
     </languages>
