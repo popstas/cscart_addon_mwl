@@ -55,6 +55,7 @@
             <values>
                 <value id="mwl_xlsx.name">Multi Wishlist</value>
                 <value id="mwl_xlsx.description">Create and manage multiple wishlists.</value>
+                <value id="mwl_xlsx.wishlists">Wishlists</value>
                 <value id="mwl_xlsx.my_lists">My wishlists</value>
                 <value id="mwl_xlsx.new_list">New list…</value>
                 <value id="mwl_xlsx.enter_list_name">Enter list name</value>
@@ -66,6 +67,7 @@
             <values>
                 <value id="mwl_xlsx.name">Несколько списков желаний</value>
                 <value id="mwl_xlsx.description">Создание и управление несколькими списками желаний.</value>
+                <value id="mwl_xlsx.wishlists">Списки желаний</value>
                 <value id="mwl_xlsx.my_lists">Мои списки желаний</value>
                 <value id="mwl_xlsx.new_list">Новый список…</value>
                 <value id="mwl_xlsx.enter_list_name">Введите название списка</value>

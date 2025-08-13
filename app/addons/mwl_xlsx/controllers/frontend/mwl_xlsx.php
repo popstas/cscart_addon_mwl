@@ -9,6 +9,11 @@ if ($mode === 'manage') {
         $lists = fn_mwl_xlsx_get_lists(null, Tygh::$app['session']->getID());
     }
     Tygh::$app['view']->assign('lists', $lists);
+    Tygh::$app['view']->assign('page_title', __('mwl_xlsx.my_lists'));
+    Tygh::$app['view']->assign('breadcrumbs', [
+        ['title' => __('home'), 'link' => fn_url('')],
+        ['title' => __('mwl_xlsx.wishlists')]
+    ]);
 }
 
 if ($mode === 'list') {
@@ -22,6 +27,12 @@ if ($mode === 'list') {
         $products = fn_mwl_xlsx_get_list_products($list_id, CART_LANGUAGE);
         Tygh::$app['view']->assign('list', $list);
         Tygh::$app['view']->assign('products', $products);
+        Tygh::$app['view']->assign('page_title', $list['name']);
+        Tygh::$app['view']->assign('breadcrumbs', [
+            ['title' => __('home'), 'link' => fn_url('')],
+            ['title' => __('mwl_xlsx.wishlists'), 'link' => fn_url('mwl_xlsx.manage')],
+            ['title' => $list['name']]
+        ]);
     } else {
         return [CONTROLLER_STATUS_NO_PAGE];
     }

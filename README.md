@@ -8,6 +8,7 @@
 - Each wishlist shows the number of products and links to its own page.
 - View products of a wishlist on a dedicated page.
 - Export wishlists to XLSX files from the wishlist list page, placing each product feature in its own column and translating product and feature data into the site's current language.
+- Navigate wishlists with breadcrumbs and page titles.
 
 ### Add-on URLs
 - `index.php?dispatch=mwl_xlsx.manage` – list user wishlists.
