@@ -89,9 +89,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fname    = $basename . '-' . substr(sha1(uniqid('', true)), 0, 8) . '.xlsx';
         $dst      = 'mwl_xlsx/templates/' . (int) $company_id . '/' . $fname;
 
+        // Уже существующие шаблоны (должен быть максимум один)
+        $existing = db_get_array('SELECT template_id, path FROM ?:mwl_xlsx_templates WHERE company_id = ?i', (int) $company_id);
+
         // 4) Копируем во Storage
         $put = $storage->put($dst, ['file' => $file['tmp_name']]);
         if ($put) {
+            // удаляем старые шаблоны
+            foreach ($existing as $tpl) {
+                $storage->delete($tpl['path']);
+                db_query('DELETE FROM ?:mwl_xlsx_templates WHERE template_id = ?i', (int) $tpl['template_id']);
+            }
+
             $now = TIME;
             db_query(
                 'INSERT INTO ?:mwl_xlsx_templates ?e',

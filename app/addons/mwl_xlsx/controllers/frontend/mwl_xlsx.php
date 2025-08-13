@@ -3,6 +3,7 @@
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
 use Tygh\Languages\Helper;
 use Tygh\Registry;
+use Tygh\Storage;
 
 if ($mode === 'manage') {
     if (!empty($auth['user_id'])) {
@@ -66,8 +67,18 @@ if ($mode === 'export') {
     $feature_names = fn_mwl_xlsx_collect_feature_names($products, CART_LANGUAGE);
     $feature_ids = array_keys($feature_names);
 
-    $xlsx = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-    $sheet = $xlsx->getActiveSheet();
+    $storage    = Storage::instance('custom_files');
+    $company_id = fn_get_runtime_company_id();
+    $tpl        = db_get_row('SELECT path FROM ?:mwl_xlsx_templates WHERE company_id = ?i', (int) $company_id);
+
+    if ($tpl && $storage->isExist($tpl['path'])) {
+        $path = $storage->getAbsolutePath($tpl['path']);
+        $xlsx = \PhpOffice\PhpSpreadsheet\IOFactory::load($path);
+        $sheet = $xlsx->getActiveSheet();
+    } else {
+        $xlsx = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $xlsx->getActiveSheet();
+    }
 
     $header = array_merge([__('name')], array_values($feature_names));
     $data = [$header];
@@ -139,16 +150,21 @@ if ($mode === 'add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
 if ($mode === 'add_list' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $list_id = (int) $_REQUEST['list_id'];
-    $product_ids = array_slice((array) ($_REQUEST['product_ids'] ?? []), 0, 20);
+    $product_ids = array_slice(array_unique(array_map('intval', (array) ($_REQUEST['product_ids'] ?? []))), 0, 20);
+    $added = false;
     foreach ($product_ids as $pid) {
-        fn_mwl_xlsx_add($list_id, (int) $pid, [], 1);
+        $added = fn_mwl_xlsx_add($list_id, $pid, [], 1) || $added;
     }
 
     $list_name = db_get_field('SELECT name FROM ?:mwl_xlsx_lists WHERE list_id = ?i', $list_id);
-    $message = __('mwl_xlsx.added', [
-        '[list_name]' => htmlspecialchars($list_name, ENT_QUOTES, 'UTF-8'),
-        '[list_url]'  => fn_url(fn_mwl_xlsx_url($list_id))
-    ]);
+    if ($added) {
+        $message = __('mwl_xlsx.added', [
+            '[list_name]' => htmlspecialchars($list_name, ENT_QUOTES, 'UTF-8'),
+            '[list_url]'  => fn_url(fn_mwl_xlsx_url($list_id))
+        ]);
+    } else {
+        $message = __('mwl_xlsx.already_exists');
+    }
 
     exit(json_encode(['success' => true, 'message' => $message]));
 }
