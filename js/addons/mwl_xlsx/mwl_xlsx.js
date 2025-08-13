@@ -10,7 +10,8 @@
     });
 
     $(document).on('change', '[data-ca-list-select-xlsx]', function() {
-        var $input = $('[data-ca-mwl-new-list-name]');
+        var $control = $(this).closest('.mwl_xlsx-control');
+        var $input = $control.find('[data-ca-mwl-new-list-name]');
         var value = $(this).val();
         if (value === '_new') {
             $input.show().focus();
@@ -22,10 +23,12 @@
 
     $(document).on('click', '[data-ca-add-to-mwl_xlsx]', function() {
         var product_id = $(this).data('caProductId');
-        var $select = $('[data-ca-list-select-xlsx]');
+        var $control = $(this).closest('.mwl_xlsx-control');
+        var $select = $control.find('[data-ca-list-select-xlsx]');
         var list_id = $select.val();
         if (list_id === '_new') {
-            var name = $('[data-ca-mwl-new-list-name]').val();
+            var $input = $control.find('[data-ca-mwl-new-list-name]');
+            var name = $input.val();
             if (name) {
                 $.ceAjax('request', fn_url('mwl_xlsx.create_list'), {
                     method: 'post',
@@ -35,7 +38,7 @@
                         list_id = data.list_id;
                         $select.prepend($('<option>', { value: list_id, text: data.name }));
                         $select.val(list_id);
-                        $('[data-ca-mwl-new-list-name]').val('').hide();
+                        $input.val('').hide();
                         localStorage.setItem('mwl_last_list', list_id);
                         addToList(product_id, list_id);
                     }
@@ -51,10 +54,12 @@
     $(document).on('click', '[data-ca-add-all-to-mwl_xlsx]', function() {
         var $btn = $(this);
         var product_ids = ($btn.data('caProductIds') || '').toString().split(',');
-        var $select = $('[data-ca-list-select-xlsx]');
+        var $control = $btn.closest('.mwl_xlsx-control');
+        var $select = $control.find('[data-ca-list-select-xlsx]');
         var list_id = $select.val();
         if (list_id === '_new') {
-            var name = $('[data-ca-mwl-new-list-name]').val();
+            var $input = $control.find('[data-ca-mwl-new-list-name]');
+            var name = $input.val();
             if (name) {
                 $.ceAjax('request', fn_url('mwl_xlsx.create_list'), {
                     method: 'post',
@@ -64,7 +69,7 @@
                         list_id = data.list_id;
                         $select.prepend($('<option>', { value: list_id, text: data.name }));
                         $select.val(list_id);
-                        $('[data-ca-mwl-new-list-name]').val('').hide();
+                        $input.val('').hide();
                         localStorage.setItem('mwl_last_list', list_id);
                         addProductsToList(product_ids, list_id);
                     }
