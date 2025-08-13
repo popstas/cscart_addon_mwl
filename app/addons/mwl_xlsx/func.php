@@ -21,7 +21,7 @@ function fn_mwl_xlsx_get_lists($user_id = null, $session_id = null)
     );
 }
 
-function fn_mwl_xlsx_get_list_products($list_id)
+function fn_mwl_xlsx_get_list_products($list_id, $lang_code = CART_LANGUAGE)
 {
     $items = db_get_hash_array(
         "SELECT product_id, product_options, amount FROM ?:mwl_xlsx_list_products WHERE list_id = ?i",
@@ -33,17 +33,17 @@ function fn_mwl_xlsx_get_list_products($list_id)
     }
 
     $params = [
-        'pid' => array_keys($items),
-        'extend' => ['description', 'images']
+        'pid'   => array_keys($items),
+        'extend'=> ['description', 'images'],
     ];
-    list($products) = fn_get_products($params);
+    list($products) = fn_get_products($params, Tygh::$app['session']['auth'], 0, $lang_code);
     fn_gather_additional_products_data($products, [
         'get_icon'            => true,
         'get_detailed'        => true,
         'get_options'         => true,
         'get_features'        => true,
         'features_display_on' => 'A',
-    ]);
+    ], $lang_code);
 
     foreach ($products as $product_id => &$product) {
         $product['selected_options'] = empty($items[$product_id]['product_options']) ? [] : @unserialize($items[$product_id]['product_options']);

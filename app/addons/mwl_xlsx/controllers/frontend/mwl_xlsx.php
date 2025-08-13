@@ -19,7 +19,7 @@ if ($mode === 'list') {
         $list = db_get_row("SELECT * FROM ?:mwl_xlsx_lists WHERE list_id = ?i AND session_id = ?s", $list_id, Tygh::$app['session']->getID());
     }
     if ($list) {
-        $products = fn_mwl_xlsx_get_list_products($list_id);
+        $products = fn_mwl_xlsx_get_list_products($list_id, CART_LANGUAGE);
         Tygh::$app['view']->assign('list', $list);
         Tygh::$app['view']->assign('products', $products);
     } else {
@@ -43,7 +43,7 @@ if ($mode === 'export') {
         require_once $vendor;
     }
 
-    $products = fn_mwl_xlsx_get_list_products($list_id);
+    $products = fn_mwl_xlsx_get_list_products($list_id, CART_LANGUAGE);
 
     $feature_names = fn_mwl_xlsx_collect_feature_names($products);
     $feature_ids = array_keys($feature_names);
@@ -51,7 +51,7 @@ if ($mode === 'export') {
     $xlsx = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
     $sheet = $xlsx->getActiveSheet();
 
-    $header = array_merge(['Name'], array_values($feature_names));
+    $header = array_merge([__('name')], array_values($feature_names));
     $data = [$header];
 
     foreach ($products as $p) {
