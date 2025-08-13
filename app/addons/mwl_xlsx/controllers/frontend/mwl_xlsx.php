@@ -1,7 +1,4 @@
 <?php
-use Tygh\Registry;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
 
@@ -41,18 +38,27 @@ if ($mode === 'export') {
         return [CONTROLLER_STATUS_NO_PAGE];
     }
 
+    $vendor = dirname(__DIR__) . '/../vendor/autoload.php';
+    if (file_exists($vendor)) {
+        require_once $vendor;
+    }
+
     $products = fn_mwl_xlsx_get_list_products($list_id);
-    $xlsx = new Spreadsheet();
+    $xlsx = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
     $sheet = $xlsx->getActiveSheet();
-    $data = [['ID', 'Name', 'Amount']];
+    $data = [['Name', 'Amount']];
     foreach ($products as $p) {
-        $data[] = [$p['product_id'], $p['product'], $p['amount']];
+        $data[] = [$p['product'], $p['amount']];
     }
     $sheet->fromArray($data, null, 'A1');
+    foreach (range('A', $sheet->getHighestDataColumn()) as $col) {
+        $sheet->getColumnDimension($col)->setAutoSize(true);
+    }
 
+    $filename = preg_replace('/[^A-Za-z0-9_\-]/', '_', $list['name']) . '.xlsx';
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    header('Content-Disposition: attachment; filename="wishlist_' . $list_id . '.xlsx"');
-    $writer = new Xlsx($xlsx);
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($xlsx);
     $writer->save('php://output');
     exit;
 }
