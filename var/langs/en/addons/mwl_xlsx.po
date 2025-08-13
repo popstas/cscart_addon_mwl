@@ -64,3 +64,11 @@ msgctxt "Languages::mwl_xlsx.add_all_to_wishlist"
 msgid "Add all to wishlist"
 msgstr "Add all to wishlist"
 
+msgctxt "Languages::mwl_xlsx.xlsx_templates"
+msgid "XLSX templates"
+msgstr "XLSX templates"
+
+msgctxt "Languages::mwl_xlsx.upload_xlsx_template"
+msgid "Upload XLSX template"
+msgstr "Upload XLSX template"
+
