@@ -48,6 +48,35 @@
         return false;
     });
 
+    $(document).on('click', '[data-ca-add-all-to-mwl_xlsx]', function() {
+        var $btn = $(this);
+        var product_ids = ($btn.data('caProductIds') || '').toString().split(',');
+        var $select = $('[data-ca-list-select-xlsx]');
+        var list_id = $select.val();
+        if (list_id === '_new') {
+            var name = $('[data-ca-mwl-new-list-name]').val();
+            if (name) {
+                $.ceAjax('request', fn_url('mwl_xlsx.create_list'), {
+                    method: 'post',
+                    data: { name: name },
+                    callback: function(data) {
+                        data = parseResponse(data);
+                        list_id = data.list_id;
+                        $select.prepend($('<option>', { value: list_id, text: data.name }));
+                        $select.val(list_id);
+                        $('[data-ca-mwl-new-list-name]').val('').hide();
+                        localStorage.setItem('mwl_last_list', list_id);
+                        addProductsToList(product_ids, list_id);
+                    }
+                });
+            }
+        } else {
+            localStorage.setItem('mwl_last_list', list_id);
+            addProductsToList(product_ids, list_id);
+        }
+        return false;
+    });
+
     var $renameDialog = $('#mwl_xlsx_rename_dialog');
     var $deleteDialog = $('#mwl_xlsx_delete_dialog');
 
@@ -116,6 +145,25 @@
         $deleteDialog.ceDialog('close');
         return false;
     });
+
+    function addProductsToList(product_ids, list_id) {
+        product_ids = product_ids.slice(0, 20);
+        $.ceAjax('request', fn_url('mwl_xlsx.add_list'), {
+            method: 'post',
+            data: { list_id: list_id, product_ids: product_ids },
+            callback: function(data) {
+                data = parseResponse(data);
+                var message = (data && data.message) ? data.message : (_.tr('mwl_xlsx.added_plain') || 'Added to wishlist');
+                $.ceNotification('show', {
+                    type: 'N',
+                    title: '',
+                    message: message,
+                    message_state: 'I',
+                    overlay: true
+                });
+            }
+        });
+    }
 
     function addToList(product_id, list_id) {
         $.ceAjax('request', fn_url('mwl_xlsx.add'), {

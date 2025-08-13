@@ -129,3 +129,19 @@ if ($mode === 'add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     exit(json_encode(['success' => true, 'message' => $message]));
 }
+
+if ($mode === 'add_list' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $list_id = (int) $_REQUEST['list_id'];
+    $product_ids = array_slice((array) ($_REQUEST['product_ids'] ?? []), 0, 20);
+    foreach ($product_ids as $pid) {
+        fn_mwl_xlsx_add($list_id, (int) $pid, [], 1);
+    }
+
+    $list_name = db_get_field('SELECT name FROM ?:mwl_xlsx_lists WHERE list_id = ?i', $list_id);
+    $message = __('mwl_xlsx.added', [
+        '[list_name]' => htmlspecialchars($list_name, ENT_QUOTES, 'UTF-8'),
+        '[list_url]'  => fn_url('mwl_xlsx.list?list_id=' . $list_id)
+    ]);
+
+    exit(json_encode(['success' => true, 'message' => $message]));
+}

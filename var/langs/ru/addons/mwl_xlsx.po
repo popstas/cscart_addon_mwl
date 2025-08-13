@@ -62,3 +62,7 @@ msgctxt "Languages::mwl_xlsx.confirm_remove"
 msgid "Remove this list?"
 msgstr "Удалить этот список?"
 
+msgctxt "Languages::mwl_xlsx.add_all_to_wishlist"
+msgid "Add all to wishlist"
+msgstr "Добавить все в список желаний"
+
