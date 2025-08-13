@@ -18,6 +18,10 @@ msgctxt "Languages::mwl_xlsx.my_lists"
 msgid "My wishlists"
 msgstr "Мои списки желаний"
 
+msgctxt "Languages::mwl_xlsx.wishlists"
+msgid "Wishlists"
+msgstr "Списки желаний"
+
 msgctxt "Languages::mwl_xlsx.new_list"
 msgid "New list…"
 msgstr "Новый список…"
