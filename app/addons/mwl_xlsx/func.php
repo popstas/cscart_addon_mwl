@@ -38,9 +38,11 @@ function fn_mwl_xlsx_get_list_products($list_id)
     ];
     list($products) = fn_get_products($params);
     fn_gather_additional_products_data($products, [
-        'get_icon' => true,
-        'get_detailed' => true,
-        'get_options' => true,
+        'get_icon'            => true,
+        'get_detailed'        => true,
+        'get_options'         => true,
+        'get_features'        => true,
+        'features_display_on' => 'A',
     ]);
 
     foreach ($products as $product_id => &$product) {
@@ -49,6 +51,37 @@ function fn_mwl_xlsx_get_list_products($list_id)
     }
 
     return $products;
+}
+
+function fn_mwl_xlsx_collect_feature_names(array $products)
+{
+    $names = [];
+    foreach ($products as $product) {
+        if (empty($product['product_features'])) {
+            continue;
+        }
+        foreach ($product['product_features'] as $feature_id => $feature) {
+            $names[$feature_id] = $feature['description'];
+        }
+    }
+    return $names;
+}
+
+function fn_mwl_xlsx_get_feature_text_values(array $features)
+{
+    $values = [];
+    foreach ($features as $feature_id => $feature) {
+        if (!empty($feature['value'])) {
+            $values[$feature_id] = $feature['value'];
+        } elseif (!empty($feature['variant'])) {
+            $values[$feature_id] = $feature['variant'];
+        } elseif (!empty($feature['variants'])) {
+            $values[$feature_id] = implode(', ', array_column($feature['variants'], 'variant'));
+        } else {
+            $values[$feature_id] = null;
+        }
+    }
+    return $values;
 }
 
 function fn_mwl_xlsx_add($list_id, $product_id, $options = [], $amount = 1)

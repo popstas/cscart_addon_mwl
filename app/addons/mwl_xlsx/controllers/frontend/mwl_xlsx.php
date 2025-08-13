@@ -44,12 +44,25 @@ if ($mode === 'export') {
     }
 
     $products = fn_mwl_xlsx_get_list_products($list_id);
+
+    $feature_names = fn_mwl_xlsx_collect_feature_names($products);
+    $feature_ids = array_keys($feature_names);
+
     $xlsx = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
     $sheet = $xlsx->getActiveSheet();
-    $data = [['Name', 'Amount']];
+
+    $header = array_merge(['Name'], array_values($feature_names));
+    $data = [$header];
+
     foreach ($products as $p) {
-        $data[] = [$p['product'], $p['amount']];
+        $row = [$p['product']];
+        $values = fn_mwl_xlsx_get_feature_text_values($p['product_features'] ?? []);
+        foreach ($feature_ids as $feature_id) {
+            $row[] = $values[$feature_id] ?? null;
+        }
+        $data[] = $row;
     }
+
     $sheet->fromArray($data, null, 'A1');
     foreach (range('A', $sheet->getHighestDataColumn()) as $col) {
         $sheet->getColumnDimension($col)->setAutoSize(true);
