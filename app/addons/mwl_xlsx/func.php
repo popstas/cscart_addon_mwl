@@ -21,7 +21,7 @@ function fn_mwl_xlsx_get_lists($user_id = null, $session_id = null)
     );
 }
 
-function fn_mwl_xlsx_get_list_products($list_id)
+function fn_mwl_xlsx_get_list_products($list_id, $lang_code = CART_LANGUAGE)
 {
     $items = db_get_hash_array(
         "SELECT product_id, product_options, amount FROM ?:mwl_xlsx_list_products WHERE list_id = ?i",
@@ -32,23 +32,74 @@ function fn_mwl_xlsx_get_list_products($list_id)
         return [];
     }
 
-    $params = [
-        'pid' => array_keys($items),
-        'extend' => ['description', 'images']
-    ];
-    list($products) = fn_get_products($params);
-    fn_gather_additional_products_data($products, [
-        'get_icon' => true,
-        'get_detailed' => true,
-        'get_options' => true,
-    ]);
+    $auth = Tygh::$app['session']['auth'];
+    $products = [];
+    foreach ($items as $product_id => $item) {
+        $product = fn_get_product_data($product_id, $auth, $lang_code);
+        if ($product) {
+            $features = fn_get_product_features_list([
+                'product_id'          => $product_id,
+                'features_display_on' => 'A',
+            ], 0, $lang_code);
 
-    foreach ($products as $product_id => &$product) {
-        $product['selected_options'] = empty($items[$product_id]['product_options']) ? [] : @unserialize($items[$product_id]['product_options']);
-        $product['amount'] = $items[$product_id]['amount'];
+            $product['product_features'] = $features;
+            $product['selected_options'] = empty($item['product_options']) ? [] : @unserialize($item['product_options']);
+            $product['amount'] = $item['amount'];
+            $products[] = $product;
+        }
     }
 
     return $products;
+}
+
+function fn_mwl_xlsx_collect_feature_names(array $products, $lang_code = CART_LANGUAGE)
+{
+    $feature_ids = [];
+    foreach ($products as $product) {
+        if (empty($product['product_features'])) {
+            continue;
+        }
+        foreach ($product['product_features'] as $feature) {
+            if (!empty($feature['feature_id'])) {
+                $feature_ids[] = $feature['feature_id'];
+            }
+        }
+    }
+
+    $feature_ids = array_unique($feature_ids);
+    if (!$feature_ids) {
+        return [];
+    }
+
+    list($features) = fn_get_product_features([
+        'feature_id' => $feature_ids,
+    ], 0, $lang_code);
+
+    $names = [];
+    foreach ($features as $feature) {
+        $names[$feature['feature_id']] = $feature['description'];
+    }
+
+    return $names;
+}
+
+function fn_mwl_xlsx_get_feature_text_values(array $features, $lang_code = CART_LANGUAGE)
+{
+    $values = [];
+    foreach ($features as $feature) {
+        $feature_id = $feature['feature_id'];
+        if (!empty($feature['value'])) {
+            $values[$feature_id] = $feature['value'];
+        } elseif (!empty($feature['variant'])) {
+            $values[$feature_id] = $feature['variant'];
+        } elseif (!empty($feature['variants'])) {
+            $values[$feature_id] = implode(', ', array_column($feature['variants'], 'variant'));
+        } else {
+            $values[$feature_id] = null;
+        }
+    }
+
+    return $values;
 }
 
 function fn_mwl_xlsx_add($list_id, $product_id, $options = [], $amount = 1)

@@ -19,7 +19,7 @@ if ($mode === 'list') {
         $list = db_get_row("SELECT * FROM ?:mwl_xlsx_lists WHERE list_id = ?i AND session_id = ?s", $list_id, Tygh::$app['session']->getID());
     }
     if ($list) {
-        $products = fn_mwl_xlsx_get_list_products($list_id);
+        $products = fn_mwl_xlsx_get_list_products($list_id, CART_LANGUAGE);
         Tygh::$app['view']->assign('list', $list);
         Tygh::$app['view']->assign('products', $products);
     } else {
@@ -43,13 +43,26 @@ if ($mode === 'export') {
         require_once $vendor;
     }
 
-    $products = fn_mwl_xlsx_get_list_products($list_id);
+    $products = fn_mwl_xlsx_get_list_products($list_id, CART_LANGUAGE);
+
+    $feature_names = fn_mwl_xlsx_collect_feature_names($products, CART_LANGUAGE);
+    $feature_ids = array_keys($feature_names);
+
     $xlsx = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
     $sheet = $xlsx->getActiveSheet();
-    $data = [['Name', 'Amount']];
+
+    $header = array_merge([__('name')], array_values($feature_names));
+    $data = [$header];
+
     foreach ($products as $p) {
-        $data[] = [$p['product'], $p['amount']];
+        $row = [$p['product']];
+        $values = fn_mwl_xlsx_get_feature_text_values($p['product_features'] ?? [], CART_LANGUAGE);
+        foreach ($feature_ids as $feature_id) {
+            $row[] = $values[$feature_id] ?? null;
+        }
+        $data[] = $row;
     }
+
     $sheet->fromArray($data, null, 'A1');
     foreach (range('A', $sheet->getHighestDataColumn()) as $col) {
         $sheet->getColumnDimension($col)->setAutoSize(true);
