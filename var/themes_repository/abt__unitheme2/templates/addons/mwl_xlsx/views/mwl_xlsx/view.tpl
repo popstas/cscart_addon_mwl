@@ -3,6 +3,18 @@
         {include file="blocks/list_templates/products_list.tpl"
             products=$products
             layout="products_without_options"
+
+            show_name=true
+            show_features=true
+            show_sku=false
+            show_price=true
+            show_old_price=true
+            show_rating=true
+            show_product_amount=true
+            show_discount_label=true
+            show_add_to_cart=false
+            but_role="action"
+
             no_pagination=true
             item_number=0
         }

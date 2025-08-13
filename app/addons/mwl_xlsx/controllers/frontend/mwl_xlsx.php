@@ -1,6 +1,7 @@
 <?php
 
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
+use Tygh\Languages\Helper;
 use Tygh\Registry;
 
 if ($mode === 'manage') {
@@ -28,6 +29,11 @@ if ($mode === 'list' || $mode === 'view') {
         $products = fn_mwl_xlsx_get_list_products($list_id, CART_LANGUAGE);
         Tygh::$app['view']->assign('list', $list);
         Tygh::$app['view']->assign('products', $products);
+        Tygh::$app['view']->assign('search', [
+            'sort_by'    => 'popularity',
+            'sort_order' => 'desc',
+            'layout'     => 'products_without_options',
+        ]);
         Tygh::$app['view']->assign('page_title', $list['name']);
         Tygh::$app['view']->assign('breadcrumbs', [
             ['title' => __('home'), 'link' => fn_url('')],
