@@ -5,6 +5,7 @@
             layout="products_without_options"
 
             show_name=true
+            show_descr=true
             show_features=true
             show_sku=false
             show_price=true
