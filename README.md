@@ -5,13 +5,13 @@
 - Add individual products to a chosen wishlist from product listings.
 - Add all products from a category page to a wishlist (up to 20 items).
 - Remember the last selected wishlist when adding products.
-- Avoid duplicate products when adding to a wishlist.
+- Avoid duplicate products when adding to a wishlist, including bulk additions.
 - Show a notification with a link to the wishlist after adding a product.
 - View existing wishlists on the **My wishlists** page.
 - Each wishlist shows the number of products and links to its own page.
 - View products of a wishlist on a dedicated page.
 - Export wishlists to XLSX files from the wishlist list page, placing each product feature in its own column and translating product and feature data into the site's current language.
-- Manage XLSX templates from the admin panel for custom export layouts.
+- Manage a single XLSX template from the admin panel for custom export layouts; uploading a new file replaces the previous template and exports use it when available.
 - Navigate wishlists with breadcrumbs and page titles.
 - Rename or remove wishlists from the manage page.
 - SEO-friendly URLs for wishlist pages (`/media-lists` and `/media-lists/{list_id}`).
