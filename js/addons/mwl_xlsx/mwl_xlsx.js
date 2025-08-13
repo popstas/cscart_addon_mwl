@@ -85,7 +85,7 @@
     $('#mwl_xlsx_new_list_input').val('');
     $newListDialog.data('caMwlOnOk', callback);
     $newListDialog.ceDialog('open', {
-      title: _.tr('mwl_xlsx.new_list') || 'New wishlist'
+      title: _.tr('mwl_xlsx.new_list') || 'New media list'
     });
     setTimeout(function() { $('#mwl_xlsx_new_list_input').focus(); }, 0);
   }
@@ -204,7 +204,7 @@
       data: { list_id: list_id, product_ids: product_ids },
       callback: function(data) {
         data = parseResponse(data);
-        var message = (data && data.message) ? data.message : (_.tr('mwl_xlsx.added_plain') || 'Added to wishlist');
+        var message = (data && data.message) ? data.message : (_.tr('mwl_xlsx.added_plain') || 'Added to media list');
         $.ceNotification('show', {
           type: 'N',
           title: '',
@@ -222,7 +222,7 @@
       data: { product_id: product_id, list_id: list_id },
       callback: function(data) {
         data = parseResponse(data);
-        var message = (data && data.message) ? data.message : (_.tr('mwl_xlsx.added_plain') || 'Added to wishlist');
+        var message = (data && data.message) ? data.message : (_.tr('mwl_xlsx.added_plain') || 'Added to media list');
         $.ceNotification('show', {
           type: 'N',
           title: '',

@@ -1,33 +1,32 @@
-## Multi Wishlist Add-on
+## Media List Add-on
 
-### Features
-- Create and name wishlists for the current user or session.
-- Add individual products to a chosen wishlist from product listings.
-- Add all products from a category page to a wishlist (up to 20 items).
-- Remember the last selected wishlist when adding products.
-- Avoid duplicate products when adding to a wishlist, including bulk additions.
-- Show a notification with a link to the wishlist after adding a product.
-- View existing wishlists on the **My wishlists** page.
-- Each wishlist shows the number of products and links to its own page.
-- View products of a wishlist on a dedicated page.
-- Export wishlists to XLSX files from the wishlist list page, placing each product feature in its own column and translating product and feature data into the site's current language.
+- Create and name media lists for the current user or session.
+- Add individual products to a chosen media list from product listings.
+- Add all products from a category page to a media list (up to 20 items).
+- Remember the last selected media list when adding products.
+- Avoid duplicate products when adding to a media list, including bulk additions.
+- Show a notification with a link to the media list after adding a product.
+- View existing media lists on the **My media lists** page.
+- Each media list shows the number of products and links to its own page.
+- View products of a media list on a dedicated page.
+- Export media lists to XLSX files from the media lists page, placing each product feature in its own column and translating product and feature data into the site's current language.
 - Manage a single XLSX template from the admin panel for custom export layouts; uploading a new file replaces the previous template and exports use it when available.
-- Navigate wishlists with breadcrumbs and page titles.
-- Rename or remove wishlists from the manage page.
-- SEO-friendly URLs for wishlist pages (`/media-lists` and `/media-lists/{list_id}`).
+- Navigate media lists with breadcrumbs and page titles.
+- Rename or remove media lists from the manage page.
+- SEO-friendly URLs for media list pages (`/media-lists` and `/media-lists/{list_id}`).
 
 ### Add-on URLs
-- `/media-lists` – list user wishlists.
-- `/media-lists/{list_id}` – view a wishlist.
-- `index.php?dispatch=mwl_xlsx.manage` – list user wishlists.
-- `index.php?dispatch=mwl_xlsx.view&list_id={list_id}` – view a wishlist.
-- `index.php?dispatch=mwl_xlsx.create_list` – create a wishlist (POST).
-- `index.php?dispatch=mwl_xlsx.add` – add a product to a wishlist (POST).
-- `index.php?dispatch=mwl_xlsx.rename_list` – rename a wishlist (POST).
-- `index.php?dispatch=mwl_xlsx.delete_list` – remove a wishlist (POST).
+- `/media-lists` – list user media lists.
+- `/media-lists/{list_id}` – view a media list.
+- `index.php?dispatch=mwl_xlsx.manage` – list user media lists.
+- `index.php?dispatch=mwl_xlsx.view&list_id={list_id}` – view a media list.
+- `index.php?dispatch=mwl_xlsx.create_list` – create a media list (POST).
+- `index.php?dispatch=mwl_xlsx.add` – add a product to a media list (POST).
+- `index.php?dispatch=mwl_xlsx.rename_list` – rename a media list (POST).
+- `index.php?dispatch=mwl_xlsx.delete_list` – remove a media list (POST).
 
 ### TODO
-- [ ] Export wishlist to XLSX on a single wishlist page.
+- [ ] Export media list to XLSX on a single media list page.
 
 ### Dev install
 

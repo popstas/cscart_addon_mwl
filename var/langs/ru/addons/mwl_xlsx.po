@@ -7,44 +7,44 @@ msgstr ""
 "Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 && n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 && n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
 
 msgctxt "Addons::name::mwl_xlsx"
-msgid "Multi Wishlist"
-msgstr "Несколько списков желаний"
+msgid "Media Lists"
+msgstr "Несколько подборок"
 
 msgctxt "Addons::description::mwl_xlsx"
-msgid "Create and manage multiple wishlists."
-msgstr "Создание и управление несколькими списками желаний."
+msgid "Create and manage multiple media lists."
+msgstr "Создание и управление несколькими подборками."
 
 msgctxt "Languages::mwl_xlsx.my_lists"
-msgid "My wishlists"
-msgstr "Мои списки желаний"
+msgid "My media lists"
+msgstr "Мои подборки"
 
 msgctxt "Languages::mwl_xlsx.wishlists"
-msgid "Wishlists"
-msgstr "Списки желаний"
+msgid "Media lists"
+msgstr "Подборки"
 
 msgctxt "Languages::mwl_xlsx.new_list"
 msgid "New list…"
-msgstr "Новый список…"
+msgstr "Новая подборка…"
 
 msgctxt "Languages::mwl_xlsx.enter_list_name"
 msgid "Enter list name"
-msgstr "Введите название списка"
+msgstr "Введите название подборки"
 
 msgctxt "Languages::mwl_xlsx.added"
 msgid "Added to <a href=\"[list_url]\">[list_name]</a>"
 msgstr "Добавлено в <a href=\"[list_url]\">[list_name]</a>"
 
 msgctxt "Languages::mwl_xlsx.added_plain"
-msgid "Added to wishlist"
-msgstr "Добавлено в список желаний"
+msgid "Added to media list"
+msgstr "Добавлено в подборку"
 
 msgctxt "Languages::mwl_xlsx.empty_list"
-msgid "Wishlist is empty"
-msgstr "Список пуст"
+msgid "Media list is empty"
+msgstr "Подборка пуста"
 
 msgctxt "Languages::mwl_xlsx.already_exists"
 msgid "Product already in list"
-msgstr "Товар уже в списке"
+msgstr "Товар уже в подборке"
 
 msgctxt "Languages::mwl_xlsx.export"
 msgid "Export XLSX"
@@ -60,11 +60,11 @@ msgstr "Удалить"
 
 msgctxt "Languages::mwl_xlsx.confirm_remove"
 msgid "Remove this list?"
-msgstr "Удалить этот список?"
+msgstr "Удалить эту подборку?"
 
 msgctxt "Languages::mwl_xlsx.add_all_to_wishlist"
-msgid "Add all to wishlist"
-msgstr "Добавить все в список желаний"
+msgid "Add all to media list"
+msgstr "Добавить все в подборку"
 
 msgctxt "Languages::mwl_xlsx.xlsx_templates"
 msgid "XLSX templates"
@@ -73,4 +73,8 @@ msgstr "XLSX-шаблоны"
 msgctxt "Languages::mwl_xlsx.upload_xlsx_template"
 msgid "Upload XLSX template"
 msgstr "Загрузить XLSX-шаблон"
+
+msgctxt "Languages::mwl_xlsx.add_to_wishlist"
+msgid "Add to media list"
+msgstr "Добавить в подборку"
 
