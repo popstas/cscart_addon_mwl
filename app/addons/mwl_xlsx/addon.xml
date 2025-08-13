@@ -12,6 +12,8 @@
     <name>Multi Wishlist</name>
     <description>Adds multiple wishlists per user without core changes (hooks, own tables, UI on product buttons).</description>
 
+    <uninstall>fn_mwl_xlsx_uninstall</uninstall>
+
     <!-- Установочные/деинсталляционные SQL -->
     <queries>
         <!-- install -->
@@ -35,6 +37,20 @@
         `timestamp` INT NOT NULL,
         PRIMARY KEY (`list_id`, `product_id`, `timestamp`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+        ]]></item>
+
+        <item for="install"><![CDATA[
+        CREATE TABLE IF NOT EXISTS `?:mwl_xlsx_templates` (
+        `template_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        `company_id` INT UNSIGNED NOT NULL DEFAULT 0,
+        `name` VARCHAR(255) NOT NULL,
+        `path` VARCHAR(255) NOT NULL,
+        `size` INT UNSIGNED NOT NULL DEFAULT 0,
+        `created_at` INT UNSIGNED NOT NULL,
+        `updated_at` INT UNSIGNED NOT NULL,
+        PRIMARY KEY (`template_id`),
+        KEY `company_id` (`company_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8
         ]]></item>
 
         <!-- uninstall -->

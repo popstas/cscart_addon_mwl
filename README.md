@@ -11,6 +11,7 @@
 - Each wishlist shows the number of products and links to its own page.
 - View products of a wishlist on a dedicated page.
 - Export wishlists to XLSX files from the wishlist list page, placing each product feature in its own column and translating product and feature data into the site's current language.
+- Manage XLSX templates from the admin panel for custom export layouts.
 - Navigate wishlists with breadcrumbs and page titles.
 - Rename or remove wishlists from the manage page.
 - SEO-friendly URLs for wishlist pages (`/media-lists` and `/media-lists/{list_id}`).
@@ -27,7 +28,6 @@
 
 ### TODO
 - [ ] Export wishlist to XLSX on a single wishlist page.
-- [ ] Upload XLSX template for a wishlist.
 
 ### Dev install
 

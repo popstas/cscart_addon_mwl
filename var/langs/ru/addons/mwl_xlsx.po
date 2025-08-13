@@ -66,3 +66,11 @@ msgctxt "Languages::mwl_xlsx.add_all_to_wishlist"
 msgid "Add all to wishlist"
 msgstr "Добавить все в список желаний"
 
+msgctxt "Languages::mwl_xlsx.xlsx_templates"
+msgid "XLSX templates"
+msgstr "XLSX-шаблоны"
+
+msgctxt "Languages::mwl_xlsx.upload_xlsx_template"
+msgid "Upload XLSX template"
+msgstr "Загрузить XLSX-шаблон"
+
