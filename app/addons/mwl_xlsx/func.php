@@ -1,5 +1,6 @@
 <?php
 use Tygh\Registry;
+use Tygh\Storage;
 
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
 
@@ -161,3 +162,10 @@ function fn_mwl_xlsx_delete_list($list_id, $user_id = null, $session_id = null)
     }
     return false;
 }
+
+function fn_mwl_xlsx_uninstall()
+{
+    db_query("DROP TABLE IF EXISTS ?:mwl_xlsx_templates");
+    Storage::instance('custom_files')->deleteDir('mwl_xlsx/templates');
+}
+
