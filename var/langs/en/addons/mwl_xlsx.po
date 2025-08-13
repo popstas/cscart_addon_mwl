@@ -36,3 +36,7 @@ msgctxt "Languages::mwl_xlsx.already_exists"
 msgid "Product already in list"
 msgstr "Product already in list"
 
+msgctxt "Languages::mwl_xlsx.export"
+msgid "Export XLSX"
+msgstr "Export XLSX"
+

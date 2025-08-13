@@ -1,2 +1,4 @@
 *.zip
 deploy.sh
+vendor/
+app/addons/mwl_xlsx/vendor/
