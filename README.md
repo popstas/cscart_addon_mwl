@@ -3,6 +3,7 @@
 ### Features
 - Create and name wishlists for the current user or session.
 - Add individual products to a chosen wishlist from product listings.
+- Remember the last selected wishlist when adding products.
 - Avoid duplicate products when adding to a wishlist.
 - View existing wishlists on the **My wishlists** page.
 - Each wishlist shows the number of products and links to its own page.

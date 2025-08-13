@@ -1,10 +1,22 @@
 (function(_, $) {
+    $.ceEvent('on', 'ce.commoninit', function(context) {
+        var last_list_id = localStorage.getItem('mwl_last_list');
+        $('[data-ca-list-select-xlsx]', context).each(function() {
+            var $select = $(this);
+            if (last_list_id && $select.find('option[value="' + last_list_id + '"]').length) {
+                $select.val(last_list_id).trigger('change');
+            }
+        });
+    });
+
     $(document).on('change', '[data-ca-list-select-xlsx]', function() {
         var $input = $('[data-ca-mwl-new-list-name]');
-        if ($(this).val() === '_new') {
+        var value = $(this).val();
+        if (value === '_new') {
             $input.show().focus();
         } else {
             $input.hide();
+            localStorage.setItem('mwl_last_list', value);
         }
     });
 
@@ -24,11 +36,13 @@
                         $select.prepend($('<option>', { value: list_id, text: data.name }));
                         $select.val(list_id);
                         $('[data-ca-mwl-new-list-name]').val('').hide();
+                        localStorage.setItem('mwl_last_list', list_id);
                         addToList(product_id, list_id);
                     }
                 });
             }
         } else {
+            localStorage.setItem('mwl_last_list', list_id);
             addToList(product_id, list_id);
         }
         return false;
