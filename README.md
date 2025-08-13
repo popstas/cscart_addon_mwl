@@ -1,5 +1,6 @@
 ## Media List Add-on
 
+### Features
 - Create and name media lists for the current user or session.
 - Add individual products to a chosen media list from product listings.
 - Add all products from a category page to a media list (up to 20 items).
@@ -24,9 +25,6 @@
 - `index.php?dispatch=mwl_xlsx.add` – add a product to a media list (POST).
 - `index.php?dispatch=mwl_xlsx.rename_list` – rename a media list (POST).
 - `index.php?dispatch=mwl_xlsx.delete_list` – remove a media list (POST).
-
-### TODO
-- [ ] Export media list to XLSX on a single media list page.
 
 ### Dev install
 
