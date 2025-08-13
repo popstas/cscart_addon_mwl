@@ -56,17 +56,23 @@ function fn_mwl_xlsx_collect_feature_names(array $products, $lang_code = CART_LA
 {
     $feature_ids = [];
     foreach ($products as $product) {
-        if (!empty($product['product_features'])) {
-            $feature_ids = array_merge($feature_ids, array_keys($product['product_features']));
+        if (empty($product['product_features'])) {
+            continue;
+        }
+        foreach ($product['product_features'] as $feature) {
+            if (!empty($feature['feature_id'])) {
+                $feature_ids[] = $feature['feature_id'];
+            }
         }
     }
 
+    $feature_ids = array_unique($feature_ids);
     if (!$feature_ids) {
         return [];
     }
 
     list($features) = fn_get_product_features([
-        'feature_id' => array_unique($feature_ids),
+        'feature_id' => $feature_ids,
     ], 0, $lang_code);
 
     $names = [];
@@ -80,7 +86,8 @@ function fn_mwl_xlsx_collect_feature_names(array $products, $lang_code = CART_LA
 function fn_mwl_xlsx_get_feature_text_values(array $features, $lang_code = CART_LANGUAGE)
 {
     $values = [];
-    foreach ($features as $feature_id => $feature) {
+    foreach ($features as $feature) {
+        $feature_id = $feature['feature_id'];
         if (!empty($feature['value'])) {
             $values[$feature_id] = $feature['value'];
         } elseif (!empty($feature['variant'])) {
