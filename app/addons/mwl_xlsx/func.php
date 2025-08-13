@@ -35,11 +35,14 @@ function fn_mwl_xlsx_get_list_products($list_id, $lang_code = CART_LANGUAGE)
     $auth = Tygh::$app['session']['auth'];
     $products = [];
     foreach ($items as $product_id => $item) {
-        $product = fn_get_product_data($product_id, $auth, $lang_code, [
-            'get_features'        => true,
-            'features_display_on' => 'A',
-        ]);
+        $product = fn_get_product_data($product_id, $auth, $lang_code);
         if ($product) {
+            $features = fn_get_product_features_list([
+                'product_id'          => $product_id,
+                'features_display_on' => 'A',
+            ], 0, $lang_code);
+
+            $product['product_features'] = $features;
             $product['selected_options'] = empty($item['product_options']) ? [] : @unserialize($item['product_options']);
             $product['amount'] = $item['amount'];
             $products[] = $product;
