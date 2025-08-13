@@ -6,7 +6,7 @@
                 <a data-ca-mwl-list-name href="{fn_url("mwl_xlsx.list?list_id=`$l.list_id`")}">{$l.name}</a>
                 ({$l.products_count})
                 <a href="{fn_url("mwl_xlsx.export?list_id=`$l.list_id`")}">{__("mwl_xlsx.export")}</a>
-                <a href="#" data-ca-mwl-rename title="{__("mwl_xlsx.rename")}"><i class="ut2-icon-baseline-edit"></i></a>
+                <a href="#" data-ca-mwl-rename title="{__("mwl_xlsx.rename")}"><i class="ut2-icon-more_vert"></i></a>
                 <a href="#" data-ca-mwl-delete title="{__("mwl_xlsx.remove")}"><i class="ut2-icon-baseline-delete"></i></a>
             </li>
         {/foreach}

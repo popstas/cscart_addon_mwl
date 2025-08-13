@@ -52,12 +52,12 @@
         var list_id = $renameDialog.data('caMwlListId');
         var name = $('#mwl_xlsx_rename_input').val().trim();
         if (name) {
-            $.ceAjax('request', fn_url('mwl_xlsx.rename_list'), {
+                $.ceAjax('request', fn_url('mwl_xlsx.rename_list'), {
                 method: 'post',
                 data: { list_id: list_id, name: name },
                 callback: function(data) {
                     if (data && data.success) {
-                        $('[data-ca-mwl-list-id="' + list_id + '"]').find('[data-ca-mwl-list-name]').text(data.name);
+                        location.reload();
                     }
                 }
             });
@@ -82,18 +82,15 @@
 
     $(document).on('click', '[data-ca-mwl-delete-confirm]', function() {
         var list_id = $deleteDialog.data('caMwlListId');
-        $.ceAjax('request', fn_url('mwl_xlsx.delete_list'), {
-            method: 'post',
-            data: { list_id: list_id },
-            callback: function(data) {
-                if (data && data.success) {
-                    $('[data-ca-mwl-list-id="' + list_id + '"]').remove();
-                    if (!$('[data-ca-mwl-list-id]').length) {
+            $.ceAjax('request', fn_url('mwl_xlsx.delete_list'), {
+                method: 'post',
+                data: { list_id: list_id },
+                callback: function(data) {
+                    if (data && data.success) {
                         location.reload();
                     }
                 }
-            }
-        });
+            });
         $deleteDialog.ceDialog('close');
         return false;
     });
