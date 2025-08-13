@@ -29,6 +29,10 @@ msgid "Enter list name"
 msgstr "Enter list name"
 
 msgctxt "Languages::mwl_xlsx.added"
+msgid "Added to <a href=\"[list_url]\">[list_name]</a>"
+msgstr "Added to <a href=\"[list_url]\">[list_name]</a>"
+
+msgctxt "Languages::mwl_xlsx.added_plain"
 msgid "Added to wishlist"
 msgstr "Added to wishlist"
 

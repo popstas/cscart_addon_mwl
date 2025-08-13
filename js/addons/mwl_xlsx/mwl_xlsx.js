@@ -123,7 +123,7 @@
             data: { product_id: product_id, list_id: list_id },
             callback: function(data) {
                 data = parseResponse(data);
-                var message = (data && data.message) ? data.message : (_.tr('mwl_xlsx.added') || 'Added to wishlist');
+                var message = (data && data.message) ? data.message : (_.tr('mwl_xlsx.added_plain') || 'Added to wishlist');
                 $.ceNotification('show', {
                     type: 'N',
                     title: '',

@@ -5,6 +5,7 @@
 - Add individual products to a chosen wishlist from product listings.
 - Remember the last selected wishlist when adding products.
 - Avoid duplicate products when adding to a wishlist.
+- Show a notification with a link to the wishlist after adding a product.
 - View existing wishlists on the **My wishlists** page.
 - Each wishlist shows the number of products and links to its own page.
 - View products of a wishlist on a dedicated page.
