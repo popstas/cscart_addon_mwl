@@ -6,7 +6,7 @@
     {/if}
     {assign var=product_ids value=[]}
     {foreach $products as $p}
-        {$product_ids[] = $p.product_id}
+        {append var=product_ids value=$p.product_id}
     {/foreach}
     <div class="mwl_xlsx-control mwl_xlsx-control--category">
         <select class="mwl_xlsx-select" data-ca-list-select-xlsx>
