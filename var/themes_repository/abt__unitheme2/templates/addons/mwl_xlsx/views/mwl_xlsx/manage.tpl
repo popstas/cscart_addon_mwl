@@ -19,7 +19,7 @@
 <div id="mwl_xlsx_rename_dialog" class="hidden">
     <div class="ty-control-group">
         <label for="mwl_xlsx_rename_input" class="ty-control-group__title">{__("mwl_xlsx.enter_list_name")}</label>
-        <input type="text" id="mwl_xlsx_rename_input" class="ty-input-text" />
+        <input type="text" id="mwl_xlsx_rename_input" maxlength="50" class="ty-input-text" />
     </div>
     <div class="buttons-container">
         <button class="ty-btn ty-btn__primary" data-ca-mwl-rename-save>{__("save")}</button>
