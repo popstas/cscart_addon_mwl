@@ -82,6 +82,8 @@
                 <value id="mwl_xlsx.confirm_remove">Remove this list?</value>
                 <value id="mwl_xlsx.add_all_to_wishlist">Add all to media list</value>
                 <value id="mwl_xlsx.add_to_wishlist">Add to media list</value>
+                <value id="mwl_xlsx.remove_from_list">Remove from list</value>
+                <value id="mwl_xlsx.removed">Removed</value>
             </values>
         </item>
         <item>
@@ -100,6 +102,8 @@
                 <value id="mwl_xlsx.confirm_remove">Удалить эту подборку?</value>
                 <value id="mwl_xlsx.add_all_to_wishlist">Добавить все в подборку</value>
                 <value id="mwl_xlsx.add_to_wishlist">Добавить в подборку</value>
+                <value id="mwl_xlsx.remove_from_list">Удалить из подборки</value>
+                <value id="mwl_xlsx.removed">Удалено</value>
             </values>
         </item>
     </languages>

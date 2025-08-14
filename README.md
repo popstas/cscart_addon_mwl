@@ -10,6 +10,7 @@
 - View existing media lists on the **My media lists** page.
 - Each media list shows the number of products and links to its own page.
 - View products of a media list on a dedicated page.
+- Remove products from a media list directly from its page.
 - Export media lists to XLSX files from the media lists page, placing each product feature in its own column and translating product and feature data into the site's current language.
 - Manage a single XLSX template from the admin panel for custom export layouts; uploading a new file replaces the previous template and exports use it when available.
 - Navigate media lists with breadcrumbs and page titles.
@@ -23,6 +24,7 @@
 - `index.php?dispatch=mwl_xlsx.view&list_id={list_id}` – view a media list.
 - `index.php?dispatch=mwl_xlsx.create_list` – create a media list (POST).
 - `index.php?dispatch=mwl_xlsx.add` – add a product to a media list (POST).
+- `index.php?dispatch=mwl_xlsx.remove` – remove a product from a media list (POST).
 - `index.php?dispatch=mwl_xlsx.rename_list` – rename a media list (POST).
 - `index.php?dispatch=mwl_xlsx.delete_list` – remove a media list (POST).
 

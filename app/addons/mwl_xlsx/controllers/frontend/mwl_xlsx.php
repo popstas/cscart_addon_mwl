@@ -148,6 +148,12 @@ if ($mode === 'add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit(json_encode(['success' => true, 'message' => $message]));
 }
 
+if ($mode === 'remove' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $list_id = (int) $_REQUEST['list_id'];
+    $removed = fn_mwl_xlsx_remove($list_id, $_REQUEST['product_id']);
+    exit(json_encode(['success' => $removed]));
+}
+
 if ($mode === 'add_list' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $list_id = (int) $_REQUEST['list_id'];
     $product_ids = array_slice(array_unique(array_map('intval', (array) ($_REQUEST['product_ids'] ?? []))), 0, 20);
