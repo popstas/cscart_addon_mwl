@@ -28,6 +28,7 @@ if ($mode === 'list' || $mode === 'view') {
     }
     if ($list) {
         $products = fn_mwl_xlsx_get_list_products($list_id, CART_LANGUAGE);
+        Tygh::$app['view']->assign('is_mwl_xlsx_view', true);
         Tygh::$app['view']->assign('list', $list);
         Tygh::$app['view']->assign('products', $products);
         Tygh::$app['view']->assign('search', [

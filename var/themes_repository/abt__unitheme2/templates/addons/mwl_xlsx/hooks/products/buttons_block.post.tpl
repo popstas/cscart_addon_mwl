@@ -16,8 +16,9 @@
             {__("mwl_xlsx.add_to_wishlist")}
         </button>
     </div>
-{elseif $runtime.controller == 'mwl_xlsx' && ($runtime.mode == 'list' || $runtime.mode == 'view')}
+{elseif !empty($is_mwl_xlsx_view)}
     <div class="mwl_xlsx-control">
+        <br>
         <button class="ty-btn" data-ca-remove-from-mwl_xlsx data-ca-product-id="{$product.product_id}" data-ca-list-id="{$product.mwl_list_id}">
             {__("mwl_xlsx.remove_from_list")}
         </button>
