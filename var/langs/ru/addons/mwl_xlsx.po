@@ -86,3 +86,11 @@ msgctxt "Languages::mwl_xlsx.removed"
 msgid "Removed"
 msgstr "Удалено"
 
+msgctxt "Languages::mwl_xlsx.list_name"
+msgid "List name"
+msgstr "Название"
+
+msgctxt "Languages::mwl_xlsx.products"
+msgid "Products"
+msgstr "Товары"
+
