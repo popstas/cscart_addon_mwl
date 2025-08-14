@@ -52,6 +52,7 @@ function fn_mwl_xlsx_get_list_products($list_id, $lang_code = CART_LANGUAGE)
             $product['product_features'] = $features;
             $product['selected_options'] = empty($item['product_options']) ? [] : @unserialize($item['product_options']);
             $product['amount'] = $item['amount'];
+            $product['mwl_list_id'] = $list_id;
             $products[] = $product;
         }
     }
@@ -132,6 +133,17 @@ function fn_mwl_xlsx_add($list_id, $product_id, $options = [], $amount = 1)
     ]);
 
     return true;
+}
+
+function fn_mwl_xlsx_remove($list_id, $product_id)
+{
+    $deleted = db_query(
+        "DELETE FROM ?:mwl_xlsx_list_products WHERE list_id = ?i AND product_id = ?i",
+        $list_id,
+        $product_id
+    );
+
+    return (bool) $deleted;
 }
 
 function fn_mwl_xlsx_update_list_name($list_id, $name, $user_id = null, $session_id = null)

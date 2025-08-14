@@ -39,6 +39,23 @@
     return false;
   });
 
+  $(_.doc).on('click', '[data-ca-remove-from-mwl_xlsx]', function() {
+    var $btn = $(this);
+    var list_id = $btn.data('caListId');
+    var product_id = $btn.data('caProductId');
+    $.ceAjax('request', fn_url('mwl_xlsx.remove'), {
+      method: 'post',
+      data: { list_id: list_id, product_id: product_id },
+      callback: function(data) {
+        data = parseResponse(data);
+        if (data && data.success) {
+          $btn.text(_.tr('mwl_xlsx.removed') || 'Removed').prop('disabled', true);
+        }
+      }
+    });
+    return false;
+  });
+
   var $renameDialog = $('#mwl_xlsx_rename_dialog');
   var $deleteDialog = $('#mwl_xlsx_delete_dialog');
   var $newListDialog = $('#mwl_xlsx_new_list_dialog');

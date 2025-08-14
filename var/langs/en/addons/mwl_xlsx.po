@@ -76,3 +76,11 @@ msgctxt "Languages::mwl_xlsx.add_to_wishlist"
 msgid "Add to media list"
 msgstr "Add to media list"
 
+msgctxt "Languages::mwl_xlsx.remove_from_list"
+msgid "Remove from list"
+msgstr "Remove from list"
+
+msgctxt "Languages::mwl_xlsx.removed"
+msgid "Removed"
+msgstr "Removed"
+

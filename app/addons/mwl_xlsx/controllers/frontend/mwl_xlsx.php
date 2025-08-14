@@ -28,6 +28,7 @@ if ($mode === 'list' || $mode === 'view') {
     }
     if ($list) {
         $products = fn_mwl_xlsx_get_list_products($list_id, CART_LANGUAGE);
+        Tygh::$app['view']->assign('is_mwl_xlsx_view', true);
         Tygh::$app['view']->assign('list', $list);
         Tygh::$app['view']->assign('products', $products);
         Tygh::$app['view']->assign('search', [
@@ -146,6 +147,12 @@ if ($mode === 'add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     exit(json_encode(['success' => true, 'message' => $message]));
+}
+
+if ($mode === 'remove' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $list_id = (int) $_REQUEST['list_id'];
+    $removed = fn_mwl_xlsx_remove($list_id, $_REQUEST['product_id']);
+    exit(json_encode(['success' => $removed]));
 }
 
 if ($mode === 'add_list' && $_SERVER['REQUEST_METHOD'] === 'POST') {
