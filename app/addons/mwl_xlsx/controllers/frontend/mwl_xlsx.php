@@ -19,7 +19,7 @@ if ($mode === 'manage') {
     ]);
 }
 
-if ($mode === 'list' || $mode === 'view') {
+if ($mode === 'view') {
     $list_id = (int) $_REQUEST['list_id'];
     if (!empty($auth['user_id'])) {
         $list = db_get_row("SELECT * FROM ?:mwl_xlsx_lists WHERE list_id = ?i AND user_id = ?i", $list_id, $auth['user_id']);
