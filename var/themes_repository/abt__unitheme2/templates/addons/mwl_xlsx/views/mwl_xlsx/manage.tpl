@@ -4,16 +4,16 @@
             <thead>
                 <tr>
                     <th class="ty-left">{__("mwl_xlsx.list_name")}</th>
-                    <th class="ty-center">{__("mwl_xlsx.products")}</th>
-                    <th class="ty-right">&nbsp;</th>
+                    <th class="">{__("mwl_xlsx.items")}</th>
+                    <th class="">{__("mwl_xlsx.actions")}</th>
                 </tr>
             </thead>
             <tbody>
             {foreach $lists as $l}
                 <tr data-ca-mwl-list-id="{$l.list_id}">
                     <td class="ty-strong"><a data-ca-mwl-list-name href="{$l.list_id|fn_mwl_xlsx_url|fn_url}">{$l.name}</a></td>
-                    <td class="ty-center">{$l.products_count}</td>
-                    <td class="ty-right">
+                    <td class="">{$l.products_count}</td>
+                    <td class="">
                         <a class="mwl_xlsx-export" href="{fn_url("mwl_xlsx.export?list_id=`$l.list_id`")}" title="{__("mwl_xlsx.export")}"><img src="{$images_dir}/addons/mwl_xlsx/xlsx.svg" alt="{__("mwl_xlsx.export")}" width="20" height="20" /></a>
                         <a href="#" data-ca-mwl-rename title="{__("mwl_xlsx.rename")}"><i class="ut2-icon-more_vert"></i></a>
                         <a href="#" data-ca-mwl-delete title="{__("mwl_xlsx.remove")}"><i class="ut2-icon-baseline-delete"></i></a>

@@ -90,7 +90,10 @@ msgctxt "Languages::mwl_xlsx.list_name"
 msgid "List name"
 msgstr "Название"
 
-msgctxt "Languages::mwl_xlsx.products"
-msgid "Products"
-msgstr "Товары"
+msgctxt "Languages::mwl_xlsx.items"
+msgid "Items"
+msgstr "Позиции"
 
+msgctxt "Languages::mwl_xlsx.actions"
+msgid "Actions"
+msgstr "Действия"
