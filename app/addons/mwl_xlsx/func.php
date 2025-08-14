@@ -29,7 +29,7 @@ function fn_mwl_xlsx_get_lists($user_id = null, $session_id = null)
 }
 
 /**
- * Returns the total number of products in all media lists of the current user or session.
+ * Returns the number of media lists of the current user or session.
  *
  * @param array $auth Authentication data
  *
@@ -45,9 +45,7 @@ function fn_mwl_xlsx_get_media_lists_count(array $auth)
     }
 
     $count = (int) db_get_field(
-        'SELECT SUM(lp.amount) FROM ?:mwl_xlsx_lists AS l '
-        . 'LEFT JOIN ?:mwl_xlsx_list_products AS lp ON lp.list_id = l.list_id '
-        . 'WHERE ?p',
+        'SELECT COUNT(*) FROM ?:mwl_xlsx_lists AS l WHERE ?p',
         $condition
     );
 

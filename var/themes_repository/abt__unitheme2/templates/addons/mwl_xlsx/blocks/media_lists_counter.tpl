@@ -1,7 +1,7 @@
 {* Шаблон счётчика media-lists для верхней панели UT2 *}
-{assign var="count" value=fn_mwl_xlsx_get_media_lists_count($auth)}
-{assign var="show_zero" value=$block.settings.show_zero|default:"N"}
-{assign var="link_url" value=$block.settings.link_url|default:"media-lists"}
+{assign var="count" value=$media_lists_count}
+{assign var="show_zero" value=$block.properties.show_zero|default:"N"}
+{assign var="link_url" value=$block.properties.link_url|default:"media-lists"}
 
 {* Поддержка как ЧПУ (/media-lists), так и dispatch (mwl_xlsx.manage / mwl_xlsx.view) *}
 {if $link_url|substr:0:1 == '/'}
