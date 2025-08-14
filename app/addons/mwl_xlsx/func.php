@@ -28,6 +28,44 @@ function fn_mwl_xlsx_get_lists($user_id = null, $session_id = null)
     );
 }
 
+/**
+ * Returns the number of media lists of the current user or session.
+ *
+ * @param array $auth Authentication data
+ *
+ * @return int
+ */
+function fn_mwl_xlsx_get_media_lists_count(array $auth)
+{
+    if (!empty($auth['user_id'])) {
+        $condition = db_quote('l.user_id = ?i', $auth['user_id']);
+    } else {
+        $session_id = Tygh::$app['session']->getID();
+        $condition = db_quote('l.session_id = ?s', $session_id);
+    }
+
+    $count = (int) db_get_field(
+        'SELECT COUNT(*) FROM ?:mwl_xlsx_lists AS l WHERE ?p',
+        $condition
+    );
+
+    return $count;
+}
+
+/** Смarty-плагин: {mwl_media_lists_count assign=\"count\"} */
+function fn_mwl_xlsx_smarty_media_lists_count($params, \Smarty_Internal_Template $tpl)
+{
+    $auth = Tygh::$app['session']['auth'] ?? [];
+    $count = fn_mwl_xlsx_get_media_lists_count($auth);
+
+    if (!empty($params['assign'])) {
+        $tpl->assign($params['assign'], $count);
+        return '';
+    }
+
+    return $count;
+}
+
 function fn_mwl_xlsx_get_list_products($list_id, $lang_code = CART_LANGUAGE)
 {
     $items = db_get_hash_array(
