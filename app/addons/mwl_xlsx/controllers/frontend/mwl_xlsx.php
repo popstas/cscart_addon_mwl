@@ -98,7 +98,7 @@ if ($mode === 'export') {
         $sheet->getColumnDimension($col)->setAutoSize(true);
     }
 
-    $filename = preg_replace('/[^A-Za-z0-9_\-]/', '_', $list['name']) . '.xlsx';
+    $filename = preg_replace('/[^\p{L}\p{N} _().-]/u', '_', $list['name']) . '.xlsx';
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
     $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($xlsx);
