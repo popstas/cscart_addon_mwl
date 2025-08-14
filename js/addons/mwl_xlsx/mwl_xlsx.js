@@ -98,13 +98,22 @@
     return false;
   });
 
-  function getListName(callback) {
-    $('#mwl_xlsx_new_list_input').val('');
+  function getListName(defaultName, callback) {
+    // Support old signature: getListName(callback)
+    if (typeof defaultName === 'function' && !callback) {
+      callback = defaultName;
+      defaultName = '';
+    }
+    var name = (defaultName || '').toString();
+    var $input = $('#mwl_xlsx_new_list_input');
+    $input.val(name);
+    // Select text so user can overwrite quickly
+    try { $input[0].setSelectionRange(0, name.length); } catch (e) {}
     $newListDialog.data('caMwlOnOk', callback);
     $newListDialog.ceDialog('open', {
       title: _.tr('mwl_xlsx.new_list') || 'New media list'
     });
-    setTimeout(function() { $('#mwl_xlsx_new_list_input').focus(); }, 0);
+    setTimeout(function() { $input.focus(); }, 0);
   }
 
   $(_.doc).on('click', '[data-ca-mwl-rename]', function() {
@@ -190,7 +199,11 @@
       return;
     }
 
-    getListName(function(name) {
+    // If there are no existing lists (except the special "_new"), prefill default name
+    var existingCount = $select.find('option').filter(function() { return this.value !== '_new'; }).length;
+    var defaultName = existingCount ? '' : (_.tr('mwl_xlsx.default_list_name') || 'Media list');
+
+    getListName(defaultName, function(name) {
       if (!name) {
         if (typeof cb === 'function') { cb(null); }
         return;
