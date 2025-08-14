@@ -30,6 +30,18 @@
 - `index.php?dispatch=mwl_xlsx.rename_list` – rename a media list (POST).
 - `index.php?dispatch=mwl_xlsx.delete_list` – remove a media list (POST).
 
+### Manual setup
+
+1. Create SEO rule for `/media-lists`:
+- Admin panel -> SEO -> SEO rules -> Add new rule
+- SEO name: `media-lists`
+- Dispatch: `mwl_xlsx.manage`
+
+2. Create block in header:
+- Admin panel -> Design -> Layouts -> Add new block
+- Block type: `HTML with Smarty`
+- Block content: `{include file="addons/mwl_xlsx/blocks/media_lists_counter.tpl"}`
+
 ### Dev install
 
 ```bash
