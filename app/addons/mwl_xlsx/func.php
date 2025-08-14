@@ -132,6 +132,8 @@ function fn_mwl_xlsx_add($list_id, $product_id, $options = [], $amount = 1)
         'timestamp'      => TIME
     ]);
 
+    db_query('UPDATE ?:mwl_xlsx_lists SET updated_at = ?s WHERE list_id = ?i', date('Y-m-d H:i:s'), $list_id);
+
     return true;
 }
 
@@ -142,6 +144,10 @@ function fn_mwl_xlsx_remove($list_id, $product_id)
         $list_id,
         $product_id
     );
+
+    if ($deleted) {
+        db_query('UPDATE ?:mwl_xlsx_lists SET updated_at = ?s WHERE list_id = ?i', date('Y-m-d H:i:s'), $list_id);
+    }
 
     return (bool) $deleted;
 }
@@ -154,7 +160,7 @@ function fn_mwl_xlsx_update_list_name($list_id, $name, $user_id = null, $session
     $condition = $user_id ? ['list_id' => $list_id, 'user_id' => $user_id] : ['list_id' => $list_id, 'session_id' => $session_id];
     $exists = db_get_field('SELECT list_id FROM ?:mwl_xlsx_lists WHERE ?w', $condition);
     if ($exists) {
-        db_query('UPDATE ?:mwl_xlsx_lists SET name = ?s WHERE list_id = ?i', $name, $list_id);
+        db_query('UPDATE ?:mwl_xlsx_lists SET name = ?s, updated_at = ?s WHERE list_id = ?i', $name, date('Y-m-d H:i:s'), $list_id);
         return true;
     }
     return false;
