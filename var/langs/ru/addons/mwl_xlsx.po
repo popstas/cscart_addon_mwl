@@ -101,3 +101,11 @@ msgstr "Позиции"
 msgctxt "Languages::mwl_xlsx.actions"
 msgid "Actions"
 msgstr "Действия"
+
+msgctxt "Languages::mwl_xlsx.block_media_lists_counter"
+msgid "Media lists counter"
+msgstr "Счётчик подборок"
+
+msgctxt "Languages::mwl_xlsx.media_lists"
+msgid "Media lists"
+msgstr "Подборки"

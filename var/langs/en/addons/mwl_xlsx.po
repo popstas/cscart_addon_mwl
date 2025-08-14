@@ -99,3 +99,11 @@ msgstr "Items"
 msgctxt "Languages::mwl_xlsx.actions"
 msgid "Actions"
 msgstr "Actions"
+
+msgctxt "Languages::mwl_xlsx.block_media_lists_counter"
+msgid "Media lists counter"
+msgstr "Media lists counter"
+
+msgctxt "Languages::mwl_xlsx.media_lists"
+msgid "Media lists"
+msgstr "Media lists"

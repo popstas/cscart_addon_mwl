@@ -17,6 +17,7 @@
 - Rename or remove media lists from the manage page.
 - Track when each media list was last updated.
 - SEO-friendly URLs for media list pages (`/media-lists` and `/media-lists/{list_id}`).
+- UT2 top panel block displaying the total number of products across all media lists.
 
 ### Add-on URLs
 - `/media-lists` – list user media lists.
