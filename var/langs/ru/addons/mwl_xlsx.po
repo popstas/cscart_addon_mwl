@@ -102,6 +102,26 @@ msgctxt "Languages::mwl_xlsx.actions"
 msgid "Actions"
 msgstr "Действия"
 
+msgctxt "Languages::mwl_xlsx.settings"
+msgid "Settings"
+msgstr "Настройки"
+
+msgctxt "Languages::mwl_xlsx.price_multiplier"
+msgid "Price multiplier"
+msgstr "Множитель цены"
+
+msgctxt "Languages::mwl_xlsx.price_append"
+msgid "Price append"
+msgstr "Добавить к цене"
+
+msgctxt "Languages::mwl_xlsx.round_to"
+msgid "Round price to"
+msgstr "Округлять цену до"
+
+msgctxt "Languages::mwl_xlsx.settings_saved"
+msgid "Settings saved"
+msgstr "Настройки сохранены"
+
 msgctxt "Languages::mwl_xlsx.block_media_lists_counter"
 msgid "Media lists counter"
 msgstr "Счётчик подборок"

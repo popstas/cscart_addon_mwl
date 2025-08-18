@@ -25,6 +25,9 @@
     {else}
         {include file="common/no_items.tpl"}
     {/if}
+    <div class="ty-mbm">
+        <a class="mwl-settings" href="{fn_url('mwl_xlsx.settings')}">{__("mwl_xlsx.settings")}</a>
+    </div>
 {/capture}
 
 <div id="mwl_xlsx_rename_dialog" class="hidden">

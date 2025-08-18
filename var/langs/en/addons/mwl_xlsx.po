@@ -107,3 +107,31 @@ msgstr "Media lists counter"
 msgctxt "Languages::mwl_xlsx.media_lists"
 msgid "Media lists"
 msgstr "Media lists"
+
+msgctxt "Languages::mwl_xlsx.settings"
+msgid "Settings"
+msgstr "Settings"
+
+msgctxt "Languages::mwl_xlsx.price_multiplier"
+msgid "Price multiplier"
+msgstr "Price multiplier"
+
+msgctxt "Languages::mwl_xlsx.price_append"
+msgid "Price append"
+msgstr "Price append"
+
+msgctxt "Languages::mwl_xlsx.round_to"
+msgid "Round price to"
+msgstr "Round price to"
+
+msgctxt "Languages::mwl_xlsx.settings_saved"
+msgid "Settings saved"
+msgstr "Settings saved"
+
+msgctxt "Languages::mwl_xlsx.block_media_lists_counter"
+msgid "Media lists counter"
+msgstr "Media lists counter"
+
+msgctxt "Languages::mwl_xlsx.media_lists"
+msgid "Media lists"
+msgstr "Media lists"
