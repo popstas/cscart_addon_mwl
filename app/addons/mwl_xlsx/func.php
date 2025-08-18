@@ -4,6 +4,138 @@ use Tygh\Storage;
 
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
 
+/**
+ * Ensures settings table exists.
+ */
+function fn_mwl_xlsx_ensure_settings_table()
+{
+    db_query("CREATE TABLE IF NOT EXISTS `?:mwl_xlsx_user_settings` (
+        `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        `user_id` INT UNSIGNED NOT NULL DEFAULT 0,
+        `session_id` VARCHAR(64) NOT NULL DEFAULT '',
+        `price_multiplier` DECIMAL(12,4) NOT NULL DEFAULT 0,
+        `price_append` VARCHAR(64) NOT NULL DEFAULT '',
+        `round_to` DECIMAL(12,4) NOT NULL DEFAULT 10,
+        `updated_at` DATETIME NOT NULL,
+        PRIMARY KEY (`id`),
+        KEY `user_id` (`user_id`),
+        KEY `session_id` (`session_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8");
+
+    // Ensure new columns exist for backward compatibility
+    $prefix = Registry::get('config.table_prefix');
+    $table = $prefix . 'mwl_xlsx_user_settings';
+    $has_round_to = (int) db_get_field(
+        "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?s AND COLUMN_NAME = 'round_to'",
+        $table
+    );
+    if (!$has_round_to) {
+        db_query("ALTER TABLE ?:mwl_xlsx_user_settings ADD COLUMN `round_to` DECIMAL(12,4) NOT NULL DEFAULT 10");
+    }
+}
+
+/**
+ * Get user (or session) settings for Media Lists.
+ *
+ * @param array $auth
+ * @return array{price_multiplier:float, price_append:string, round_to:float}
+ */
+function fn_mwl_xlsx_get_user_settings(array $auth)
+{
+    fn_mwl_xlsx_ensure_settings_table();
+
+    if (!empty($auth['user_id'])) {
+        $row = db_get_row('SELECT price_multiplier, price_append, round_to FROM ?:mwl_xlsx_user_settings WHERE user_id = ?i ORDER BY id DESC LIMIT 1', (int) $auth['user_id']);
+    } else {
+        $session_id = Tygh::$app['session']->getID();
+        $row = db_get_row('SELECT price_multiplier, price_append, round_to FROM ?:mwl_xlsx_user_settings WHERE session_id = ?s ORDER BY id DESC LIMIT 1', $session_id);
+    }
+
+    return [
+        'price_multiplier' => isset($row['price_multiplier']) ? (float) $row['price_multiplier'] : 0.0,
+        'price_append'     => isset($row['price_append']) ? (string) $row['price_append'] : '',
+        'round_to'         => isset($row['round_to']) ? (int) $row['round_to'] : 10,
+    ];
+}
+
+/**
+ * Save user (or session) settings for Media Lists.
+ *
+ * @param array $auth
+ * @param array $data ['price_multiplier','price_append','round_to']
+ * @return void
+ */
+function fn_mwl_xlsx_save_user_settings(array $auth, array $data)
+{
+    fn_mwl_xlsx_ensure_settings_table();
+
+    $price_multiplier = isset($data['price_multiplier']) ? (float) $data['price_multiplier'] : 1;
+    $price_append = isset($data['price_append']) ? trim((string) $data['price_append']) : 0;
+    $round_to = isset($data['round_to']) ? (int) $data['round_to'] : 10;
+
+    $row = [
+        'user_id'         => !empty($auth['user_id']) ? (int) $auth['user_id'] : 0,
+        'session_id'      => !empty($auth['user_id']) ? '' : Tygh::$app['session']->getID(),
+        'price_multiplier'=> $price_multiplier,
+        'price_append'    => $price_append,
+        'round_to'        => $round_to,
+        'updated_at'      => date('Y-m-d H:i:s'),
+    ];
+
+    // Upsert by user or session
+    if (!empty($auth['user_id'])) {
+        $exists = db_get_field('SELECT id FROM ?:mwl_xlsx_user_settings WHERE user_id = ?i ORDER BY id DESC LIMIT 1', (int) $auth['user_id']);
+        if ($exists) {
+            db_query('UPDATE ?:mwl_xlsx_user_settings SET ?u WHERE id = ?i', $row, (int) $exists);
+        } else {
+            db_query('INSERT INTO ?:mwl_xlsx_user_settings ?e', $row);
+        }
+    } else {
+        $sid = $row['session_id'];
+        $exists = db_get_field('SELECT id FROM ?:mwl_xlsx_user_settings WHERE session_id = ?s ORDER BY id DESC LIMIT 1', $sid);
+        if ($exists) {
+            db_query('UPDATE ?:mwl_xlsx_user_settings SET ?u WHERE id = ?i', $row, (int) $exists);
+        } else {
+            db_query('INSERT INTO ?:mwl_xlsx_user_settings ?e', $row);
+        }
+    }
+}
+
+/**
+ * Apply price transformation according to settings.
+ *
+ * @param float $price
+ * @param array $settings ['price_multiplier'=>float,'price_append'=>int,'round_to'=>float]
+ * @return string Price prepared for export (multiplied, integer appended to value, then rounded)
+ */
+function fn_mwl_xlsx_transform_price_for_export($price, array $settings)
+{
+    $price = (float) $price;
+    $mult = isset($settings['price_multiplier']) ? (float) $settings['price_multiplier'] : 1;
+    $append = isset($settings['price_append']) ? (int) $settings['price_append'] : 0;
+    $round_to = isset($settings['round_to']) ? (int) $settings['round_to'] : 10;
+
+    if ($mult > 0) {
+        $price = $price * $mult;
+    }
+
+    // Add integer append to price before rounding
+    if ($append !== 0) {
+        $price += $append;
+    }
+
+    if ($round_to > 0) {
+        // Round up to the next multiple of $round_to (ceiling)
+        $price = ceil($price / $round_to) * $round_to;
+    }
+
+    // Normalize to string with up to 2 decimals, trimming trailing zeros
+    $str = number_format($price, 2, '.', '');
+    $str = rtrim(rtrim($str, '0'), '.');
+
+    return $str;
+}
+
 function fn_mwl_xlsx_url($list_id)
 {
     $list_id = (int) $list_id;

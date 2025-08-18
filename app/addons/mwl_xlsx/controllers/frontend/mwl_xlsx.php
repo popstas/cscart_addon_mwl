@@ -19,6 +19,17 @@ if ($mode === 'manage') {
     ]);
 }
 
+if ($mode === 'settings') {
+    $settings = fn_mwl_xlsx_get_user_settings($auth);
+    Tygh::$app['view']->assign('user_settings', $settings);
+    Tygh::$app['view']->assign('page_title', __('mwl_xlsx.settings'));
+    Tygh::$app['view']->assign('breadcrumbs', [
+        ['title' => __('home'), 'link' => fn_url('')],
+        ['title' => __('mwl_xlsx.wishlists'), 'link' => fn_url('mwl_xlsx.manage')],
+        ['title' => __('mwl_xlsx.settings')]
+    ]);
+}
+
 if ($mode === 'view') {
     $list_id = (int) $_REQUEST['list_id'];
     if (!empty($auth['user_id'])) {
@@ -81,11 +92,14 @@ if ($mode === 'export') {
         $sheet = $xlsx->getActiveSheet();
     }
 
-    $header = array_merge([__('name')], array_values($feature_names));
+    // Include Price column after Name
+    $header = array_merge([__('name'), __('price')], array_values($feature_names));
     $data = [$header];
 
+    $settings = fn_mwl_xlsx_get_user_settings($auth);
     foreach ($products as $p) {
-        $row = [$p['product']];
+        $price_str = fn_mwl_xlsx_transform_price_for_export($p['price'], $settings);
+        $row = [$p['product'], $price_str];
         $values = fn_mwl_xlsx_get_feature_text_values($p['product_features'] ?? [], CART_LANGUAGE);
         foreach ($feature_ids as $feature_id) {
             $row[] = $values[$feature_id] ?? null;
@@ -155,6 +169,17 @@ if ($mode === 'remove' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $list_id = (int) $_REQUEST['list_id'];
     $removed = fn_mwl_xlsx_remove($list_id, $_REQUEST['product_id']);
     exit(json_encode(['success' => $removed]));
+}
+
+if ($mode === 'save_settings' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $data = [
+        'price_multiplier' => isset($_REQUEST['price_multiplier']) ? (float) $_REQUEST['price_multiplier'] : 1.0,
+        'price_append'     => isset($_REQUEST['price_append']) ? (string) $_REQUEST['price_append'] : 0,
+        'round_to'         => isset($_REQUEST['round_to']) ? (float) $_REQUEST['round_to'] : 10.0,
+    ];
+    fn_mwl_xlsx_save_user_settings($auth, $data);
+    fn_set_notification('N', __('notice'), __('mwl_xlsx.settings_saved'));
+    return [CONTROLLER_STATUS_REDIRECT, 'mwl_xlsx.settings'];
 }
 
 if ($mode === 'add_list' && $_SERVER['REQUEST_METHOD'] === 'POST') {
