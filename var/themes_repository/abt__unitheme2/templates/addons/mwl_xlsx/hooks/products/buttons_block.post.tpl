@@ -1,4 +1,7 @@
-{if ($runtime.controller == 'products' || $runtime.controller == 'categories') && $runtime.mode == 'view'}
+{if ($runtime.controller == 'products' && $runtime.mode == 'view')
+|| ($runtime.controller == 'categories' && $runtime.mode == 'view')
+|| ($runtime.controller == 'companies' && $runtime.mode == 'products')
+}
     {if $auth}
         {assign var=lists value=fn_mwl_xlsx_get_lists($auth.user_id)}
     {else}

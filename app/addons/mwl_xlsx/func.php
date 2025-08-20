@@ -13,9 +13,9 @@ function fn_mwl_xlsx_ensure_settings_table()
         `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
         `user_id` INT UNSIGNED NOT NULL DEFAULT 0,
         `session_id` VARCHAR(64) NOT NULL DEFAULT '',
-        `price_multiplier` DECIMAL(12,4) NOT NULL DEFAULT 0,
-        `price_append` VARCHAR(64) NOT NULL DEFAULT '',
-        `round_to` DECIMAL(12,4) NOT NULL DEFAULT 10,
+        `price_multiplier` DECIMAL(12,4) NOT NULL DEFAULT '1.0000',
+        `price_append` INT NOT NULL DEFAULT '0',
+        `round_to` INT NOT NULL DEFAULT '10',
         `updated_at` DATETIME NOT NULL,
         PRIMARY KEY (`id`),
         KEY `user_id` (`user_id`),
@@ -52,8 +52,8 @@ function fn_mwl_xlsx_get_user_settings(array $auth)
     }
 
     return [
-        'price_multiplier' => isset($row['price_multiplier']) ? (float) $row['price_multiplier'] : 0.0,
-        'price_append'     => isset($row['price_append']) ? (string) $row['price_append'] : '',
+        'price_multiplier' => isset($row['price_multiplier']) ? (float) $row['price_multiplier'] : 1,
+        'price_append'     => isset($row['price_append']) ? (int) $row['price_append'] : 0,
         'round_to'         => isset($row['round_to']) ? (int) $row['round_to'] : 10,
     ];
 }
@@ -70,7 +70,7 @@ function fn_mwl_xlsx_save_user_settings(array $auth, array $data)
     fn_mwl_xlsx_ensure_settings_table();
 
     $price_multiplier = isset($data['price_multiplier']) ? (float) $data['price_multiplier'] : 1;
-    $price_append = isset($data['price_append']) ? trim((string) $data['price_append']) : 0;
+    $price_append = isset($data['price_append']) ? (int) $data['price_append'] : 0;
     $round_to = isset($data['round_to']) ? (int) $data['round_to'] : 10;
 
     $row = [
