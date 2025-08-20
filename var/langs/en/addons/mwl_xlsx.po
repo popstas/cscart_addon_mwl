@@ -135,3 +135,7 @@ msgstr "Media lists counter"
 msgctxt "Languages::mwl_xlsx.media_lists"
 msgid "Media lists"
 msgstr "Media lists"
+
+msgctxt "Languages::mwl_xlsx.tooltip"
+msgid "You can add products to a media list and save it as an XLSX file."
+msgstr "You can add products to a media list and save it as an XLSX file."

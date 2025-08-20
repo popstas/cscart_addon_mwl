@@ -52,7 +52,7 @@ msgstr "Товар уже в подборке"
 
 msgctxt "Languages::mwl_xlsx.export"
 msgid "Export XLSX"
-msgstr "Экспорт в XLSX"
+msgstr "Скачать подборку для редактирования"
 
 msgctxt "Languages::mwl_xlsx.rename"
 msgid "Rename"
@@ -92,15 +92,15 @@ msgstr "Удалено"
 
 msgctxt "Languages::mwl_xlsx.list_name"
 msgid "List name"
-msgstr "Название"
+msgstr "Название подборки"
 
 msgctxt "Languages::mwl_xlsx.items"
 msgid "Items"
-msgstr "Позиции"
+msgstr "Всего изданий"
 
 msgctxt "Languages::mwl_xlsx.actions"
 msgid "Actions"
-msgstr "Действия"
+msgstr "Скачать подборку"
 
 msgctxt "Languages::mwl_xlsx.settings"
 msgid "Settings"
@@ -129,3 +129,7 @@ msgstr "Счётчик подборок"
 msgctxt "Languages::mwl_xlsx.media_lists"
 msgid "Media lists"
 msgstr "Подборки"
+
+msgctxt "Languages::mwl_xlsx.tooltip"
+msgid "You can add products to a media list and save it as an XLSX file."
+msgstr "Вы можете добавить товары в подборку и сохранить как файл XLSX."
