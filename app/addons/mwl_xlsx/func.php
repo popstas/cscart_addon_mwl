@@ -5,6 +5,32 @@ use Tygh\Storage;
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
 
 /**
+ * Check if user belongs to user groups defined in add-on setting.
+ *
+ * Administrators always pass this check.
+ *
+ * @param array  $auth        Current authentication data
+ * @param string $setting_key Add-on setting storing comma separated usergroup IDs
+ *
+ * @return bool
+ */
+function fn_mwl_xlsx_check_usergroup_access(array $auth, $setting_key)
+{
+    if (($auth['user_type'] ?? '') === 'A') {
+        return true;
+    }
+
+    $allowed = Registry::get("addons.mwl_xlsx.$setting_key");
+    $allowed = $allowed !== '' ? array_map('intval', explode(',', $allowed)) : [];
+    if (!$allowed) {
+        return true;
+    }
+
+    $usergroups = array_map('intval', array_keys($auth['usergroup_ids'] ?? []));
+    return (bool) array_intersect($allowed, $usergroups);
+}
+
+/**
  * Check whether the current customer may work with media lists.
  *
  * @param array $auth Current authentication data
@@ -13,14 +39,7 @@ if (!defined('BOOTSTRAP')) { die('Access denied'); }
  */
 function fn_mwl_xlsx_user_can_access_lists(array $auth)
 {
-    $allowed = Registry::get('addons.mwl_xlsx.allowed_usergroups');
-    $allowed = $allowed !== '' ? array_map('intval', explode(',', $allowed)) : [];
-    if (!$allowed) {
-        return true;
-    }
-
-    $usergroups = array_map('intval', array_keys($auth['usergroup_ids'] ?? []));
-    return (bool) array_intersect($allowed, $usergroups);
+    return fn_mwl_xlsx_check_usergroup_access($auth, 'allowed_usergroups');
 }
 
 /**
@@ -36,14 +55,7 @@ function fn_mwl_xlsx_can_view_price(array $auth)
         return false;
     }
 
-    $allowed = Registry::get('addons.mwl_xlsx.authorized_usergroups');
-    $allowed = $allowed !== '' ? array_map('intval', explode(',', $allowed)) : [];
-    if (!$allowed) {
-        return true;
-    }
-
-    $usergroups = array_map('intval', array_keys($auth['usergroup_ids'] ?? []));
-    return (bool) array_intersect($allowed, $usergroups);
+    return fn_mwl_xlsx_check_usergroup_access($auth, 'authorized_usergroups');
 }
 
 /**
