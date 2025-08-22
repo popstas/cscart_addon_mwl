@@ -21,6 +21,7 @@
 - Hide prices for guests or unauthorized user groups.
 - Optional extra button in product lists for adding items to a media list.
 - Limit media list features to specific user groups.
+- Configure price visibility, extra list button, and access groups via the add-on's **Settings** page in the admin panel.
 
 ### Add-on URLs
 - `/media-lists` – list user media lists.

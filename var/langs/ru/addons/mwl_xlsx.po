@@ -70,10 +70,6 @@ msgctxt "Languages::mwl_xlsx.add_all_to_wishlist"
 msgid "Add all to media list"
 msgstr "Добавить все в подборку"
 
-msgctxt "Languages::mwl_xlsx.xlsx_templates"
-msgid "XLSX templates"
-msgstr "XLSX-шаблоны"
-
 msgctxt "Languages::mwl_xlsx.upload_xlsx_template"
 msgid "Upload XLSX template"
 msgstr "Загрузить XLSX-шаблон"
@@ -101,10 +97,6 @@ msgstr "Всего изданий"
 msgctxt "Languages::mwl_xlsx.actions"
 msgid "Actions"
 msgstr "Скачать подборку"
-
-msgctxt "Languages::mwl_xlsx.settings"
-msgid "Settings"
-msgstr "Настройки"
 
 msgctxt "Languages::mwl_xlsx.price_multiplier"
 msgid "Price multiplier"
