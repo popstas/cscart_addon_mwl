@@ -1,3 +1,4 @@
+{if fn_mwl_xlsx_user_can_access_lists($auth)}
 {capture name="mainbox"}
     <div class="mwl_xlsx-view-page">
         {if $products}
@@ -33,3 +34,6 @@
     title=$list.name
     content=$smarty.capture.mainbox
 }
+{else}
+    {include file="common/no_items.tpl"}
+{/if}

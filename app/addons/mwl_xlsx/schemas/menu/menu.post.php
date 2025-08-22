@@ -7,6 +7,11 @@ $schema['central']['mwl_xlsx'] = [
             'position'    => 100,
             'permissions' => 'view_catalog',
         ],
+        'settings' => [
+            'href'        => 'mwl_xlsx.settings',
+            'position'    => 200,
+            'permissions' => 'view_catalog',
+        ],
     ],
 ];
 return $schema;

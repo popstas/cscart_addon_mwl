@@ -70,10 +70,6 @@ msgctxt "Languages::mwl_xlsx.add_all_to_wishlist"
 msgid "Add all to media list"
 msgstr "Добавить все в подборку"
 
-msgctxt "Languages::mwl_xlsx.xlsx_templates"
-msgid "XLSX templates"
-msgstr "XLSX-шаблоны"
-
 msgctxt "Languages::mwl_xlsx.upload_xlsx_template"
 msgid "Upload XLSX template"
 msgstr "Загрузить XLSX-шаблон"
@@ -102,10 +98,6 @@ msgctxt "Languages::mwl_xlsx.actions"
 msgid "Actions"
 msgstr "Скачать подборку"
 
-msgctxt "Languages::mwl_xlsx.settings"
-msgid "Settings"
-msgstr "Настройки"
-
 msgctxt "Languages::mwl_xlsx.price_multiplier"
 msgid "Price multiplier"
 msgstr "Множитель цены"
@@ -133,3 +125,23 @@ msgstr "Подборки"
 msgctxt "Languages::mwl_xlsx.tooltip"
 msgid "You can add products to a media list and save it as an XLSX file."
 msgstr "Вы можете добавить товары в подборку и сохранить как файл XLSX."
+
+msgctxt "Languages::mwl_xlsx.hide_price_for_guests"
+msgid "Hide price for unauthorized"
+msgstr "Скрывать цену для неавторизованных"
+
+msgctxt "Languages::mwl_xlsx.authorized_usergroups"
+msgid "Authorized user groups"
+msgstr "Группы пользователей авторизованных"
+
+msgctxt "Languages::mwl_xlsx.show_extra_button"
+msgid "Show extra button in list"
+msgstr "Выводить кнопку extra в списке"
+
+msgctxt "Languages::mwl_xlsx.allowed_usergroups"
+msgid "User groups allowed for media lists"
+msgstr "Группы пользователей, которым разрешён доступ к mwl lists"
+
+msgctxt "Languages::mwl_xlsx.login_to_view_price"
+msgid "Log in to view price"
+msgstr "Войдите, чтобы увидеть цену"

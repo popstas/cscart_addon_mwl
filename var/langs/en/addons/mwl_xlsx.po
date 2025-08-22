@@ -139,3 +139,23 @@ msgstr "Media lists"
 msgctxt "Languages::mwl_xlsx.tooltip"
 msgid "You can add products to a media list and save it as an XLSX file."
 msgstr "You can add products to a media list and save it as an XLSX file."
+
+msgctxt "Languages::mwl_xlsx.hide_price_for_guests"
+msgid "Hide price for unauthorized"
+msgstr "Hide price for unauthorized"
+
+msgctxt "Languages::mwl_xlsx.authorized_usergroups"
+msgid "Authorized user groups"
+msgstr "Authorized user groups"
+
+msgctxt "Languages::mwl_xlsx.show_extra_button"
+msgid "Show extra button in list"
+msgstr "Show extra button in list"
+
+msgctxt "Languages::mwl_xlsx.allowed_usergroups"
+msgid "User groups allowed for media lists"
+msgstr "User groups allowed for media lists"
+
+msgctxt "Languages::mwl_xlsx.login_to_view_price"
+msgid "Log in to view price"
+msgstr "Log in to view price"

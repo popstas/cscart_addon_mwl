@@ -85,6 +85,11 @@
                 <value id="mwl_xlsx.add_to_wishlist">Add to media list</value>
                 <value id="mwl_xlsx.remove_from_list">Remove from list</value>
                 <value id="mwl_xlsx.removed">Removed</value>
+                <value id="mwl_xlsx.hide_price_for_guests">Hide price for unauthorized</value>
+                <value id="mwl_xlsx.authorized_usergroups">Authorized user groups</value>
+                <value id="mwl_xlsx.show_extra_button">Show extra button in list</value>
+                <value id="mwl_xlsx.allowed_usergroups">User groups allowed for media lists</value>
+                <value id="mwl_xlsx.login_to_view_price">Log in to view price</value>
             </values>
         </item>
         <item>
@@ -105,20 +110,37 @@
                 <value id="mwl_xlsx.add_to_wishlist">Добавить в подборку</value>
                 <value id="mwl_xlsx.remove_from_list">Удалить из подборки</value>
                 <value id="mwl_xlsx.removed">Удалено</value>
+                <value id="mwl_xlsx.hide_price_for_guests">Скрывать цену для неавторизованных</value>
+                <value id="mwl_xlsx.authorized_usergroups">Группы пользователей авторизованных</value>
+                <value id="mwl_xlsx.show_extra_button">Выводить кнопку extra в списке</value>
+                <value id="mwl_xlsx.allowed_usergroups">Группы пользователей, которым разрешён доступ к mwl lists</value>
+                <value id="mwl_xlsx.login_to_view_price">Войдите, чтобы увидеть цену</value>
             </values>
         </item>
     </languages>
 
-    <!-- Настройки можно добавить позже
     <settings>
         <sections>
             <section id="general" name="General">
                 <items>
-                    <item id="allow_sharing" type="checkbox" name="Allow sharing by link" value="Y"/>
-                    <item id="default_list_name" type="input" name="Default list name" value="Favorites"/>
+                    <item id="hide_price_for_guests" type="checkbox">
+                        <name>mwl_xlsx.hide_price_for_guests</name>
+                        <value>N</value>
+                    </item>
+                    <item id="authorized_usergroups" type="selectbox" multiple="true">
+                        <name>mwl_xlsx.authorized_usergroups</name>
+                        <variants_function>fn_get_usergroups</variants_function>
+                    </item>
+                    <item id="show_extra_button" type="checkbox">
+                        <name>mwl_xlsx.show_extra_button</name>
+                        <value>Y</value>
+                    </item>
+                    <item id="allowed_usergroups" type="selectbox" multiple="true">
+                        <name>mwl_xlsx.allowed_usergroups</name>
+                        <variants_function>fn_get_usergroups</variants_function>
+                    </item>
                 </items>
             </section>
         </sections>
     </settings>
-    -->
 </addon>
