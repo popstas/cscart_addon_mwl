@@ -13,12 +13,13 @@ if (!defined('BOOTSTRAP')) { die('Access denied'); }
  */
 function fn_mwl_xlsx_user_can_access_lists(array $auth)
 {
-    $allowed = (array) Registry::get('addons.mwl_xlsx.allowed_usergroups');
+    $allowed = Registry::get('addons.mwl_xlsx.allowed_usergroups');
+    $allowed = $allowed !== '' ? array_map('intval', explode(',', $allowed)) : [];
     if (!$allowed) {
         return true;
     }
 
-    $usergroups = array_keys($auth['usergroup_ids'] ?? []);
+    $usergroups = array_map('intval', array_keys($auth['usergroup_ids'] ?? []));
     return (bool) array_intersect($allowed, $usergroups);
 }
 
@@ -35,12 +36,13 @@ function fn_mwl_xlsx_can_view_price(array $auth)
         return false;
     }
 
-    $allowed = (array) Registry::get('addons.mwl_xlsx.authorized_usergroups');
+    $allowed = Registry::get('addons.mwl_xlsx.authorized_usergroups');
+    $allowed = $allowed !== '' ? array_map('intval', explode(',', $allowed)) : [];
     if (!$allowed) {
         return true;
     }
 
-    $usergroups = array_keys($auth['usergroup_ids'] ?? []);
+    $usergroups = array_map('intval', array_keys($auth['usergroup_ids'] ?? []));
     return (bool) array_intersect($allowed, $usergroups);
 }
 

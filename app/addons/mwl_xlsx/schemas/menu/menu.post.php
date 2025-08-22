@@ -8,7 +8,7 @@ $schema['central']['mwl_xlsx'] = [
             'permissions' => 'view_catalog',
         ],
         'settings' => [
-            'href'        => 'mwl_xlsx_templates.settings',
+            'href'        => 'mwl_xlsx.settings',
             'position'    => 200,
             'permissions' => 'view_catalog',
         ],
