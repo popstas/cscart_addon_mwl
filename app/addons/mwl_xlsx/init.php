@@ -5,6 +5,9 @@ fn_register_hooks(
     'auth_routines_post',
     'init_user_session_data_post',
     'before_dispatch',
+    'get_filters_post',
+    'get_selected_filters_post',
+    'get_product_filter_fields_post',
     'init_templater_post'
 );
 
