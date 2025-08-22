@@ -1,33 +1,37 @@
-{if ($runtime.controller == 'products' && $runtime.mode == 'view')
-|| ($runtime.controller == 'categories' && $runtime.mode == 'view')
-|| ($runtime.controller == 'companies' && $runtime.mode == 'products')
-}
-    {if $auth}
-        {assign var=lists value=fn_mwl_xlsx_get_lists($auth.user_id)}
-    {else}
-        {assign var=lists value=fn_mwl_xlsx_get_lists(null)}
+{if fn_mwl_xlsx_user_can_access_lists($auth)}
+    {if ($runtime.controller == 'products' && $runtime.mode == 'view')
+    || ($runtime.controller == 'categories' && $runtime.mode == 'view')
+    || ($runtime.controller == 'companies' && $runtime.mode == 'products')
+    }
+        {if $addons.mwl_xlsx.show_extra_button == "Y"}
+            {if $auth}
+                {assign var=lists value=fn_mwl_xlsx_get_lists($auth.user_id)}
+            {else}
+                {assign var=lists value=fn_mwl_xlsx_get_lists(null)}
+            {/if}
+
+            <div class="mwl_xlsx-control">
+                <select class="mwl_xlsx-select" data-ca-list-select-xlsx>
+                    {foreach $lists as $l}
+                        <option value="{$l.list_id}">{$l.name}</option>
+                    {/foreach}
+                    <option value="_new">+ {__("mwl_xlsx.new_list")}</option>
+                </select>
+                <button class="ty-btn" data-ca-add-to-mwl_xlsx data-ca-product-id="{$product.product_id}">
+                    {__("mwl_xlsx.add_to_wishlist")}
+                </button>
+
+                <span class="ty-price-hint cm-tooltip ty-icon-help-circle" title="{__("mwl_xlsx.tooltip")}">
+                </span>
+            </div>
+        {/if}
+
+    {elseif !empty($is_mwl_xlsx_view)}
+        <div class="mwl_xlsx-control">
+            <br>
+            <button class="ty-btn" data-ca-remove-from-mwl_xlsx data-ca-product-id="{$product.product_id}" data-ca-list-id="{$product.mwl_list_id}">
+                {__("mwl_xlsx.remove_from_list")}
+            </button>
+        </div>
     {/if}
-
-    <div class="mwl_xlsx-control">
-        <select class="mwl_xlsx-select" data-ca-list-select-xlsx>
-            {foreach $lists as $l}
-                <option value="{$l.list_id}">{$l.name}</option>
-            {/foreach}
-            <option value="_new">+ {__("mwl_xlsx.new_list")}</option>
-        </select>
-        <button class="ty-btn" data-ca-add-to-mwl_xlsx data-ca-product-id="{$product.product_id}">
-            {__("mwl_xlsx.add_to_wishlist")}
-        </button>
-
-        <span class="ty-price-hint cm-tooltip ty-icon-help-circle" title="{__("mwl_xlsx.tooltip")}">
-        </span>
-    </div>
-
-{elseif !empty($is_mwl_xlsx_view)}
-    <div class="mwl_xlsx-control">
-        <br>
-        <button class="ty-btn" data-ca-remove-from-mwl_xlsx data-ca-product-id="{$product.product_id}" data-ca-list-id="{$product.mwl_list_id}">
-            {__("mwl_xlsx.remove_from_list")}
-        </button>
-    </div>
 {/if}

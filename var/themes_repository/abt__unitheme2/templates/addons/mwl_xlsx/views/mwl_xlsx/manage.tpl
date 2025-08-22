@@ -1,3 +1,4 @@
+{if fn_mwl_xlsx_user_can_access_lists($auth)}
 {capture name="mainbox"}
     {if $lists}
         <table class="ty-table" data-ca-mwl-lists>
@@ -53,3 +54,6 @@
     title=__("mwl_xlsx.my_lists")
     content=$smarty.capture.mainbox
 }
+{else}
+    {include file="common/no_items.tpl"}
+{/if}
