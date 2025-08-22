@@ -1,3 +1,5 @@
+{mwl_user_can_access_lists assign="can"}
+{if $can}
 {mwl_media_lists_count assign="count"}
 {assign var="link_url" value="/media-lists"}
 {assign var="href" value=$link_url|fn_url}
@@ -10,3 +12,4 @@
         </span>
     </a>
 </div>
+{/if}

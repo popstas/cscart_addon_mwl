@@ -5,6 +5,77 @@ use Tygh\Storage;
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
 
 /**
+ * Check if user belongs to user groups defined in add-on setting.
+ *
+ * Administrators always pass this check.
+ *
+ * @param array  $auth        Current authentication data
+ * @param string $setting_key Add-on setting storing comma separated usergroup IDs
+ *
+ * @return bool
+ */
+function fn_mwl_xlsx_check_usergroup_access(array $auth, $setting_key)
+{
+    if (($auth['user_type'] ?? '') === 'A') {
+        return true;
+    }
+
+    $allowed = Registry::get("addons.mwl_xlsx.$setting_key");
+    $allowed = $allowed !== '' ? array_map('intval', explode(',', $allowed)) : [];
+    if (!$allowed) {
+        return true;
+    }
+
+    $usergroups = array_map('intval', array_keys($auth['usergroup_ids'] ?? []));
+    return (bool) array_intersect($allowed, $usergroups);
+}
+
+/**
+ * Check whether the current customer may work with media lists.
+ *
+ * @param array $auth Current authentication data
+ *
+ * @return bool
+ */
+function fn_mwl_xlsx_user_can_access_lists(array $auth)
+{
+    return fn_mwl_xlsx_check_usergroup_access($auth, 'allowed_usergroups');
+}
+
+/**
+ * {mwl_user_can_access_lists auth=$auth assign="can"}
+ * или просто {mwl_user_can_access_lists assign="can"} — auth возьмём из сессии.
+ */
+function smarty_function_mwl_user_can_access_lists(array $params, \Smarty_Internal_Template $template)
+{
+    $auth = $params['auth'] ?? (Tygh::$app['session']['auth'] ?? []);
+    $result = fn_mwl_xlsx_user_can_access_lists($auth);
+
+    if (!empty($params['assign'])) {
+        $template->assign($params['assign'], (bool) $result);
+        return '';
+    }
+
+    return $result ? '1' : '';
+}
+
+/**
+ * Determine if price should be shown to the current customer.
+ *
+ * @param array $auth Current authentication data
+ *
+ * @return bool
+ */
+function fn_mwl_xlsx_can_view_price(array $auth)
+{
+    if (Registry::get('addons.mwl_xlsx.hide_price_for_guests') === 'Y' && empty($auth['user_id'])) {
+        return false;
+    }
+
+    return fn_mwl_xlsx_check_usergroup_access($auth, 'authorized_usergroups');
+}
+
+/**
  * Ensures settings table exists.
  */
 function fn_mwl_xlsx_ensure_settings_table()
