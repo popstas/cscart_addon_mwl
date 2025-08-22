@@ -18,6 +18,9 @@
 - Track when each media list was last updated.
 - SEO-friendly URLs for media list pages (`/media-lists` and `/media-lists/{list_id}`).
 - UT2 top panel block displaying the number of media lists for the current user or session.
+- Hide prices for guests or unauthorized user groups.
+- Optional extra button in product lists for adding items to a media list.
+- Limit media list features to specific user groups.
 
 ### Add-on URLs
 - `/media-lists` – list user media lists.

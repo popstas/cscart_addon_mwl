@@ -5,6 +5,10 @@ use Tygh\Languages\Helper;
 use Tygh\Registry;
 use Tygh\Storage;
 
+if (!fn_mwl_xlsx_user_can_access_lists($auth)) {
+    return [CONTROLLER_STATUS_DENIED];
+}
+
 if ($mode === 'manage') {
     if (!empty($auth['user_id'])) {
         $lists = fn_mwl_xlsx_get_lists($auth['user_id']);

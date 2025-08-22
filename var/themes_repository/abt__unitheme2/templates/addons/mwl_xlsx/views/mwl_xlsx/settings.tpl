@@ -1,3 +1,4 @@
+{if fn_mwl_xlsx_user_can_access_lists($auth)}
 {capture name="mainbox"}
     <form action="{fn_url('mwl_xlsx.save_settings')}" method="post" class="cm-ajax">
         <div class="ty-control-group">
@@ -22,3 +23,6 @@
     title=__("mwl_xlsx.settings")
     content=$smarty.capture.mainbox
 }
+{else}
+    {include file="common/no_items.tpl"}
+{/if}
