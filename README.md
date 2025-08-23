@@ -3,7 +3,7 @@
 ### Features
 - Create and name media lists for the current user or session.
 - Add individual products to a chosen media list from product listings.
-- Add all products from a category page to a media list (up to 20 items).
+- Add all products from a category page to a media list (up to a configurable limit, 50 items by default).
 - Remember the last selected media list when adding products.
 - Avoid duplicate products when adding to a media list, including bulk additions.
 - Show a notification with a link to the media list after adding a product.
@@ -22,6 +22,7 @@
 - Optional extra button in product lists for adding items to a media list.
 - Limit media list features to specific user groups.
 - Configure price visibility, extra list button, and access groups via the add-on's **Settings** page in the admin panel.
+- Limit the number of items in a media list via the **Max list items** setting (default 50).
 
 ### Add-on URLs
 - `/media-lists` – list user media lists.

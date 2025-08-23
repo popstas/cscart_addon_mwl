@@ -228,7 +228,10 @@
   }
 
   function addProductsToList(product_ids, list_id) {
-    product_ids = product_ids.slice(0, 20);
+    var limit = _.addons && _.addons.mwl_xlsx && parseInt(_.addons.mwl_xlsx.max_list_items, 10);
+    if (limit > 0) {
+      product_ids = product_ids.slice(0, limit);
+    }
     $.ceAjax('request', fn_url('mwl_xlsx.add_list'), {
       method: 'post',
       data: { list_id: list_id, product_ids: product_ids },

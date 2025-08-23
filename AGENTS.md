@@ -7,7 +7,7 @@ This project implements a CS-Cart Multivendor add-on for the `abt__unitheme2` th
 
 ## Core Features
 - Add a single product to a media list
-- Add all selected products to a media list (default limit: 20 items)
+- Add all selected products to a media list (configurable limit, default 50 items)
 - Name media lists
 - Media lists page
 - Export media list to XLSX on the media lists page

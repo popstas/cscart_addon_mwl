@@ -154,19 +154,24 @@ if ($mode === 'delete_list' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
 if ($mode === 'add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $list_id = (int) $_REQUEST['list_id'];
-    $added = fn_mwl_xlsx_add($list_id, $_REQUEST['product_id'], $_REQUEST['product_options'] ?? [], 1);
+    $status = fn_mwl_xlsx_add($list_id, $_REQUEST['product_id'], $_REQUEST['product_options'] ?? [], 1);
 
-    if ($added) {
+    if ($status === 'added') {
         $list_name = db_get_field('SELECT name FROM ?:mwl_xlsx_lists WHERE list_id = ?i', $list_id);
         $message = __('mwl_xlsx.added', [
             '[list_name]' => htmlspecialchars($list_name, ENT_QUOTES, 'UTF-8'),
             '[list_url]'  => fn_url(fn_mwl_xlsx_url($list_id))
         ]);
+        $success = true;
+    } elseif ($status === 'limit') {
+        $message = __('mwl_xlsx.list_limit_reached', ['[limit]' => Registry::get('addons.mwl_xlsx.max_list_items')]);
+        $success = false;
     } else {
         $message = __('mwl_xlsx.already_exists');
+        $success = false;
     }
 
-    exit(json_encode(['success' => true, 'message' => $message]));
+    exit(json_encode(['success' => $success, 'message' => $message]));
 }
 
 if ($mode === 'remove' && $_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -188,21 +193,42 @@ if ($mode === 'save_settings' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
 if ($mode === 'add_list' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $list_id = (int) $_REQUEST['list_id'];
-    $product_ids = array_slice(array_unique(array_map('intval', (array) ($_REQUEST['product_ids'] ?? []))), 0, 20);
+    $limit = (int) Registry::get('addons.mwl_xlsx.max_list_items');
+    $current = (int) db_get_field('SELECT COUNT(*) FROM ?:mwl_xlsx_list_products WHERE list_id = ?i', $list_id);
+    $remaining = $limit > 0 ? max($limit - $current, 0) : 0;
+
+    $requested = array_unique(array_map('intval', (array) ($_REQUEST['product_ids'] ?? [])));
+    $product_ids = $remaining > 0 ? array_slice($requested, 0, $remaining) : [];
+    $limit_hit = $remaining === 0 || count($product_ids) < count($requested);
+
     $added = false;
     foreach ($product_ids as $pid) {
-        $added = fn_mwl_xlsx_add($list_id, $pid, [], 1) || $added;
+        $status = fn_mwl_xlsx_add($list_id, $pid, [], 1);
+        if ($status === 'added') {
+            $added = true;
+        } elseif ($status === 'limit') {
+            $limit_hit = true;
+            break;
+        }
     }
 
     $list_name = db_get_field('SELECT name FROM ?:mwl_xlsx_lists WHERE list_id = ?i', $list_id);
-    if ($added) {
+    if ($limit_hit && !$added) {
+        $message = __('mwl_xlsx.list_limit_reached', ['[limit]' => $limit]);
+        $success = false;
+    } elseif ($limit_hit && $added) {
+        $message = __('mwl_xlsx.list_limit_reached', ['[limit]' => $limit]);
+        $success = true;
+    } elseif ($added) {
         $message = __('mwl_xlsx.added', [
             '[list_name]' => htmlspecialchars($list_name, ENT_QUOTES, 'UTF-8'),
             '[list_url]'  => fn_url(fn_mwl_xlsx_url($list_id))
         ]);
+        $success = true;
     } else {
         $message = __('mwl_xlsx.already_exists');
+        $success = false;
     }
 
-    exit(json_encode(['success' => true, 'message' => $message]));
+    exit(json_encode(['success' => $success, 'message' => $message]));
 }

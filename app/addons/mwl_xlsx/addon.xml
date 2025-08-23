@@ -90,6 +90,8 @@
                 <value id="mwl_xlsx.show_extra_button">Show extra button in list</value>
                 <value id="mwl_xlsx.allowed_usergroups">User groups allowed for media lists</value>
                 <value id="mwl_xlsx.login_to_view_price">Log in to view price</value>
+                <value id="mwl_xlsx.max_list_items">Maximum items per list</value>
+                <value id="mwl_xlsx.list_limit_reached">You cannot add more than [limit] items to a media list</value>
             </values>
         </item>
         <item>
@@ -115,6 +117,8 @@
                 <value id="mwl_xlsx.show_extra_button">Выводить кнопку extra в списке</value>
                 <value id="mwl_xlsx.allowed_usergroups">Группы пользователей, которым разрешён доступ к mwl lists</value>
                 <value id="mwl_xlsx.login_to_view_price">Войдите, чтобы увидеть цену</value>
+                <value id="mwl_xlsx.max_list_items">Максимальное число товаров в подборке</value>
+                <value id="mwl_xlsx.list_limit_reached">Нельзя добавить более [limit] товаров в подборку</value>
             </values>
         </item>
     </languages>
@@ -138,6 +142,10 @@
                     <item id="allowed_usergroups" type="selectbox" multiple="true">
                         <name>mwl_xlsx.allowed_usergroups</name>
                         <variants_function>fn_get_usergroups</variants_function>
+                    </item>
+                    <item id="max_list_items" type="input">
+                        <name>mwl_xlsx.max_list_items</name>
+                        <value>50</value>
                     </item>
                 </items>
             </section>
