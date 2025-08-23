@@ -410,6 +410,14 @@ function fn_mwl_xlsx_get_feature_text_values(array $features, $lang_code = CART_
 
 function fn_mwl_xlsx_add($list_id, $product_id, $options = [], $amount = 1)
 {
+    $limit = (int) Registry::get('addons.mwl_xlsx.max_list_items');
+    if ($limit > 0) {
+        $count = (int) db_get_field('SELECT COUNT(*) FROM ?:mwl_xlsx_list_products WHERE list_id = ?i', $list_id);
+        if ($count >= $limit) {
+            return 'limit';
+        }
+    }
+
     $serialized = serialize($options);
     $exists = db_get_field(
         "SELECT 1 FROM ?:mwl_xlsx_list_products WHERE list_id = ?i AND product_id = ?i AND product_options = ?s",
@@ -419,7 +427,7 @@ function fn_mwl_xlsx_add($list_id, $product_id, $options = [], $amount = 1)
     );
 
     if ($exists) {
-        return false;
+        return 'exists';
     }
 
     db_query("INSERT INTO ?:mwl_xlsx_list_products ?e", [
@@ -432,7 +440,7 @@ function fn_mwl_xlsx_add($list_id, $product_id, $options = [], $amount = 1)
 
     db_query('UPDATE ?:mwl_xlsx_lists SET updated_at = ?s WHERE list_id = ?i', date('Y-m-d H:i:s'), $list_id);
 
-    return true;
+    return 'added';
 }
 
 function fn_mwl_xlsx_remove($list_id, $product_id)

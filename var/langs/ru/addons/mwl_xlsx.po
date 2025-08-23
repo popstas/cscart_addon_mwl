@@ -145,3 +145,11 @@ msgstr "Группы пользователей, которым разрешён
 msgctxt "Languages::mwl_xlsx.login_to_view_price"
 msgid "Log in to view price"
 msgstr "Войдите, чтобы увидеть цену"
+
+msgctxt "Languages::mwl_xlsx.max_list_items"
+msgid "Maximum items per list"
+msgstr "Максимальное число товаров в подборке"
+
+msgctxt "Languages::mwl_xlsx.list_limit_reached"
+msgid "You cannot add more than [limit] items to a media list"
+msgstr "Нельзя добавить более [limit] товаров в подборку"
