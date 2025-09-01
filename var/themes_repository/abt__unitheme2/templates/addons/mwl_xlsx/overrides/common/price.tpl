@@ -6,7 +6,7 @@
     {assign var=can_see value=false}
     {if $auth.area == "A"}
         {assign var=can_see value=true}
-    {elseif $auth.user_id && $auth.usergroup_ids && $auth.usergroup_ids|in_array:8}
+    {elseif $auth.user_id && fn_mwl_xlsx_can_view_price($auth)}
         {assign var=can_see value=true}
     {/if}
 

@@ -26,7 +26,7 @@ function fn_mwl_xlsx_check_usergroup_access(array $auth, $setting_key)
         return true;
     }
 
-    $usergroups = array_map('intval', array_keys($auth['usergroup_ids'] ?? []));
+    $usergroups = array_map('intval', $auth['usergroup_ids'] ?? []);
     return (bool) array_intersect($allowed, $usergroups);
 }
 
@@ -68,6 +68,7 @@ function smarty_function_mwl_user_can_access_lists(array $params, \Smarty_Intern
  */
 function fn_mwl_xlsx_can_view_price(array $auth)
 {
+
     if (Registry::get('addons.mwl_xlsx.hide_price_for_guests') === 'Y' && empty($auth['user_id'])) {
         return false;
     }
