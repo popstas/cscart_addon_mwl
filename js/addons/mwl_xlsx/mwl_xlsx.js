@@ -218,9 +218,28 @@
             if (typeof cb === 'function') { cb(null); }
             return;
           }
-          $select.prepend($('<option>', { value: list_id, text: data.name }));
-          $select.val(list_id);
+
+          // update select lists
+          var optionHtml = '<option value="' + list_id + '">' + data.name + '</option>';
+          $('[data-ca-list-select-xlsx]').each(function() {
+            $(this).prepend(optionHtml);
+            $(this).val(list_id);
+          });
+          // $select.val(list_id);
           localStorage.setItem('mwl_last_list', list_id);
+
+          var $counter = $('#mwl_media_lists_count');
+          if ($counter.length) {
+            var $count = $counter.find('.count');
+            if ($count.length) {
+              var n = parseInt($count.text(), 10) || 0;
+              $count.text(n + 1);
+            } else {
+              $counter.find('span').append('<span class="count">1</span>');
+              $counter.find('a.ty-wishlist__a').addClass('active');
+            }
+          }
+
           if (typeof cb === 'function') { cb(list_id); }
         }
       });
