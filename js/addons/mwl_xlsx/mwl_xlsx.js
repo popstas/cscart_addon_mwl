@@ -218,11 +218,14 @@
             if (typeof cb === 'function') { cb(null); }
             return;
           }
+
+          // update select lists
           var optionHtml = '<option value="' + list_id + '">' + data.name + '</option>';
           $('[data-ca-list-select-xlsx]').each(function() {
             $(this).prepend(optionHtml);
+            $(this).val(list_id);
           });
-          $select.val(list_id);
+          // $select.val(list_id);
           localStorage.setItem('mwl_last_list', list_id);
 
           var $counter = $('#mwl_media_lists_count');
