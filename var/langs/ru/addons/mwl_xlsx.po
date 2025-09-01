@@ -110,6 +110,10 @@ msgctxt "Languages::mwl_xlsx.round_to"
 msgid "Round price to"
 msgstr "Округлять цену до"
 
+msgctxt "Languages::mwl_xlsx.settings"
+msgid "Price setting for agencies"
+msgstr "Настройка цены для агентств"
+
 msgctxt "Languages::mwl_xlsx.settings_saved"
 msgid "Settings saved"
 msgstr "Настройки сохранены"
