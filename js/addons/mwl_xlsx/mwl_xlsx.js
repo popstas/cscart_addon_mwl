@@ -12,7 +12,7 @@
   $(_.doc).on('change', '[data-ca-list-select-xlsx]', function() {
     var value = $(this).val();
     if (value !== '_new') {
-      localStorage.setItem('mwl_last_list', value);
+      changeList(value);
     }
   });
 
@@ -194,7 +194,7 @@
   function resolveListId($select, cb) {
     var list_id = $select.val();
     if (list_id !== '_new') {
-      localStorage.setItem('mwl_last_list', list_id);
+      changeList(list_id);
       if (typeof cb === 'function') { cb(list_id); }
       return;
     }
@@ -219,14 +219,7 @@
             return;
           }
 
-          // update select lists
-          var optionHtml = '<option value="' + list_id + '">' + data.name + '</option>';
-          $('[data-ca-list-select-xlsx]').each(function() {
-            $(this).prepend(optionHtml);
-            $(this).val(list_id);
-          });
-          // $select.val(list_id);
-          localStorage.setItem('mwl_last_list', list_id);
+          changeList(list_id, data.name);
 
           var $counter = $('#mwl_media_lists_count');
           if ($counter.length) {
@@ -244,6 +237,28 @@
         }
       });
     });
+  }
+
+  function changeList(list_id, list_name) {
+    // If list_name provided, ensure option exists and select it; otherwise just select existing option
+    if (list_name) {
+      var optionHtml = '<option value="' + list_id + '">' + list_name + '</option>';
+      $('[data-ca-list-select-xlsx]').each(function() {
+        var $sel = $(this);
+        var $opt = $sel.find('option[value="' + list_id + '"]');
+        if ($opt.length) {
+          $opt.text(list_name);
+        } else {
+          $sel.prepend(optionHtml);
+        }
+        $sel.val(list_id);
+      });
+    } else {
+      $('[data-ca-list-select-xlsx]').each(function() {
+        $(this).val(list_id);
+      });
+    }
+    localStorage.setItem('mwl_last_list', list_id);
   }
 
   function addProductsToList(product_ids, list_id) {
