@@ -54,6 +54,10 @@ msgctxt "Languages::mwl_xlsx.export"
 msgid "Export XLSX"
 msgstr "Скачать подборку для редактирования"
 
+msgctxt "Languages::mwl_xlsx.export_google"
+msgid "Export Google Sheets"
+msgstr "Экспорт в Google Таблицы"
+
 msgctxt "Languages::mwl_xlsx.rename"
 msgid "Rename"
 msgstr "Переименовать"
@@ -157,3 +161,7 @@ msgstr "Максимальное число товаров в подборке"
 msgctxt "Languages::mwl_xlsx.list_limit_reached"
 msgid "You cannot add more than [limit] items to a media list"
 msgstr "Нельзя добавить более [limit] товаров в подборку"
+
+msgctxt "Languages::mwl_xlsx.google_credentials"
+msgid "Google credentials (JSON)"
+msgstr "Учетные данные Google (JSON)"

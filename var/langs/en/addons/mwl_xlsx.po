@@ -52,6 +52,10 @@ msgctxt "Languages::mwl_xlsx.export"
 msgid "Export XLSX"
 msgstr "Export XLSX"
 
+msgctxt "Languages::mwl_xlsx.export_google"
+msgid "Export Google Sheets"
+msgstr "Export Google Sheets"
+
 msgctxt "Languages::mwl_xlsx.rename"
 msgid "Rename"
 msgstr "Rename"
@@ -167,3 +171,7 @@ msgstr "Maximum items per list"
 msgctxt "Languages::mwl_xlsx.list_limit_reached"
 msgid "You cannot add more than [limit] items to a media list"
 msgstr "You cannot add more than [limit] items to a media list"
+
+msgctxt "Languages::mwl_xlsx.google_credentials"
+msgid "Google credentials (JSON)"
+msgstr "Google credentials (JSON)"

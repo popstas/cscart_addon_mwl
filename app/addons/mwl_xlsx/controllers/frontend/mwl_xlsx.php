@@ -4,6 +4,10 @@ if (!defined('BOOTSTRAP')) { die('Access denied'); }
 use Tygh\Languages\Helper;
 use Tygh\Registry;
 use Tygh\Storage;
+use Google\Client;
+use Google\Service\Sheets;
+use Google\Service\Sheets\Spreadsheet;
+use Google\Service\Sheets\ValueRange;
 
 if (!fn_mwl_xlsx_user_can_access_lists($auth)) {
     return [CONTROLLER_STATUS_DENIED];
@@ -122,6 +126,67 @@ if ($mode === 'export') {
     $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($xlsx);
     $writer->save('php://output');
     exit;
+}
+
+if ($mode === 'export_google') {
+    $list_id = (int) $_REQUEST['list_id'];
+    if (!empty($auth['user_id'])) {
+        $list = db_get_row("SELECT * FROM ?:mwl_xlsx_lists WHERE list_id = ?i AND user_id = ?i", $list_id, $auth['user_id']);
+    } else {
+        $list = db_get_row("SELECT * FROM ?:mwl_xlsx_lists WHERE list_id = ?i AND session_id = ?s", $list_id, Tygh::$app['session']->getID());
+    }
+    if (!$list) {
+        return [CONTROLLER_STATUS_NO_PAGE];
+    }
+
+    $vendor = dirname(__DIR__) . '/../vendor/autoload.php';
+    if (file_exists($vendor)) {
+        require_once $vendor;
+    }
+
+    $cred = Registry::get('addons.mwl_xlsx.google_credentials');
+    if (!$cred) {
+        return [CONTROLLER_STATUS_NO_PAGE];
+    }
+    $auth_config = json_decode($cred, true);
+    if (!$auth_config) {
+        return [CONTROLLER_STATUS_NO_PAGE];
+    }
+
+    $client = new Client();
+    $client->setAuthConfig($auth_config);
+    $client->setScopes([Sheets::SPREADSHEETS, \Google\Service\Drive::DRIVE_FILE]);
+
+    $service = new Sheets($client);
+
+    $products = fn_mwl_xlsx_get_list_products($list_id, CART_LANGUAGE);
+    $feature_names = fn_mwl_xlsx_collect_feature_names($products, CART_LANGUAGE);
+    $feature_ids = array_keys($feature_names);
+
+    $header = array_merge([__('name'), __('price')], array_values($feature_names));
+    $data = [$header];
+
+    $settings = fn_mwl_xlsx_get_user_settings($auth);
+    foreach ($products as $p) {
+        $price_str = fn_mwl_xlsx_transform_price_for_export($p['price'], $settings);
+        $row = [$p['product'], $price_str];
+        $values = fn_mwl_xlsx_get_feature_text_values($p['product_features'] ?? [], CART_LANGUAGE);
+        foreach ($feature_ids as $feature_id) {
+            $row[] = $values[$feature_id] ?? null;
+        }
+        $data[] = $row;
+    }
+
+    $spreadsheet = new Spreadsheet([
+        'properties' => ['title' => $list['name']]
+    ]);
+    $spreadsheet = $service->spreadsheets->create($spreadsheet, ['fields' => 'spreadsheetId']);
+    $id = $spreadsheet->spreadsheetId;
+
+    $body = new ValueRange(['values' => $data]);
+    $service->spreadsheets_values->update($id, 'A1', $body, ['valueInputOption' => 'RAW']);
+
+    return [CONTROLLER_STATUS_REDIRECT, 'https://docs.google.com/spreadsheets/d/' . $id];
 }
 
 if ($mode === 'create_list' && $_SERVER['REQUEST_METHOD'] === 'POST') {

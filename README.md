@@ -12,6 +12,7 @@
 - View products of a media list on a dedicated page.
 - Remove products from a media list directly from its page.
 - Export media lists to XLSX files from the media lists page, placing each product feature in its own column and translating product and feature data into the site's current language.
+- Export media lists directly to Google Sheets using configured credentials.
 - Manage a single XLSX template from the admin panel for custom export layouts; uploading a new file replaces the previous template and exports use it when available.
 - Navigate media lists with breadcrumbs and page titles.
 - Rename or remove media lists from the manage page.
@@ -23,6 +24,7 @@
 - Optional extra button in product lists for adding items to a media list.
 - Limit media list features to specific user groups.
 - Configure price visibility, extra list button, and access groups via the add-on's **Settings** page in the admin panel.
+- Provide Google API credentials JSON in the add-on settings to enable Google Sheets export.
 - Limit the number of items in a media list via the **Max list items** setting (default 50).
 
 ### Add-on URLs
