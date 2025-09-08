@@ -175,3 +175,51 @@ msgstr "You cannot add more than [limit] items to a media list"
 msgctxt "Languages::mwl_xlsx.google_credentials"
 msgid "Google credentials (JSON)"
 msgstr "Google credentials (JSON)"
+
+msgctxt "Languages::mwl_xlsx.notifications"
+msgid "Notifications"
+msgstr "Notifications"
+
+msgctxt "Languages::mwl_xlsx.notifications_descr"
+msgid "Configure where to send price check requests."
+msgstr "Configure where to send price check requests."
+
+msgctxt "Languages::mwl_xlsx.notify_via_telegram"
+msgid "Telegram"
+msgstr "Telegram"
+
+msgctxt "Languages::mwl_xlsx.notify_via_email"
+msgid "Email"
+msgstr "Email"
+
+msgctxt "Languages::mwl_xlsx.notify_email_hint"
+msgid "Leave blank to use company email."
+msgstr "Leave blank to use company email."
+
+msgctxt "Languages::mwl_xlsx.price_check_button"
+msgid "Request price check"
+msgstr "Request price check"
+
+msgctxt "Languages::mwl_xlsx.price_check_requested"
+msgid "The item has been sent for a price check. It usually takes 3–48 hours."
+msgstr "The item has been sent for a price check. It usually takes 3–48 hours."
+
+msgctxt "Languages::mwl_xlsx.price_check_failed"
+msgid "Failed to send a price check request. Please try again later."
+msgstr "Failed to send a price check request. Please try again later."
+
+msgctxt "Languages::mwl_xlsx.notify_via"
+msgid "Send via"
+msgstr "Send via"
+
+msgctxt "Languages::mwl_xlsx.telegram_bot_token"
+msgid "Telegram bot token"
+msgstr "Telegram bot token"
+
+msgctxt "Languages::mwl_xlsx.telegram_chat_id"
+msgid "Telegram chat ID"
+msgstr "Telegram chat ID"
+
+msgctxt "Languages::mwl_xlsx.notify_email"
+msgid "Notification email"
+msgstr "Notification email"

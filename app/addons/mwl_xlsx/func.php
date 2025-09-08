@@ -1,6 +1,9 @@
 <?php
 use Tygh\Registry;
 use Tygh\Storage;
+use Google\Service\Sheets;
+use Google\Service\Sheets\ValueRange;
+use Google\Service\Sheets\BatchUpdateSpreadsheetRequest;
 
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
 
@@ -21,7 +24,12 @@ function fn_mwl_xlsx_check_usergroup_access(array $auth, $setting_key)
     }
 
     $allowed = Registry::get("addons.mwl_xlsx.$setting_key");
-    $allowed = $allowed !== '' ? array_map('intval', explode(',', $allowed)) : [];
+    // allow all if setting is empty
+    if ($allowed === '') {
+        return true;
+    }
+
+    $allowed = array_map('intval', explode(',', $allowed));
     if (!$allowed) {
         return true;
     }
@@ -492,5 +500,87 @@ function fn_mwl_xlsx_uninstall()
 {
     db_query("DROP TABLE IF EXISTS ?:mwl_xlsx_templates");
     Storage::instance('custom_files')->deleteDir('mwl_xlsx/templates');
+}
+
+
+/**
+ * Fill a Google Spreadsheet with values and apply basic formatting (auto-resize columns).
+ *
+ * @param Sheets $sheets        Authorized Google Sheets service
+ * @param string $spreadsheet_id Spreadsheet ID
+ * @param array  $data          2D array of values (first row is header)
+ * @param bool   $debug         When true, prints debug info and non-fatally handles formatting errors
+ *
+ * @return bool True on successful values write, false if write failed in debug mode
+ * @throws \Google\Service\Exception When values write fails and debug is false
+ */
+function fn_mwl_xlsx_fill_google_sheet(Sheets $sheets, $spreadsheet_id, array $data, $debug = false)
+{
+    // 1) Write all values starting from A1
+    try {
+        $body = new ValueRange(['values' => $data]);
+        $sheets->spreadsheets_values->update($spreadsheet_id, 'A1', $body, ['valueInputOption' => 'RAW']);
+    } catch (\Google\Service\Exception $e) {
+        if ($debug) {
+            header('Content-Type: text/plain; charset=UTF-8');
+            echo "Sheets API values.update error:\n";
+            echo $e->getCode() . " " . $e->getMessage() . "\n";
+            if (method_exists($e, 'getErrors')) {
+                echo json_encode($e->getErrors(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n";
+            }
+            echo "Created Spreadsheet ID: $spreadsheet_id\n";
+            echo "URL: https://docs.google.com/spreadsheets/d/$spreadsheet_id\n";
+            return false;
+        }
+        throw $e;
+    }
+
+    // 2) Auto-resize columns (best effort)
+    try {
+        $ss = $sheets->spreadsheets->get($spreadsheet_id, ['fields' => 'sheets(properties(sheetId,title))']);
+        $sheets_list = $ss->getSheets();
+        $sheet_id = $sheets_list && isset($sheets_list[0]) ? $sheets_list[0]->getProperties()->sheetId : null;
+
+        if ($sheet_id !== null) {
+            // Determine maximum number of columns used
+            $column_count = 0;
+            foreach ($data as $r) {
+                $column_count = max($column_count, is_array($r) ? count($r) : 0);
+            }
+
+            $requests = [
+                [
+                    'autoResizeDimensions' => [
+                        'dimensions' => [
+                            'sheetId'   => $sheet_id,
+                            'dimension' => 'COLUMNS',
+                            'startIndex'=> 0,
+                            'endIndex'  => $column_count,
+                        ],
+                    ],
+                ],
+            ];
+            $batch_req = new BatchUpdateSpreadsheetRequest(['requests' => $requests]);
+            $sheets->spreadsheets->batchUpdate($spreadsheet_id, $batch_req);
+
+            if ($debug) {
+                echo "Auto-resize columns applied on sheetId=$sheet_id for $column_count columns\n\n";
+            }
+        } elseif ($debug) {
+            echo "Warning: Could not determine sheetId for auto-resize\n\n";
+        }
+    } catch (\Google\Service\Exception $e) {
+        if ($debug) {
+            echo "Sheets API batchUpdate (auto-resize) error:\n";
+            echo $e->getCode() . " " . $e->getMessage() . "\n";
+            if (method_exists($e, 'getErrors')) {
+                echo json_encode($e->getErrors(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n";
+            }
+            echo "\n";
+        }
+        // Non-fatal
+    }
+
+    return true;
 }
 

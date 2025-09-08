@@ -165,3 +165,35 @@ msgstr "Нельзя добавить более [limit] товаров в по�
 msgctxt "Languages::mwl_xlsx.google_credentials"
 msgid "Google credentials (JSON)"
 msgstr "Учетные данные Google (JSON)"
+
+msgctxt "Languages::mwl_xlsx.notifications"
+msgid "Notifications"
+msgstr "Уведомления"
+
+msgctxt "Languages::mwl_xlsx.notifications_descr"
+msgid "Configure where to send price check requests."
+msgstr "Куда отправлять запросы на проверку цены."
+
+msgctxt "Languages::mwl_xlsx.notify_via_telegram"
+msgid "Telegram"
+msgstr "Telegram"
+
+msgctxt "Languages::mwl_xlsx.notify_via_email"
+msgid "Email"
+msgstr "Email"
+
+msgctxt "Languages::mwl_xlsx.notify_email_hint"
+msgid "Leave blank to use company email."
+msgstr "Оставьте пустым, чтобы использовать email компании."
+
+msgctxt "Languages::mwl_xlsx.price_check_button"
+msgid "Request price check"
+msgstr "Запросить проверку цены"
+
+msgctxt "Languages::mwl_xlsx.price_check_requested"
+msgid "The outlet has been sent for a price check. It usually takes 3–48 hours."
+msgstr "Издание отправлено на проверку цены. Как правило это занимает от 3 до 48 часов."
+
+msgctxt "Languages::mwl_xlsx.price_check_failed"
+msgid "Failed to send a price check request. Please try again later."
+msgstr "Не удалось отправить запрос на проверку. Повторите позже."
