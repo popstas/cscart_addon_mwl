@@ -94,6 +94,7 @@
                 <value id="mwl_xlsx.list_limit_reached">You cannot add more than [limit] items to a media list</value>
                 <value id="mwl_xlsx.export_google">Export Google Sheets</value>
                 <value id="mwl_xlsx.google_credentials">Google credentials (JSON)</value>
+                <value id="mwl_xlsx.google_drive_folder_id">Google Drive folder ID (optional, Shared Drive supported)</value>
             </values>
         </item>
         <item>
@@ -123,6 +124,7 @@
                 <value id="mwl_xlsx.list_limit_reached">Нельзя добавить более [limit] товаров в подборку</value>
                 <value id="mwl_xlsx.export_google">Экспорт в Google Таблицы</value>
                 <value id="mwl_xlsx.google_credentials">Учетные данные Google (JSON)</value>
+                <value id="mwl_xlsx.google_drive_folder_id">ID папки Google Диска (необязательно, поддерживаются Общие диски)</value>
             </values>
         </item>
     </languages>
@@ -153,6 +155,34 @@
                     </item>
                     <item id="google_credentials" type="textarea">
                         <name>mwl_xlsx.google_credentials</name>
+                    </item>
+                    <item id="google_drive_folder_id" type="input">
+                        <name>mwl_xlsx.google_drive_folder_id</name>
+                    </item>
+                </items>
+            </section>
+            <section id="notifications" name="mwl_xlsx.notifications">
+                <items>
+                    <item id="notify_via" type="selectbox">
+                        <name>mwl_xlsx.notify_via</name>
+                        <variants>
+                            <item id="telegram">
+                                <name>mwl_xlsx.notify_via_telegram</name>
+                            </item>
+                            <item id="email">
+                                <name>mwl_xlsx.notify_via_email</name>
+                            </item>
+                        </variants>
+                        <value>telegram</value>
+                    </item>
+                    <item id="telegram_bot_token" type="input">
+                        <name>mwl_xlsx.telegram_bot_token</name>
+                    </item>
+                    <item id="telegram_chat_id" type="input">
+                        <name>mwl_xlsx.telegram_chat_id</name>
+                    </item>
+                    <item id="notify_email" type="input">
+                        <name>mwl_xlsx.notify_email</name>
                     </item>
                 </items>
             </section>

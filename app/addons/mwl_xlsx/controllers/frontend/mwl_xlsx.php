@@ -4,10 +4,14 @@ if (!defined('BOOTSTRAP')) { die('Access denied'); }
 use Tygh\Languages\Helper;
 use Tygh\Registry;
 use Tygh\Storage;
+use Tygh\Http;
+use Tygh\Mailer;
+use Tygh\Enum\NotificationSeverity;
 use Google\Client;
 use Google\Service\Sheets;
 use Google\Service\Sheets\Spreadsheet;
 use Google\Service\Sheets\ValueRange;
+use Google\Service\Sheets\BatchUpdateSpreadsheetRequest;
 
 if (!fn_mwl_xlsx_user_can_access_lists($auth)) {
     return [CONTROLLER_STATUS_DENIED];
@@ -156,6 +160,58 @@ if ($mode === 'export_google') {
     $client = new Client();
     $client->setAuthConfig($auth_config);
     $client->setScopes([Sheets::SPREADSHEETS, \Google\Service\Drive::DRIVE_FILE]);
+    $folder_id = trim((string) Registry::get('addons.mwl_xlsx.google_drive_folder_id'));
+
+    // Optional debug mode: add `&debug=1` to the URL to print diagnostic info and errors
+    $is_debug = isset($_REQUEST['debug']);
+    if ($is_debug) {
+        $debug_info = [
+            'creds_type'     => $auth_config['type'] ?? null,
+            'client_email'   => $auth_config['client_email'] ?? null,
+            'project_id'     => $auth_config['project_id'] ?? null,
+            'has_private_key'=> isset($auth_config['private_key']),
+            'scopes'         => [Sheets::SPREADSHEETS, \Google\Service\Drive::DRIVE_FILE],
+            'list_title'     => $list['name'],
+            'folder_id'      => $folder_id ?: null,
+        ];
+        header('Content-Type: text/plain; charset=UTF-8');
+        echo "Debug info before API calls:\n";
+        echo json_encode($debug_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n\n";
+
+        // Force token retrieval for service account and show token metadata
+        try {
+            $token = $client->fetchAccessTokenWithAssertion();
+            echo "fetchAccessTokenWithAssertion() OK\n";
+            $safe_token = $token;
+            if (isset($safe_token['access_token'])) {
+                $safe_token['access_token'] = substr($safe_token['access_token'], 0, 20) . '...';
+            }
+            echo json_encode($safe_token, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n\n";
+        } catch (\Throwable $e) {
+            echo "Token fetch error:\n";
+            echo get_class($e) . ": " . $e->getMessage() . "\n\n";
+        }
+
+        // Quick Drive API probe to verify access and API enablement
+        try {
+            $drive = new \Google\Service\Drive($client);
+            $files = $drive->files->listFiles([
+                'pageSize' => 1,
+                'fields' => 'files(id,name,parents)',
+                'supportsAllDrives' => true,
+                'includeItemsFromAllDrives' => true,
+            ]);
+            echo "Drive API listFiles OK. Sample file(s):\n";
+            echo json_encode($files->getFiles(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n\n";
+        } catch (\Google\Service\Exception $e) {
+            echo "Drive API listFiles error:\n";
+            echo $e->getCode() . " " . $e->getMessage() . "\n";
+            if (method_exists($e, 'getErrors')) {
+                echo json_encode($e->getErrors(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n";
+            }
+            echo "\n";
+        }
+    }
 
     $service = new Sheets($client);
 
@@ -177,16 +233,163 @@ if ($mode === 'export_google') {
         $data[] = $row;
     }
 
-    $spreadsheet = new Spreadsheet([
-        'properties' => ['title' => $list['name']]
-    ]);
-    $spreadsheet = $service->spreadsheets->create($spreadsheet, ['fields' => 'spreadsheetId']);
-    $id = $spreadsheet->spreadsheetId;
+    // Try to create the spreadsheet from an XLSX template (if configured)
+    $storage    = Storage::instance('custom_files');
+    $company_id = fn_get_runtime_company_id();
+    $tpl        = db_get_row('SELECT path FROM ?:mwl_xlsx_templates WHERE company_id = ?i', (int) $company_id);
 
-    $body = new ValueRange(['values' => $data]);
-    $service->spreadsheets_values->update($id, 'A1', $body, ['valueInputOption' => 'RAW']);
+    $id = null;
+    $created_via_drive = false;
+    if ($tpl && $storage->isExist($tpl['path'])) {
+        try {
+            $drive = new \Google\Service\Drive($client);
+            $path = $storage->getAbsolutePath($tpl['path']);
+            $file_meta = new \Google\Service\Drive\DriveFile([
+                'name'     => $list['name'],
+                'mimeType' => 'application/vnd.google-apps.spreadsheet',
+                'parents'  => $folder_id ? [$folder_id] : null,
+            ]);
+            $created = $drive->files->create($file_meta, [
+                'data'                => @file_get_contents($path),
+                'mimeType'           => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'uploadType'         => 'multipart',
+                'fields'             => 'id, parents',
+                'supportsAllDrives'  => true,
+            ]);
+            $id = $created->id;
+            $created_via_drive = true; // created via Drive import from XLSX
+            if ($is_debug) {
+                echo "Created from XLSX template via Drive. Spreadsheet ID: $id\n\n";
+            }
+        } catch (\Google\Service\Exception $e_tpl) {
+            if ($is_debug) {
+                echo "Drive API import (template) error:\n";
+                echo $e_tpl->getCode() . " " . $e_tpl->getMessage() . "\n";
+                if (method_exists($e_tpl, 'getErrors')) {
+                    echo json_encode($e_tpl->getErrors(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n";
+                }
+                echo "Falling back to empty spreadsheet creation...\n";
+            }
+            // Fall through to normal creation below
+        }
+    }
 
-    return [CONTROLLER_STATUS_REDIRECT, 'https://docs.google.com/spreadsheets/d/' . $id];
+    if (!$id) {
+        $spreadsheet = new Spreadsheet([
+            'properties' => ['title' => $list['name']]
+        ]);
+        try {
+            $spreadsheet = $service->spreadsheets->create($spreadsheet, ['fields' => 'spreadsheetId']);
+            $id = $spreadsheet->spreadsheetId;
+        } catch (\Google\Service\Exception $e) {
+            // Fallback: create the spreadsheet using Drive API (sometimes Sheets create is blocked by policy)
+            if ($is_debug) {
+                echo "Sheets API create error:\n";
+                echo $e->getCode() . " " . $e->getMessage() . "\n";
+                if (method_exists($e, 'getErrors')) {
+                    echo json_encode($e->getErrors(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n";
+                }
+                echo "Trying Drive API fallback to create spreadsheet...\n";
+            }
+
+            try {
+                $drive = new \Google\Service\Drive($client);
+                $file_meta = new \Google\Service\Drive\DriveFile([
+                    'name' => $list['name'],
+                    'mimeType' => 'application/vnd.google-apps.spreadsheet',
+                    // Place into specific folder if provided
+                    'parents' => $folder_id ? [$folder_id] : null,
+                ]);
+                $created = $drive->files->create($file_meta, [
+                    'fields' => 'id, parents',
+                    'supportsAllDrives' => true,
+                ]);
+                $id = $created->id;
+                $created_via_drive = true;
+                if ($is_debug) {
+                    echo "Drive API create OK. New Spreadsheet ID: $id\n\n";
+                }
+            } catch (\Google\Service\Exception $e2) {
+                if ($is_debug) {
+                    echo "Drive API create error:\n";
+                    echo $e2->getCode() . " " . $e2->getMessage() . "\n";
+                    if (method_exists($e2, 'getErrors')) {
+                        echo json_encode($e2->getErrors(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n";
+                    }
+                    exit;
+                }
+                throw $e2;
+            }
+        }
+    }
+
+    // If we created via Sheets and a folder is specified, add the folder as a parent
+    if (!$created_via_drive && $folder_id) {
+        try {
+            $drive = isset($drive) ? $drive : new \Google\Service\Drive($client);
+            $drive->files->update($id, new \Google\Service\Drive\DriveFile(), [
+                'addParents' => $folder_id,
+                'supportsAllDrives' => true,
+                'fields' => 'id, parents',
+            ]);
+            if ($is_debug) {
+                echo "Added folder parent via Drive API: $folder_id\n\n";
+            }
+        } catch (\Google\Service\Exception $e3) {
+            if ($is_debug) {
+                echo "Drive API addParents error:\n";
+                echo $e3->getCode() . " " . $e3->getMessage() . "\n";
+                if (method_exists($e3, 'getErrors')) {
+                    echo json_encode($e3->getErrors(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n";
+                }
+                echo "\n";
+            }
+            // Non-fatal; continue
+        }
+    }
+
+    // Enable link sharing: anyone with the link can view
+    try {
+        $drive = isset($drive) ? $drive : new \Google\Service\Drive($client);
+        $perm = new \Google\Service\Drive\Permission([
+            'type' => 'anyone',
+            'role' => 'reader',
+            'allowFileDiscovery' => false, // anyone with the link, not publicly discoverable
+        ]);
+        $drive->permissions->create($id, $perm, [
+            'supportsAllDrives' => true,
+            'fields' => 'id',
+            'sendNotificationEmail' => false,
+        ]);
+        if ($is_debug) {
+            echo "Sharing set: anyone with the link (reader)\n\n";
+        }
+    } catch (\Google\Service\Exception $e4) {
+        if ($is_debug) {
+            echo "Drive API permissions.create error:\n";
+            echo $e4->getCode() . " " . $e4->getMessage() . "\n";
+            if (method_exists($e4, 'getErrors')) {
+                echo json_encode($e4->getErrors(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n";
+            }
+            echo "\n";
+        }
+        // Non-fatal; continue
+    }
+
+    $ok = fn_mwl_xlsx_fill_google_sheet($service, $id, $data, $is_debug);
+    if ($is_debug && !$ok) {
+        // Error details already printed by helper in debug mode
+        exit;
+    }
+
+    if ($is_debug) {
+        echo "Created Spreadsheet ID: $id\n";
+        echo "URL: https://docs.google.com/spreadsheets/d/$id\n";
+        exit;
+    }
+
+    fn_redirect('https://docs.google.com/spreadsheets/d/' . $id, true);
+    exit;
 }
 
 if ($mode === 'create_list' && $_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -296,4 +499,85 @@ if ($mode === 'add_list' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     exit(json_encode(['success' => $success, 'message' => $message]));
+}
+
+if ($mode === 'request_price_check' /* && $_SERVER['REQUEST_METHOD'] === 'POST' */) {
+    $item_id = (string) ($_REQUEST['item_id'] ?? '');
+    $field   = (string) ($_REQUEST['field'] ?? '');
+    $value   = (int) ($_REQUEST['value'] ?? '');
+
+
+    $company_id = fn_get_runtime_company_id();
+    $user_id    = $_SESSION['auth']['user_id'] ?? 0;
+    $user_name  = $_SESSION['auth']['user_id'] ? fn_get_user_name($user_id) : __('guest');
+    $storefront = fn_url('', 'C');
+    $product_url = fn_url('products.view?product_id=' . (int) $item_id, 'C');
+
+    // Сообщение, которое уйдёт в Telegram/email
+    $text = "Запрос проверки цены\n"
+          . "— URL: {$product_url}\n"
+        //   . "— Элемент: {$item_id}\n"
+        //   . "— Поле: {$field}\n"
+          . "— Текущая цена: {$value}\n"
+          . "— Пользователь: {$user_name} (ID {$user_id})\n"
+          . "— Время: " . date('Y-m-d H:i:s');
+
+    $ok = true;
+    $via = Registry::get('addons.mwl_xlsx.notify_via');
+
+    if ($via === 'telegram') {
+        $token   = trim((string) Registry::get('addons.mwl_xlsx.telegram_bot_token'));
+        $chat_id = trim((string) Registry::get('addons.mwl_xlsx.telegram_chat_id'));
+        if ($token && $chat_id) {
+            // Telegram Bot API
+            $url = "https://api.telegram.org/bot{$token}/sendMessage";
+            $resp = Http::post($url, [
+                'chat_id'    => $chat_id,
+                'text'       => $text,
+                'parse_mode' => 'HTML',
+            ], [
+                'timeout'    => 10,
+                'headers'    => [
+                    'Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8',
+                ],
+                'log_pre'    => 'mwl_xlsx.telegram_request',
+                'log_result' => true,
+            ]);
+            $ok = $resp && ($resp = json_decode($resp, true)) && !empty($resp['ok']);
+        } else {
+            $ok = false;
+        }
+    } else { // email
+        $to = trim((string) Registry::get('addons.mwl_xlsx.notify_email'));
+        if (!$to) {
+            $company_data = fn_get_company_communication_settings($company_id);
+            $to = $company_data['company_orders_department'] ?? Registry::get('settings.Company.company_orders_department');
+        }
+        $ok = Mailer::sendMail([
+            'to'        => $to,
+            'from'      => 'default_company_orders_department',
+            'data'      => [
+                'subject' => 'Запрос проверки цены',
+                'message' => nl2br($text),
+            ],
+            'template_code' => 'addons:mwl_xlsx/price_check',
+            'company_id'    => $company_id,
+            'is_html'       => true,
+        ], 'C', CART_LANGUAGE);
+    }
+
+    if ($ok) {
+        fn_set_notification(NotificationSeverity::NOTICE, '', __('mwl_xlsx.price_check_requested'));
+    } else {
+        fn_set_notification(NotificationSeverity::ERROR, '', __('mwl_xlsx.price_check_failed'));
+    }
+
+    // AJAX-ответ без перезагрузки
+    if (defined('AJAX_REQUEST')) {
+        // return [CONTROLLER_STATUS_OK, fn_url($_REQUEST['redirect_url'] ?? '/')];
+        exit; // Ничего не возвращаем — хватит нотификации
+    }
+
+    // return [CONTROLLER_STATUS_OK, fn_url($_REQUEST['redirect_url'] ?? '/')];
+    exit;
 }

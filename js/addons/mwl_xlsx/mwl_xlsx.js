@@ -18,12 +18,12 @@
 
   $(_.doc).on('click', '[data-ca-add-to-mwl_xlsx]', function() {
     var product_id = $(this).data('caProductId');
-    var $control = $(this).closest('.mwl_xlsx-control');
-    var $select = $control.find('[data-ca-list-select-xlsx]');
-    resolveListId($select, function(list_id) {
-      if (!list_id) { return; }
-      addToList(product_id, list_id);
+    populateAddDialogOptions();
+    $addDialog.data('caMwlProductId', product_id);
+    $addDialog.ceDialog('open', {
+      title: _.tr('mwl_xlsx.add_to_wishlist') || 'Add to media list'
     });
+    setTimeout(function() { $('#mwl_xlsx_add_select').focus(); }, 0);
     return false;
   });
 
@@ -59,6 +59,7 @@
   var $renameDialog = $('#mwl_xlsx_rename_dialog');
   var $deleteDialog = $('#mwl_xlsx_delete_dialog');
   var $newListDialog = $('#mwl_xlsx_new_list_dialog');
+  var $addDialog = $('#mwl_xlsx_add_dialog');
   if (!$newListDialog.length) {
     $('body').append(
       '<div id="mwl_xlsx_new_list_dialog" class="hidden">' +
@@ -73,6 +74,26 @@
       '</div>'
     );
     $newListDialog = $('#mwl_xlsx_new_list_dialog');
+  }
+
+  // Add-to-list dialog (select list + Add button)
+  if (!$addDialog.length) {
+    $('body').append(
+      '<div id="mwl_xlsx_add_dialog" class="hidden">' +
+      '<div class="ty-control-group">' +
+      '<label for="mwl_xlsx_add_select" class="ty-control-group__title">' + (_.tr('mwl_xlsx.select_list') || 'Select media list') + '</label>' +
+      '<select id="mwl_xlsx_add_select" class="ty-input-text mwl_xlsx-select" data-ca-list-select-xlsx></select>' +
+      '</div>' +
+      '<div class="ty-control-group">' +
+      '<a href="/media-lists/" target="_blank" class="">' + (_.tr('mwl_xlsx.my_lists') || 'My media lists') + '</a>' +
+      '</div>' +
+      '<div class="buttons-container">' +
+      '<button class="ty-btn ty-btn__primary" data-ca-mwl-add-dialog-confirm>' + (_.tr('add') || 'Add') + '</button>' +
+      '<button class="ty-btn" data-ca-mwl-add-dialog-cancel>' + (_.tr('cancel') || 'Cancel') + '</button>' +
+      '</div>' +
+      '</div>'
+    );
+    $addDialog = $('#mwl_xlsx_add_dialog');
   }
 
   // New list dialog controls
@@ -188,6 +209,53 @@
     $deleteDialog.ceDialog('close');
     return false;
   });
+
+  // Add dialog controls
+  $(_.doc).on('click', '[data-ca-mwl-add-dialog-cancel]', function() {
+    $addDialog.ceDialog('close');
+    return false;
+  });
+
+  $(_.doc).on('keydown', '#mwl_xlsx_add_select', function(e) {
+    if (e.keyCode === 13) { // Enter
+      $('[data-ca-mwl-add-dialog-confirm]').trigger('click');
+      e.preventDefault();
+    }
+  });
+
+  $(_.doc).on('click', '[data-ca-mwl-add-dialog-confirm]', function() {
+    var product_id = $addDialog.data('caMwlProductId');
+    var $select = $addDialog.find('[data-ca-list-select-xlsx]');
+    resolveListId($select, function(list_id) {
+      if (!list_id) { return; }
+      addToList(product_id, list_id);
+    });
+    $addDialog.ceDialog('close');
+    return false;
+  });
+
+  function populateAddDialogOptions() {
+    var $dlgSelect = $addDialog.find('[data-ca-list-select-xlsx]');
+    $dlgSelect.empty();
+    // Try to take options from any existing select on the page (excluding dialog itself)
+    var $source = $('[data-ca-list-select-xlsx]').not($dlgSelect).first();
+    if ($source.length && $source.find('option').length) {
+      $source.find('option').each(function() {
+        var val = this.value;
+        var txt = $(this).text();
+        $dlgSelect.append($('<option/>', { value: val, text: txt }));
+      });
+    } else {
+      // Fallback: only allow creating a new list
+      var newLabel = '+ ' + (_.tr('mwl_xlsx.new_list') || 'New media list');
+      $dlgSelect.append($('<option/>', { value: '_new', text: newLabel }));
+    }
+
+    var last_list_id = localStorage.getItem('mwl_last_list');
+    if (last_list_id && $dlgSelect.find('option[value="' + last_list_id + '"]').length) {
+      $dlgSelect.val(last_list_id);
+    }
+  }
 
   // Resolves selected list id, creating a new list if "_new" is chosen.
   // Calls cb(list_id) on success, cb(null) if cancelled or failed.

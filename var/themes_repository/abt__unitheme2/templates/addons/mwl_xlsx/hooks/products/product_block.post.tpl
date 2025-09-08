@@ -1,4 +1,4 @@
-{* design/themes/abt__unitheme2/templates/addons/mwl_xlsx/hooks/products/product_block.post.tpl *}
+{* "add all to list", design/themes/abt__unitheme2/templates/addons/mwl_xlsx/hooks/products/product_block.post.tpl *}
 {if fn_mwl_xlsx_user_can_access_lists($auth) && $addons.mwl_xlsx.show_extra_button == "Y"}
     {if ($runtime.controller == 'categories' && $runtime.mode == 'view')
     || ($runtime.controller == 'companies' && $runtime.mode == 'products')
