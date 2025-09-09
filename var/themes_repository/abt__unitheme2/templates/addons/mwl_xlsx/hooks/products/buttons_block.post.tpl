@@ -1,8 +1,11 @@
 {if fn_mwl_xlsx_user_can_access_lists($auth)}
-    {if ($runtime.controller == 'products' && $runtime.mode == 'view')
-    || ($runtime.controller == 'categories' && $runtime.mode == 'view')
-    || ($runtime.controller == 'companies' && $runtime.mode == 'products')
-    }
+    {assign var=is_lists value=(
+        ($runtime.controller == 'products' && $runtime.mode == 'view')
+        || ($runtime.controller == 'categories' && $runtime.mode == 'view')
+        || ($runtime.controller == 'companies' && $runtime.mode == 'products')
+    )}
+    {assign var=is_price_request value=(fn_mwl_xlsx_can_view_price($auth) && ($runtime.controller == 'products' && $runtime.mode == 'view'))}
+    {if $is_lists}
         {if $auth}
             {assign var=lists value=fn_mwl_xlsx_get_lists($auth.user_id)}
         {else}
@@ -28,19 +31,21 @@
         {assign var="item_id" value=$product.product_id}
         {assign var="field_name" value="price"}
         {assign var="field_value" value=$product.price}
-        <a
-            href="{"mwl_xlsx.request_price_check?item_id=`$item_id|escape:url`&field=`$field_name|escape:url`&value=`$field_value|escape:url`"|fn_url}"
-            data-ca-target-id="ajax_empty"
-            data-ca-scroll="false"
-            data-ca-ajax-preload="true"
-            data-ca-ajax-full-render="false"
-            class="request-price-check-btn ty-btn ty-btn__secondary cm-ajax cm-post hidden"
-        >
-            {__('mwl_xlsx.price_check_button')}
-        </a>
+        {if $is_price_request}
+            <a
+                href="{"mwl_xlsx.request_price_check?item_id=`$item_id|escape:url`&field=`$field_name|escape:url`&value=`$field_value|escape:url`"|fn_url}"
+                data-ca-target-id="ajax_empty"
+                data-ca-scroll="false"
+                data-ca-ajax-preload="true"
+                data-ca-ajax-full-render="false"
+                class="request-price-check-btn ty-btn ty-btn__secondary cm-ajax cm-post"
+            >
+                {__('mwl_xlsx.price_check_button')}
+            </a>
+            {* Невидимая цель для cm-ajax, чтобы не перерисовывать страницу *}
+            <div id="ajax_empty" class="hidden"></div>
+        {/if}
 
-        {* Невидимая цель для cm-ajax, чтобы не перерисовывать страницу *}
-        <div id="ajax_empty" class="hidden"></div>
 
     {elseif !empty($is_mwl_xlsx_view)}
         <div class="mwl_xlsx-control">

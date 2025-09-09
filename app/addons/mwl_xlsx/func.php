@@ -584,3 +584,34 @@ function fn_mwl_xlsx_fill_google_sheet(Sheets $sheets, $spreadsheet_id, array $d
     return true;
 }
 
+/**
+ * Переключает выбранную валюту пользователя и (по желанию) пересчитывает корзину.
+ */
+function fn_mwl_xlsx_switch_currency(string $target_currency, bool $recalc_cart = true): void
+{
+    if (AREA !== 'C') {
+        return;
+    }
+
+    // Есть ли такая валюта и активна ли она
+    $currencies = Registry::get('currencies') ?: [];
+    if (empty($currencies[$target_currency]) || $currencies[$target_currency]['status'] !== 'A') {
+        return; // не трогаем, если валюта недоступна
+    }
+
+    $current = $_SESSION['settings']['secondary_currencyC']['value'];
+    if ($current === $target_currency) {
+        return; // уже установлена
+    }
+
+    $_SESSION['settings']['secondary_currencyC']['value'] = $target_currency;
+    // Registry::set('secondary_currency', $target_currency);
+    // fn_set_cookie('currency', $target_currency, COOKIE_ALIVE_TIME);
+    // var_dump($_SESSION['settings']); exit;
+
+    if ($recalc_cart && !empty($_SESSION['cart'])) {
+        $cart = &$_SESSION['cart'];
+        $auth = &$_SESSION['auth'];
+        fn_calculate_cart_content($cart, $auth, 'S', true, 'F', true);
+    }
+}
