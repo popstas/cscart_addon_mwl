@@ -16,7 +16,7 @@
                     <td class="">{$l.products_count}</td>
                     <td class="">
                         <a class="mwl_xlsx-export" href="{fn_url("mwl_xlsx.export?list_id=`$l.list_id`")}" title="{__("mwl_xlsx.export")}"><img src="{$images_dir}/addons/mwl_xlsx/xlsx.svg" alt="{__("mwl_xlsx.export")}" width="20" height="20" /></a>
-                        <a class="mwl_xlsx-export" href="{fn_url("mwl_xlsx.export_google?list_id=`$l.list_id`")}" title="{__("mwl_xlsx.export_google")}"><img src="{$images_dir}/addons/mwl_xlsx/gsheet.svg" alt="{__("mwl_xlsx.export_google")}" width="20" height="20" /></a>
+                        <a class="mwl_xlsx-export" href="{fn_url("mwl_xlsx.export_google?list_id=`$l.list_id`")}" target="_blank" title="{__("mwl_xlsx.export_google")}"><img src="{$images_dir}/addons/mwl_xlsx/gsheet.svg" alt="{__("mwl_xlsx.export_google")}" width="20" height="20" /></a>
                         <a href="#" data-ca-mwl-rename title="{__("mwl_xlsx.rename")}"><i class="ut2-icon-more_vert"></i></a>
                         <a href="#" data-ca-mwl-delete title="{__("mwl_xlsx.remove")}"><i class="ut2-icon-baseline-delete"></i></a>
                     </td>

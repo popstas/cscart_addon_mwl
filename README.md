@@ -27,6 +27,11 @@
 - Provide Google API credentials JSON in the add-on settings to enable Google Sheets export.
 - Limit the number of items in a media list via the **Max list items** setting (default 50).
 
+### Shortcuts
+- Press "a" on a product page to open the "Add to media list" dialog.
+  - Works only when no input/select/textarea or contenteditable is focused.
+  - Requires the page to have a single visible `data-ca-add-to-mwl_xlsx` button.
+
 ### Add-on URLs
 - `/media-lists` – list user media lists.
 - `/media-lists/{list_id}` – view a media list.

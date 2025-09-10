@@ -5,6 +5,7 @@
         || ($runtime.controller == 'companies' && $runtime.mode == 'products')
     )}
     {assign var=is_price_request value=(fn_mwl_xlsx_can_view_price($auth) && ($runtime.controller == 'products' && $runtime.mode == 'view'))}
+    {assign var="view_layout" value=$selected_layout|default:$smarty.request.layout|default:$smarty.cookies.selected_layout|default:$settings.Appearance.default_products_view}
     {if $is_lists}
         {if $auth}
             {assign var=lists value=fn_mwl_xlsx_get_lists($auth.user_id)}
@@ -20,11 +21,17 @@
                 <option value="_new">+ {__("mwl_xlsx.new_list")}</option>
             </select>
             <button class="ty-btn" data-ca-add-to-mwl_xlsx data-ca-product-id="{$product.product_id}">
-                {__("mwl_xlsx.add_to_wishlist")}
+                {if $view_layout == "products_without_options" || $view_layout == "products_multicolumns"}
+                    {__("mwl_xlsx.add_to_wishlist")}
+                {else}
+                    <i class="ut2-icon-article"></i>
+                {/if}
             </button>
 
-            <span class="ty-price-hint cm-tooltip ty-icon-help-circle" title="{__("mwl_xlsx.tooltip")}">
-            </span>
+            {if $view_layout == "products_without_options"}
+                <span class="ty-price-hint cm-tooltip ty-icon-help-circle" title="{__("mwl_xlsx.tooltip")}">
+                </span>
+            {/if}
         </div>
 
         {* Запросить проверку цены - Предположим, у нас есть переменные $item_id, $field_name, $field_value *}

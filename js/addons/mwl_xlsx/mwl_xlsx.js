@@ -7,6 +7,30 @@
         $select.val(last_list_id).trigger('change');
       }
     });
+
+    // Move request-price-check button into the feature row value if present on product page
+    const moveRequestPrice = true;
+    if (moveRequestPrice) {
+      try {
+        var $opener = $('#opener_ut2_features_dialog_552', context);
+        if (!$opener.length) { $opener = $('#opener_ut2_features_dialog_552'); }
+        var $btn = $('.request-price-check-btn', context);
+        if (!$btn.length) { $btn = $('.request-price-check-btn'); }
+        if ($opener.length && $btn.length) {
+          var $feature = $opener.first().closest('.ty-product-feature');
+          if ($feature.length) {
+            var $value = $feature.find('.ty-product-feature__value').first();
+            if ($value.length) {
+              $value.append($btn.first());
+            } else {
+              $btn.first().insertAfter($opener.first());
+            }
+          } else {
+            $btn.first().insertAfter($opener.first());
+          }
+        }
+      } catch (e) {}
+    }
   });
 
   $(_.doc).on('change', '[data-ca-list-select-xlsx]', function() {
@@ -142,6 +166,8 @@
       '</div>' +
       '<div class="ty-control-group">' +
       '<a href="/media-lists/" target="_blank" class="">' + (_.tr('mwl_xlsx.my_lists') || 'My media lists') + '</a>' +
+      ' · ' +
+      '<a href="#" target="_blank" class="hidden" id="mwl_xlsx_go_to_list_link">' + (_.tr('mwl_xlsx.go_to_list') || 'Go to media list') + '</a>' +
       '</div>' +
       '<div class="buttons-container">' +
       '<button class="ty-btn ty-btn__primary" data-ca-mwl-add-dialog-confirm>' + (_.tr('add') || 'Add') + '</button>' +
@@ -395,6 +421,25 @@
       });
     }
     localStorage.setItem('mwl_last_list', list_id);
+
+    try {
+      var $link = $('#mwl_xlsx_go_to_list_link');
+      if ($link.length) {
+        if (list_id && list_id !== '_new') {
+          var goLabel = _.tr('mwl_xlsx.go_to_list') || 'Go to';
+          var displayName = list_name || (function() {
+            var $opt = $('[data-ca-list-select-xlsx] option[value="' + list_id + '"]').first();
+            var t = $opt.length ? $opt.text() : '';
+            return t || (_.tr('mwl_xlsx.default_list_name') || 'Media list');
+          })();
+          $link.attr('href', '/media-lists/' + list_id)
+            .text(goLabel + ' ' + displayName)
+            .removeClass('hidden');
+        } else {
+          $link.addClass('hidden');
+        }
+      }
+    } catch (e) {}
   }
 
   function addProductsToList(product_ids, list_id) {
@@ -408,6 +453,16 @@
       callback: function(data) {
         data = parseResponse(data);
         var message = (data && data.message) ? data.message : (_.tr('mwl_xlsx.added_plain') || 'Added to media list');
+        if (!data || !data.message) {
+          var goLabel = _.tr('mwl_xlsx.go_to_list') || 'Go to';
+          var listName = (function() {
+            var $opt = $('[data-ca-list-select-xlsx] option[value="' + list_id + '"]').first();
+            var t = $opt.length ? $opt.text() : '';
+            return t || (_.tr('mwl_xlsx.default_list_name') || 'Media list');
+          })();
+          var safeName = listName.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;').replace(/'/g, '&#39;');
+          message += ' <a target="_blank" href="/media-lists/' + list_id + '">' + goLabel + ' ' + safeName + '</a>';
+        }
         $.ceNotification('show', {
           type: 'N',
           title: '',
@@ -426,6 +481,16 @@
       callback: function(data) {
         data = parseResponse(data);
         var message = (data && data.message) ? data.message : (_.tr('mwl_xlsx.added_plain') || 'Added to media list');
+        if (!data || !data.message) {
+          var goLabel = _.tr('mwl_xlsx.go_to_list') || 'Go to';
+          var listName = (function() {
+            var $opt = $('[data-ca-list-select-xlsx] option[value="' + list_id + '"]').first();
+            var t = $opt.length ? $opt.text() : '';
+            return t || (_.tr('mwl_xlsx.default_list_name') || 'Media list');
+          })();
+          var safeName = listName.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;').replace(/'/g, '&#39;');
+          message += ' <a target="_blank" href="/media-lists/' + list_id + '">' + goLabel + ' ' + safeName + '</a>';
+        }
         $.ceNotification('show', {
           type: 'N',
           title: '',

@@ -227,3 +227,7 @@ msgstr "Notification email"
 msgctxt "Languages::mwl_xlsx.added_short"
 msgid "Added"
 msgstr "Added"
+
+msgctxt "Languages::mwl_xlsx.go_to_list"
+msgid "Go to"
+msgstr "Go to"

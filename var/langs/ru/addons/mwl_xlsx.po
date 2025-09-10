@@ -201,3 +201,7 @@ msgstr "Не удалось отправить запрос на проверк�
 msgctxt "Languages::mwl_xlsx.added_short"
 msgid "Added"
 msgstr "Добавлено"
+
+msgctxt "Languages::mwl_xlsx.go_to_list"
+msgid "Go to"
+msgstr "Перейти в"

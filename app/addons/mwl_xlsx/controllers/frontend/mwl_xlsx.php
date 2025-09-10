@@ -86,10 +86,8 @@ if ($mode === 'export') {
         require_once $vendor;
     }
 
-    $products = fn_mwl_xlsx_get_list_products($list_id, CART_LANGUAGE);
-
-    $feature_names = fn_mwl_xlsx_collect_feature_names($products, CART_LANGUAGE);
-    $feature_ids = array_keys($feature_names);
+    $list_data = fn_mwl_xlsx_get_list_data($list_id, $auth, CART_LANGUAGE);
+    $data = $list_data['data'];
 
     $storage    = Storage::instance('custom_files');
     $company_id = fn_get_runtime_company_id();
@@ -102,21 +100,6 @@ if ($mode === 'export') {
     } else {
         $xlsx = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $xlsx->getActiveSheet();
-    }
-
-    // Include Price column after Name
-    $header = array_merge([__('name'), __('price')], array_values($feature_names));
-    $data = [$header];
-
-    $settings = fn_mwl_xlsx_get_user_settings($auth);
-    foreach ($products as $p) {
-        $price_str = fn_mwl_xlsx_transform_price_for_export($p['price'], $settings);
-        $row = [$p['product'], $price_str];
-        $values = fn_mwl_xlsx_get_feature_text_values($p['product_features'] ?? [], CART_LANGUAGE);
-        foreach ($feature_ids as $feature_id) {
-            $row[] = $values[$feature_id] ?? null;
-        }
-        $data[] = $row;
     }
 
     $sheet->fromArray($data, null, 'A1');
@@ -162,76 +145,10 @@ if ($mode === 'export_google') {
     $client->setScopes([Sheets::SPREADSHEETS, \Google\Service\Drive::DRIVE_FILE]);
     $folder_id = trim((string) Registry::get('addons.mwl_xlsx.google_drive_folder_id'));
 
-    // Optional debug mode: add `&debug=1` to the URL to print diagnostic info and errors
-    $is_debug = isset($_REQUEST['debug']);
-    if ($is_debug) {
-        $debug_info = [
-            'creds_type'     => $auth_config['type'] ?? null,
-            'client_email'   => $auth_config['client_email'] ?? null,
-            'project_id'     => $auth_config['project_id'] ?? null,
-            'has_private_key'=> isset($auth_config['private_key']),
-            'scopes'         => [Sheets::SPREADSHEETS, \Google\Service\Drive::DRIVE_FILE],
-            'list_title'     => $list['name'],
-            'folder_id'      => $folder_id ?: null,
-        ];
-        header('Content-Type: text/plain; charset=UTF-8');
-        echo "Debug info before API calls:\n";
-        echo json_encode($debug_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n\n";
-
-        // Force token retrieval for service account and show token metadata
-        try {
-            $token = $client->fetchAccessTokenWithAssertion();
-            echo "fetchAccessTokenWithAssertion() OK\n";
-            $safe_token = $token;
-            if (isset($safe_token['access_token'])) {
-                $safe_token['access_token'] = substr($safe_token['access_token'], 0, 20) . '...';
-            }
-            echo json_encode($safe_token, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n\n";
-        } catch (\Throwable $e) {
-            echo "Token fetch error:\n";
-            echo get_class($e) . ": " . $e->getMessage() . "\n\n";
-        }
-
-        // Quick Drive API probe to verify access and API enablement
-        try {
-            $drive = new \Google\Service\Drive($client);
-            $files = $drive->files->listFiles([
-                'pageSize' => 1,
-                'fields' => 'files(id,name,parents)',
-                'supportsAllDrives' => true,
-                'includeItemsFromAllDrives' => true,
-            ]);
-            echo "Drive API listFiles OK. Sample file(s):\n";
-            echo json_encode($files->getFiles(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n\n";
-        } catch (\Google\Service\Exception $e) {
-            echo "Drive API listFiles error:\n";
-            echo $e->getCode() . " " . $e->getMessage() . "\n";
-            if (method_exists($e, 'getErrors')) {
-                echo json_encode($e->getErrors(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n";
-            }
-            echo "\n";
-        }
-    }
-
     $service = new Sheets($client);
 
-    $products = fn_mwl_xlsx_get_list_products($list_id, CART_LANGUAGE);
-    $feature_names = fn_mwl_xlsx_collect_feature_names($products, CART_LANGUAGE);
-    $feature_ids = array_keys($feature_names);
-
-    $header = array_merge([__('name'), __('price')], array_values($feature_names));
-    $data = [$header];
-
-    $settings = fn_mwl_xlsx_get_user_settings($auth);
-    foreach ($products as $p) {
-        $price_str = fn_mwl_xlsx_transform_price_for_export($p['price'], $settings);
-        $row = [$p['product'], $price_str];
-        $values = fn_mwl_xlsx_get_feature_text_values($p['product_features'] ?? [], CART_LANGUAGE);
-        foreach ($feature_ids as $feature_id) {
-            $row[] = $values[$feature_id] ?? null;
-        }
-        $data[] = $row;
-    }
+    $list_data = fn_mwl_xlsx_get_list_data($list_id, $auth, CART_LANGUAGE);
+    $data = $list_data['data'];
 
     // Try to create the spreadsheet from an XLSX template (if configured)
     $storage    = Storage::instance('custom_files');
@@ -258,18 +175,7 @@ if ($mode === 'export_google') {
             ]);
             $id = $created->id;
             $created_via_drive = true; // created via Drive import from XLSX
-            if ($is_debug) {
-                echo "Created from XLSX template via Drive. Spreadsheet ID: $id\n\n";
-            }
         } catch (\Google\Service\Exception $e_tpl) {
-            if ($is_debug) {
-                echo "Drive API import (template) error:\n";
-                echo $e_tpl->getCode() . " " . $e_tpl->getMessage() . "\n";
-                if (method_exists($e_tpl, 'getErrors')) {
-                    echo json_encode($e_tpl->getErrors(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n";
-                }
-                echo "Falling back to empty spreadsheet creation...\n";
-            }
             // Fall through to normal creation below
         }
     }
@@ -283,15 +189,6 @@ if ($mode === 'export_google') {
             $id = $spreadsheet->spreadsheetId;
         } catch (\Google\Service\Exception $e) {
             // Fallback: create the spreadsheet using Drive API (sometimes Sheets create is blocked by policy)
-            if ($is_debug) {
-                echo "Sheets API create error:\n";
-                echo $e->getCode() . " " . $e->getMessage() . "\n";
-                if (method_exists($e, 'getErrors')) {
-                    echo json_encode($e->getErrors(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n";
-                }
-                echo "Trying Drive API fallback to create spreadsheet...\n";
-            }
-
             try {
                 $drive = new \Google\Service\Drive($client);
                 $file_meta = new \Google\Service\Drive\DriveFile([
@@ -306,18 +203,7 @@ if ($mode === 'export_google') {
                 ]);
                 $id = $created->id;
                 $created_via_drive = true;
-                if ($is_debug) {
-                    echo "Drive API create OK. New Spreadsheet ID: $id\n\n";
-                }
             } catch (\Google\Service\Exception $e2) {
-                if ($is_debug) {
-                    echo "Drive API create error:\n";
-                    echo $e2->getCode() . " " . $e2->getMessage() . "\n";
-                    if (method_exists($e2, 'getErrors')) {
-                        echo json_encode($e2->getErrors(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n";
-                    }
-                    exit;
-                }
                 throw $e2;
             }
         }
@@ -332,18 +218,7 @@ if ($mode === 'export_google') {
                 'supportsAllDrives' => true,
                 'fields' => 'id, parents',
             ]);
-            if ($is_debug) {
-                echo "Added folder parent via Drive API: $folder_id\n\n";
-            }
         } catch (\Google\Service\Exception $e3) {
-            if ($is_debug) {
-                echo "Drive API addParents error:\n";
-                echo $e3->getCode() . " " . $e3->getMessage() . "\n";
-                if (method_exists($e3, 'getErrors')) {
-                    echo json_encode($e3->getErrors(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n";
-                }
-                echo "\n";
-            }
             // Non-fatal; continue
         }
     }
@@ -361,27 +236,17 @@ if ($mode === 'export_google') {
             'fields' => 'id',
             'sendNotificationEmail' => false,
         ]);
-        if ($is_debug) {
-            echo "Sharing set: anyone with the link (reader)\n\n";
-        }
     } catch (\Google\Service\Exception $e4) {
-        if ($is_debug) {
-            echo "Drive API permissions.create error:\n";
-            echo $e4->getCode() . " " . $e4->getMessage() . "\n";
-            if (method_exists($e4, 'getErrors')) {
-                echo json_encode($e4->getErrors(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n";
-            }
-            echo "\n";
-        }
         // Non-fatal; continue
     }
 
-    $ok = fn_mwl_xlsx_fill_google_sheet($service, $id, $data, $is_debug);
-    if ($is_debug && !$ok) {
-        // Error details already printed by helper in debug mode
+    $ok = fn_mwl_xlsx_fill_google_sheet($service, $id, $data);
+    if (!$ok) {
+        echo "Error filling Google Sheet\n";
         exit;
     }
 
+    $is_debug = false;
     if ($is_debug) {
         echo "Created Spreadsheet ID: $id\n";
         echo "URL: https://docs.google.com/spreadsheets/d/$id\n";

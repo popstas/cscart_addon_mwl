@@ -410,11 +410,44 @@ function fn_mwl_xlsx_get_feature_text_values(array $features, $lang_code = CART_
         } elseif (!empty($feature['variants'])) {
             $values[$feature_id] = implode(', ', array_column($feature['variants'], 'variant'));
         } else {
-            $values[$feature_id] = null;
+            $values[$feature_id] = '';
         }
     }
 
     return $values;
+}
+
+/**
+ * Build tabular data (header + rows) for a media list export.
+ *
+ * @param int   $list_id
+ * @param array $auth
+ * @param string $lang_code
+ *
+ * @return array{data: array}
+ */
+function fn_mwl_xlsx_get_list_data($list_id, array $auth, $lang_code = CART_LANGUAGE)
+{
+    $products = fn_mwl_xlsx_get_list_products((int) $list_id, $lang_code);
+    $feature_names = fn_mwl_xlsx_collect_feature_names($products, $lang_code);
+    $feature_ids = array_keys($feature_names);
+
+    // Header: Name, Price, then feature names
+    $header = array_merge([__('name'), __('price')], array_values($feature_names));
+    $data = [$header];
+
+    $settings = fn_mwl_xlsx_get_user_settings($auth);
+    foreach ($products as $p) {
+        $price_str = fn_mwl_xlsx_transform_price_for_export($p['price'], $settings);
+        $row = [$p['product'], $price_str];
+        $values = fn_mwl_xlsx_get_feature_text_values($p['product_features'] ?? [], $lang_code);
+        foreach ($feature_ids as $feature_id) {
+            $row[] = $values[$feature_id] ?? null;
+        }
+        $data[] = $row;
+    }
+
+    return ['data' => $data];
 }
 
 function fn_mwl_xlsx_add($list_id, $product_id, $options = [], $amount = 1)
@@ -516,23 +549,53 @@ function fn_mwl_xlsx_uninstall()
  */
 function fn_mwl_xlsx_fill_google_sheet(Sheets $sheets, $spreadsheet_id, array $data, $debug = false)
 {
+    // Limit to 50 rows total (including headers)
+    $data = array_slice($data, 0, 51);
+
+    // Normalize rows to indexed arrays; coerce nulls to empty strings
+    // Google Sheets API expects arrays-of-arrays, not associative arrays
+    $normalized = [];
+    foreach ($data as $row) {
+        if ($row instanceof \Traversable) {
+            $row = iterator_to_array($row);
+        } elseif (is_object($row)) {
+            $row = (array) $row;
+        }
+
+        if (is_array($row)) {
+            $row = array_values($row);
+        } else {
+            // Coerce scalars to single-cell rows
+            $row = [$row];
+        }
+
+        foreach ($row as $i => $cell) {
+            if ($cell === null) {
+                $row[$i] = '';
+            }
+        }
+
+        $normalized[] = $row;
+    }
+    $data = $normalized;
+
     // 1) Write all values starting from A1
     try {
-        $body = new ValueRange(['values' => $data]);
+        $body = new ValueRange([
+            'majorDimension' => 'ROWS',
+            'values' => $data,
+        ]);
         $sheets->spreadsheets_values->update($spreadsheet_id, 'A1', $body, ['valueInputOption' => 'RAW']);
     } catch (\Google\Service\Exception $e) {
-        if ($debug) {
-            header('Content-Type: text/plain; charset=UTF-8');
-            echo "Sheets API values.update error:\n";
-            echo $e->getCode() . " " . $e->getMessage() . "\n";
-            if (method_exists($e, 'getErrors')) {
-                echo json_encode($e->getErrors(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n";
-            }
-            echo "Created Spreadsheet ID: $spreadsheet_id\n";
-            echo "URL: https://docs.google.com/spreadsheets/d/$spreadsheet_id\n";
-            return false;
+        header('Content-Type: text/plain; charset=UTF-8');
+        echo "Sheets API values.update error:\n";
+        echo $e->getCode() . " " . $e->getMessage() . "\n";
+        if (method_exists($e, 'getErrors')) {
+            echo json_encode($e->getErrors(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n";
         }
-        throw $e;
+        echo "Created Spreadsheet ID: $spreadsheet_id\n";
+        echo "URL: https://docs.google.com/spreadsheets/d/$spreadsheet_id\n";
+        return false;
     }
 
     // 2) Auto-resize columns (best effort)
