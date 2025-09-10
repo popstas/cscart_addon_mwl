@@ -16,6 +16,25 @@
     }
   });
 
+  // Track last hovered product block's Add button on product list pages (cached, throttled)
+  var $currentProductAddBtn = null;
+  var mwlHoverTs = 0;
+  $(_.doc).on('mouseenter', '.ty-product-list', function() {
+    var now = Date.now();
+    if (now - mwlHoverTs < 50) { return; }
+    mwlHoverTs = now;
+
+    var $container = $(this);
+    var $btn = $container.data('mwlAddBtn');
+    if (!$btn || !$btn.length || !$.contains(_.doc, $btn[0])) {
+      $btn = $container.find('[data-ca-add-to-mwl_xlsx]').filter(':visible').first();
+      $container.data('mwlAddBtn', $btn);
+    }
+    if ($btn && $btn.length && $btn.is(':visible')) {
+      $currentProductAddBtn = $btn;
+    }
+  });
+
   $(_.doc).on('click', '[data-ca-add-to-mwl_xlsx]', function() {
     var product_id = $(this).data('caProductId');
     populateAddDialogOptions();
@@ -37,6 +56,43 @@
       addProductsToList(product_ids, list_id);
     });
     return false;
+  });
+
+  // Global hotkey: press "a" to open Add-to-media-list dialog
+  // Prefers last clicked product in lists; otherwise if exactly one target is visible
+  $(_.doc).on('keydown.mwl_xlsx', function(e) {
+    var key = e.key || e.keyCode;
+    var isA = key === 'a' || key === 'A' || key === 65;
+    if (!isA) { return; }
+    if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.repeat || e.isComposing) { return; }
+
+    // If Add dialog is already open, do nothing
+    if ($addDialog && $addDialog.length && $addDialog.is(':visible')) { return; }
+
+    var active = _.doc.activeElement;
+    if (active) {
+      var $active = $(active);
+      if (
+        $active.is('input, textarea, select') ||
+        $active.is('[contenteditable], [contenteditable="true"]') ||
+        active.isContentEditable
+      ) {
+        return;
+      }
+    }
+
+    // If we have a stored product button from product lists, use it
+    if ($currentProductAddBtn && $currentProductAddBtn.length && $.contains(_.doc, $currentProductAddBtn[0]) && $currentProductAddBtn.is(':visible')) {
+      $currentProductAddBtn.trigger('click');
+      e.preventDefault();
+      return;
+    }
+
+    var $targets = $('[data-ca-add-to-mwl_xlsx]:visible');
+    if ($targets.length === 1) {
+      $targets.first().trigger('click');
+      e.preventDefault();
+    }
   });
 
   $(_.doc).on('click', '[data-ca-remove-from-mwl_xlsx]', function() {
@@ -223,6 +279,17 @@
     }
   });
 
+  // In Add-dialog: press "a" to confirm
+  $(_.doc).on('keydown', '#mwl_xlsx_add_dialog', function(e) {
+    var key = e.key || e.keyCode;
+    var isA = key === 'a' || key === 'A' || key === 65;
+    if (!isA) { return; }
+    if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.repeat || e.isComposing) { return; }
+    $addDialog.find('[data-ca-mwl-add-dialog-confirm]').trigger('click');
+    // $addDialog.ceDiaalog('close');
+    e.preventDefault();
+  });
+
   $(_.doc).on('click', '[data-ca-mwl-add-dialog-confirm]', function() {
     var product_id = $addDialog.data('caMwlProductId');
     var $select = $addDialog.find('[data-ca-list-select-xlsx]');
@@ -231,6 +298,7 @@
       addToList(product_id, list_id);
     });
     $addDialog.ceDialog('close');
+
     return false;
   });
 
@@ -365,6 +433,12 @@
           message_state: 'I',
           overlay: true
         });
+
+        // Update last hovered product list button text to "Added"
+        if ($currentProductAddBtn && $currentProductAddBtn.length && $.contains(_.doc, $currentProductAddBtn[0])) {
+          var addedShort = _.tr('mwl_xlsx.added_short') || 'Added';
+          $currentProductAddBtn.text(addedShort);
+        }
       }
     });
   }
