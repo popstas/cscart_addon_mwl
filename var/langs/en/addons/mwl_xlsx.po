@@ -231,3 +231,11 @@ msgstr "Added"
 msgctxt "Languages::mwl_xlsx.go_to_list"
 msgid "Go to"
 msgstr "Go to"
+
+msgctxt "Languages::mwl_xlsx.your_status"
+msgid "Your status"
+msgstr "Your status"
+
+msgctxt "Languages::mwl_xlsx.status_tooltip"
+msgid "Your status is [status]"
+msgstr "Your status is [status]"

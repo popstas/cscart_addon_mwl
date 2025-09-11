@@ -335,6 +335,92 @@ function fn_mwl_xlsx_smarty_media_lists_count($params, \Smarty_Internal_Template
     return $count;
 }
 
+function fn_mwl_xlsx_get_customer_status()
+{
+    $allowed_usergroups = ['bronze', 'silver', 'gold', 'platinum'];
+
+    $status = '';
+    $auth = Tygh::$app['session']['auth'] ?? [];
+    $user_id = $auth['user_id'] ?? 0;
+
+    $user_data = fn_get_user_info($user_id);
+    $user_fields = $user_data['fields'] ?? [];
+    
+    $user_usergroups = $user_data['usergroups'] ?? [];
+    $user_usergroups_ids = array_column($user_usergroups, 'usergroup_id');
+
+    // global usergroups
+    $usergroups = fn_get_usergroups();
+    foreach ($usergroups as $usergroup) {
+        if (!in_array($usergroup['usergroup'], $allowed_usergroups)) {
+            continue;
+        }
+        if (in_array($usergroup['usergroup_id'], $user_usergroups_ids)) {
+            $status = $usergroup['usergroup'];
+            break;
+        }
+    }
+    // var_dump($user_usergroups_ids);
+    // exit;
+
+    // $profile_fields = fn_get_profile_fields();
+    // $status_field_index = array_search('status', array_column($profile_fields['C'], 'field_name'));
+    // $status_array_key = array_keys($profile_fields['C'])[$status_field_index];
+
+    // $status_field = $profile_fields['C'][$status_array_key] ?? [];
+    // $status_values = $status_field['values'] ?? [];
+    // $status_field_id = $status_field['field_id'] ?? 0;
+
+    // $user_status_id = $user_fields[$status_field_id] ?? 0;
+    // if ($user_status_id) {
+    //     $status = $status_values[$user_status_id] ?? '';
+    // }
+
+    return $status;
+}
+
+function smarty_function_mwl_xlsx_get_customer_status(array $params, \Smarty_Internal_Template $template)
+{
+    $status = fn_mwl_xlsx_get_customer_status();
+    if (!empty($params['assign'])) {
+        $template->assign($params['assign'], $status);
+        return '';
+    }
+
+    return $status;
+}
+
+function smarty_function_mwl_xlsx_get_customer_status_text(array $params, \Smarty_Internal_Template $template)
+{
+    $status = fn_mwl_xlsx_get_customer_status();
+    $status_map = [
+        'bronze' => 'Бронзовый партнер',
+        'silver' => 'Серебряный партнер',
+        'gold' => 'Золотой партнер',
+        'platinum' => 'Платиновый партнер',
+    ];
+    $status_map_en = [
+        'bronze' => 'Bronze partner',
+        'silver' => 'Silver partner',
+        'gold' => 'Gold partner',
+        'platinum' => 'Platinum partner',
+    ];
+    $lang_code = Tygh::$app['session']['lang_code'] ?? CART_LANGUAGE;
+    if ($lang_code == 'ru') {
+        $status = $status_map[$status] ?? $status;
+    } else {
+        $status = $status_map_en[$status] ?? $status;
+    }
+
+    if (!empty($params['assign'])) {
+        $template->assign($params['assign'], $status);
+        return '';
+    }
+
+    return $status;
+}
+
+
 function fn_mwl_xlsx_get_list_products($list_id, $lang_code = CART_LANGUAGE)
 {
     $items = db_get_hash_array(

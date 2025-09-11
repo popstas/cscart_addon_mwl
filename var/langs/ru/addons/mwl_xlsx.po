@@ -205,3 +205,11 @@ msgstr "Добавлено"
 msgctxt "Languages::mwl_xlsx.go_to_list"
 msgid "Go to"
 msgstr "Перейти в"
+
+msgctxt "Languages::mwl_xlsx.your_status"
+msgid "Your status"
+msgstr "Ваш статус"
+
+msgctxt "Languages::mwl_xlsx.status_tooltip"
+msgid "Your status is [status]"
+msgstr "Ваш статус: [status]"

@@ -155,6 +155,11 @@ if ($mode === 'export_google') {
     $company_id = fn_get_runtime_company_id();
     $tpl        = db_get_row('SELECT path FROM ?:mwl_xlsx_templates WHERE company_id = ?i', (int) $company_id);
 
+    $user = fn_get_user_info($auth['user_id']);
+    $user_company = $user['company'] ?? '';
+
+    $doc_title = $user_company ? $user_company . ' - ' . $list['name'] : $list['name'];
+
     $id = null;
     $created_via_drive = false;
     if ($tpl && $storage->isExist($tpl['path'])) {
@@ -162,7 +167,7 @@ if ($mode === 'export_google') {
             $drive = new \Google\Service\Drive($client);
             $path = $storage->getAbsolutePath($tpl['path']);
             $file_meta = new \Google\Service\Drive\DriveFile([
-                'name'     => $list['name'],
+                'name'     => $doc_title,
                 'mimeType' => 'application/vnd.google-apps.spreadsheet',
                 'parents'  => $folder_id ? [$folder_id] : null,
             ]);
@@ -182,7 +187,7 @@ if ($mode === 'export_google') {
 
     if (!$id) {
         $spreadsheet = new Spreadsheet([
-            'properties' => ['title' => $list['name']]
+            'properties' => ['title' => $doc_title]
         ]);
         try {
             $spreadsheet = $service->spreadsheets->create($spreadsheet, ['fields' => 'spreadsheetId']);
@@ -192,7 +197,7 @@ if ($mode === 'export_google') {
             try {
                 $drive = new \Google\Service\Drive($client);
                 $file_meta = new \Google\Service\Drive\DriveFile([
-                    'name' => $list['name'],
+                    'name' => $doc_title,
                     'mimeType' => 'application/vnd.google-apps.spreadsheet',
                     // Place into specific folder if provided
                     'parents' => $folder_id ? [$folder_id] : null,

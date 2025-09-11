@@ -33,7 +33,38 @@
 }
 
 .request-price-check-btn {
-    margin-left: 0 !important;
+    margin-left:2px !important;
     padding: 0 5px !important;
     height: 26px !important;
+}
+
+.mwl-status-label {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #fff;
+}
+
+// Status gradients mixin
+.status-gradient(@start-color, @end-color) {
+    background: linear-gradient(135deg, @start-color 0%, @end-color 100%);
+}
+
+/* Status labels */
+.mwl-status-label {
+    transition: background 0.5s ease;
+    &.bronze { .status-gradient(#cd7f32, #a97142); }
+    &.silver { .status-gradient(#dcdcdc, #a9a9a9); }
+    &.gold { .status-gradient(#ffd700, #daa520); }
+    &.platinum { .status-gradient(#e5e4e2, #b5b5b5); }
+
+    &:hover {
+        color: #fff;
+        &.bronze { .status-gradient(#a97142, #cd7f32); }
+        &.silver { .status-gradient(#a9a9a9, #dcdcdc); }
+        &.gold { .status-gradient(#daa520, #ffd700); }
+        &.platinum { .status-gradient(#b5b5b5, #e5e4e2); }    
+    }
 }
