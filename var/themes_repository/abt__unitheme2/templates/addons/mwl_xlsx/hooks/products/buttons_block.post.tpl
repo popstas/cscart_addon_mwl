@@ -1,6 +1,6 @@
 {if fn_mwl_xlsx_user_can_access_lists($auth)}
     {assign var=is_lists value=(
-        ($runtime.controller == 'products' && $runtime.mode == 'view')
+        ($runtime.controller == 'products' && ($runtime.mode == 'view' || $runtime.mode == 'search'))
         || ($runtime.controller == 'categories' && $runtime.mode == 'view')
         || ($runtime.controller == 'companies' && $runtime.mode == 'products')
     )}
