@@ -3,6 +3,7 @@
         ($runtime.controller == 'products' && ($runtime.mode == 'view' || $runtime.mode == 'search'))
         || ($runtime.controller == 'categories' && $runtime.mode == 'view')
         || ($runtime.controller == 'companies' && $runtime.mode == 'products')
+        || ($runtime.controller == 'index' && $runtime.mode == 'index')
     )}
     {assign var=is_price_request value=(fn_mwl_xlsx_can_view_price($auth) && ($runtime.controller == 'products' && $runtime.mode == 'view'))}
     {assign var="view_layout" value=$selected_layout|default:$smarty.request.layout|default:$smarty.cookies.selected_layout|default:$settings.Appearance.default_products_view}
