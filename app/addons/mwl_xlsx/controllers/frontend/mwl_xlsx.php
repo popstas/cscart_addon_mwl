@@ -43,56 +43,49 @@ if ($mode === 'settings') {
 }
 
 if ($mode === 'view') {
+    // get list data
     $list_id = (int) $_REQUEST['list_id'];
-    if (!empty($auth['user_id'])) {
-        $list = db_get_row("SELECT * FROM ?:mwl_xlsx_lists WHERE list_id = ?i AND user_id = ?i", $list_id, $auth['user_id']);
-    } else {
-        $list = db_get_row("SELECT * FROM ?:mwl_xlsx_lists WHERE list_id = ?i AND session_id = ?s", $list_id, Tygh::$app['session']->getID());
-    }
-    if ($list) {
-        $products = fn_mwl_xlsx_get_list_products($list_id, CART_LANGUAGE);
-        Tygh::$app['view']->assign('is_mwl_xlsx_view', true);
-        Tygh::$app['view']->assign('list', $list);
-        Tygh::$app['view']->assign('products', $products);
-        Tygh::$app['view']->assign('search', [
-            'sort_by'    => 'popularity',
-            'sort_order' => 'desc',
-            'layout'     => 'products_without_options',
-        ]);
-        Tygh::$app['view']->assign('page_title', $list['name']);
-        Tygh::$app['view']->assign('breadcrumbs', [
-            ['title' => __('home'), 'link' => fn_url('')],
-            ['title' => __('mwl_xlsx.wishlists'), 'link' => fn_url('mwl_xlsx.manage')],
-            ['title' => $list['name']]
-        ]);
-    } else {
-        return [CONTROLLER_STATUS_NO_PAGE];
-    }
-}
-
-if ($mode === 'export') {
-    $list_id = (int) $_REQUEST['list_id'];
-    if (!empty($auth['user_id'])) {
-        $list = db_get_row("SELECT * FROM ?:mwl_xlsx_lists WHERE list_id = ?i AND user_id = ?i", $list_id, $auth['user_id']);
-    } else {
-        $list = db_get_row("SELECT * FROM ?:mwl_xlsx_lists WHERE list_id = ?i AND session_id = ?s", $list_id, Tygh::$app['session']->getID());
-    }
+    $list = fn_mwl_xlsx_get_list($list_id, $auth);
     if (!$list) {
         return [CONTROLLER_STATUS_NO_PAGE];
     }
+    $products = fn_mwl_xlsx_get_list_products($list_id, CART_LANGUAGE);
 
+    Tygh::$app['view']->assign('is_mwl_xlsx_view', true);
+    Tygh::$app['view']->assign('list', $list);
+    Tygh::$app['view']->assign('products', $products);
+    Tygh::$app['view']->assign('search', [
+        'sort_by'    => 'popularity',
+        'sort_order' => 'desc',
+        'layout'     => 'products_without_options',
+    ]);
+    Tygh::$app['view']->assign('page_title', $list['name']);
+    Tygh::$app['view']->assign('breadcrumbs', [
+        ['title' => __('home'), 'link' => fn_url('')],
+        ['title' => __('mwl_xlsx.wishlists'), 'link' => fn_url('mwl_xlsx.manage')],
+        ['title' => $list['name']]
+    ]);
+}
+
+if ($mode === 'export') {
     $vendor = dirname(__DIR__) . '/../vendor/autoload.php';
     if (file_exists($vendor)) {
         require_once $vendor;
     }
 
+    // get list data
+    $list_id = (int) $_REQUEST['list_id'];
+    $list = fn_mwl_xlsx_get_list($list_id, $auth);
+    if (!$list) {
+        return [CONTROLLER_STATUS_NO_PAGE];
+    }
     $list_data = fn_mwl_xlsx_get_list_data($list_id, $auth, CART_LANGUAGE);
     $data = $list_data['data'];
 
+    // load xlsx template
     $storage    = Storage::instance('custom_files');
     $company_id = fn_get_runtime_company_id();
     $tpl        = db_get_row('SELECT path FROM ?:mwl_xlsx_templates WHERE company_id = ?i', (int) $company_id);
-
     if ($tpl && $storage->isExist($tpl['path'])) {
         $path = $storage->getAbsolutePath($tpl['path']);
         $xlsx = \PhpOffice\PhpSpreadsheet\IOFactory::load($path);
@@ -102,11 +95,14 @@ if ($mode === 'export') {
         $sheet = $xlsx->getActiveSheet();
     }
 
+    // fill sheet with data
     $sheet->fromArray($data, null, 'A1');
+    // auto size columns
     foreach (range('A', $sheet->getHighestDataColumn()) as $col) {
         $sheet->getColumnDimension($col)->setAutoSize(true);
     }
 
+    // save file
     $filename = preg_replace('/[^\p{L}\p{N} _().-]/u', '_', $list['name']) . '.xlsx';
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
@@ -116,21 +112,12 @@ if ($mode === 'export') {
 }
 
 if ($mode === 'export_google') {
-    $list_id = (int) $_REQUEST['list_id'];
-    if (!empty($auth['user_id'])) {
-        $list = db_get_row("SELECT * FROM ?:mwl_xlsx_lists WHERE list_id = ?i AND user_id = ?i", $list_id, $auth['user_id']);
-    } else {
-        $list = db_get_row("SELECT * FROM ?:mwl_xlsx_lists WHERE list_id = ?i AND session_id = ?s", $list_id, Tygh::$app['session']->getID());
-    }
-    if (!$list) {
-        return [CONTROLLER_STATUS_NO_PAGE];
-    }
-
     $vendor = dirname(__DIR__) . '/../vendor/autoload.php';
     if (file_exists($vendor)) {
         require_once $vendor;
     }
 
+    // google auth
     $cred = Registry::get('addons.mwl_xlsx.google_credentials');
     if (!$cred) {
         return [CONTROLLER_STATUS_NO_PAGE];
@@ -139,27 +126,31 @@ if ($mode === 'export_google') {
     if (!$auth_config) {
         return [CONTROLLER_STATUS_NO_PAGE];
     }
-
     $client = new Client();
     $client->setAuthConfig($auth_config);
     $client->setScopes([Sheets::SPREADSHEETS, \Google\Service\Drive::DRIVE_FILE]);
-    $folder_id = trim((string) Registry::get('addons.mwl_xlsx.google_drive_folder_id'));
-
     $service = new Sheets($client);
 
+    $folder_id = trim((string) Registry::get('addons.mwl_xlsx.google_drive_folder_id'));
+
+    // get list data
+    $list_id = (int) $_REQUEST['list_id'];
+    $list = fn_mwl_xlsx_get_list($list_id, $auth);
+    if (!$list) {
+        return [CONTROLLER_STATUS_NO_PAGE];
+    }
     $list_data = fn_mwl_xlsx_get_list_data($list_id, $auth, CART_LANGUAGE);
     $data = $list_data['data'];
 
-    // Try to create the spreadsheet from an XLSX template (if configured)
+    // doc title
+    $user = fn_get_user_info($auth['user_id']);
+    $user_company = $user['company'] ?? '';
+    $doc_title = $user_company ? $user_company . ' - ' . $list['name'] : $list['name'];
+
+    // try to create the spreadsheet from an XLSX template (if configured)
     $storage    = Storage::instance('custom_files');
     $company_id = fn_get_runtime_company_id();
     $tpl        = db_get_row('SELECT path FROM ?:mwl_xlsx_templates WHERE company_id = ?i', (int) $company_id);
-
-    $user = fn_get_user_info($auth['user_id']);
-    $user_company = $user['company'] ?? '';
-
-    $doc_title = $user_company ? $user_company . ' - ' . $list['name'] : $list['name'];
-
     $id = null;
     $created_via_drive = false;
     if ($tpl && $storage->isExist($tpl['path'])) {
@@ -185,6 +176,7 @@ if ($mode === 'export_google') {
         }
     }
 
+    // create spreadsheet without template
     if (!$id) {
         $spreadsheet = new Spreadsheet([
             'properties' => ['title' => $doc_title]
@@ -245,6 +237,7 @@ if ($mode === 'export_google') {
         // Non-fatal; continue
     }
 
+    // fill sheet with data
     $ok = fn_mwl_xlsx_fill_google_sheet($service, $id, $data);
     if (!$ok) {
         echo "Error filling Google Sheet\n";

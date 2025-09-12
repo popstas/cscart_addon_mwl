@@ -279,6 +279,25 @@ function fn_mwl_xlsx_url($list_id)
     return "media-lists/{$list_id}";
 }
 
+/**
+ * Get a media list record by ID for the current user or session.
+ *
+ * @param int   $list_id
+ * @param array $auth
+ *
+ * @return array|null
+ */
+function fn_mwl_xlsx_get_list($list_id, array $auth)
+{
+    $list_id = (int) $list_id;
+    if (!empty($auth['user_id'])) {
+        return db_get_row("SELECT * FROM ?:mwl_xlsx_lists WHERE list_id = ?i AND user_id = ?i", $list_id, (int) $auth['user_id']);
+    }
+
+    $session_id = Tygh::$app['session']->getID();
+    return db_get_row("SELECT * FROM ?:mwl_xlsx_lists WHERE list_id = ?i AND session_id = ?s", $list_id, $session_id);
+}
+
 function fn_mwl_xlsx_get_lists($user_id = null, $session_id = null)
 {
     // If user is not authorized and session_id wasn't provided, use current session id
@@ -450,6 +469,19 @@ function fn_mwl_xlsx_get_list_products($list_id, $lang_code = CART_LANGUAGE)
         }
     }
 
+    // Enrich with prices, taxes and promotions to reflect storefront pricing
+    if ($products) {
+        $params = [
+            'get_icon' => true,
+            'get_detailed' => true,
+            'get_options' => true,
+            'get_features' => false,
+            'get_discounts' => true,
+            'get_taxed_prices' => true,
+        ];
+        fn_gather_additional_products_data($products, $params, $lang_code);
+    }
+
     return $products;
 }
 
@@ -505,6 +537,7 @@ function fn_mwl_xlsx_get_feature_text_values(array $features, $lang_code = CART_
 
 /**
  * Build tabular data (header + rows) for a media list export.
+ * TODO: conflict with fn_mwl_xlsx_get_list_products
  *
  * @param int   $list_id
  * @param array $auth
