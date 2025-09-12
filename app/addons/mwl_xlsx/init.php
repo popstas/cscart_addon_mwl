@@ -5,9 +5,7 @@ fn_register_hooks(
     'auth_routines_post',
     'init_user_session_data_post',
     'before_dispatch',
-    'get_filters_post',
-    'get_selected_filters_post',
-    'get_product_filter_fields_post',
+    'get_product_filter_fields',
     'init_templater_post'
 );
 
@@ -25,6 +23,18 @@ function fn_mwl_xlsx_before_dispatch(&$controller, &$mode, &$action, &$dispatch_
         $controller = 'mwl_xlsx';
         $mode       = 'view';
     }
+}
+
+// Remove price filter if user can't access prices, removes from results, not from form
+function fn_mwl_xlsx_get_product_filter_fields(&$filters)
+{
+    // return if user can access prices
+    $auth = Tygh::$app['session']['auth'] ?? [];
+    if (fn_mwl_xlsx_can_view_price($auth)) {
+        return;
+    }
+
+    unset($filters['P']);
 }
 
 /** Регистрируем {mwl_media_lists_count} как безопасную smarty-функцию */

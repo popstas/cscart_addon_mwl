@@ -85,63 +85,6 @@ function fn_mwl_xlsx_can_view_price(array $auth)
 }
 
 /**
- * После получения фильтров скрываем "цену" для неразрешённых групп.
- */
-function fn_mwl_xlsx_get_filters_post(array &$filters, array $params, $lang_code)
-{
-    $auth = Tygh::$app['session']['auth'] ?? [];
-    if (fn_mwl_xlsx_user_can_access_lists($auth)) {
-        return; // доступ есть — ничего не скрываем
-    }
-
-    foreach ($filters as $k => $filter) {
-        // Срабатывает и по типу поля "Цена", и по конкретному ID (на случай нестандартных тем)
-        $is_price =
-            (($filter['field_type'] ?? '') === 'P')      // системный фильтр по цене
-            || (int)($filter['filter_id'] ?? 0) === 7;   // подстраховка по ID
-
-        if ($is_price) {
-            unset($filters[$k]);
-        }
-    }
-}
-
-/**
- * Аналогично вырезаем "цену" из блока "Выбранные фильтры".
- */
-function fn_mwl_xlsx_get_selected_filters_post(array &$selected_filters, array $params, $lang_code)
-{
-    $auth = Tygh::$app['session']['auth'] ?? [];
-    if (fn_mwl_xlsx_user_can_access_lists($auth)) {
-        return;
-    }
-
-    foreach ($selected_filters as $k => $filter) {
-        $is_price =
-            (($filter['field_type'] ?? '') === 'P')
-            || (int)($filter['filter_id'] ?? 0) === 7;
-
-        if ($is_price) {
-            unset($selected_filters[$k]);
-        }
-    }
-}
-
-/**
- * После получения полей фильтра товара скрываем "цену" для неразрешённых групп.
- */
-function fn_mwl_xlsx_get_product_filter_fields_post(array &$fields)
-{
-    $auth = Tygh::$app['session']['auth'] ?? [];
-    if (fn_mwl_xlsx_user_can_access_lists($auth)) {
-        return;
-    }
-
-    // В списке системных полей цена обычно под ключом 'P'.
-    unset($fields['P']);
-}
-
-/**
  * Ensures settings table exists.
  */
 function fn_mwl_xlsx_ensure_settings_table()
