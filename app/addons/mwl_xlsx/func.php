@@ -299,7 +299,7 @@ function fn_mwl_xlsx_smarty_media_lists_count($params, \Smarty_Internal_Template
 
 function fn_mwl_xlsx_get_customer_status()
 {
-    $allowed_usergroups = ['bronze', 'silver', 'gold', 'platinum'];
+    $allowed_usergroups = ['platinum', 'gold', 'silver', 'bronze'];
 
     $status = '';
     $auth = Tygh::$app['session']['auth'] ?? [];
@@ -309,34 +309,27 @@ function fn_mwl_xlsx_get_customer_status()
     $user_fields = $user_data['fields'] ?? [];
     
     $user_usergroups = $user_data['usergroups'] ?? [];
+    $user_usergroups = array_filter($user_usergroups, function($usergroup) {
+        return isset($usergroup['status']) && $usergroup['status'] === 'A';
+    });
     $user_usergroups_ids = array_column($user_usergroups, 'usergroup_id');
 
     // global usergroups
     $usergroups = fn_get_usergroups();
+    // map usergroup name => id for quick lookup
+    $usergroup_name_to_id = [];
     foreach ($usergroups as $usergroup) {
-        if (!in_array($usergroup['usergroup'], $allowed_usergroups)) {
-            continue;
-        }
-        if (in_array($usergroup['usergroup_id'], $user_usergroups_ids)) {
-            $status = $usergroup['usergroup'];
+        $usergroup_name_to_id[$usergroup['usergroup']] = $usergroup['usergroup_id'];
+    }
+
+    // iterate over allowed groups in priority order
+    foreach ($allowed_usergroups as $allowed_group_name) {
+        $allowed_group_id = isset($usergroup_name_to_id[$allowed_group_name]) ? $usergroup_name_to_id[$allowed_group_name] : null;
+        if ($allowed_group_id && in_array($allowed_group_id, $user_usergroups_ids)) {
+            $status = $allowed_group_name;
             break;
         }
     }
-    // var_dump($user_usergroups_ids);
-    // exit;
-
-    // $profile_fields = fn_get_profile_fields();
-    // $status_field_index = array_search('status', array_column($profile_fields['C'], 'field_name'));
-    // $status_array_key = array_keys($profile_fields['C'])[$status_field_index];
-
-    // $status_field = $profile_fields['C'][$status_array_key] ?? [];
-    // $status_values = $status_field['values'] ?? [];
-    // $status_field_id = $status_field['field_id'] ?? 0;
-
-    // $user_status_id = $user_fields[$status_field_id] ?? 0;
-    // if ($user_status_id) {
-    //     $status = $status_values[$user_status_id] ?? '';
-    // }
 
     return $status;
 }
