@@ -210,10 +210,11 @@ function fn_mwl_xlsx_transform_price_for_export($price, array $settings)
     }
 
     // Normalize to string with up to 2 decimals, trimming trailing zeros
-    $str = number_format($price, 2, '.', '');
-    $str = rtrim(rtrim($str, '0'), '.');
+    // $str = number_format($price, 2, '.', '');
+    // $str = rtrim(rtrim($str, '0'), '.');
 
-    return $str;
+    // return $str;
+    return $price;
 }
 
 function fn_mwl_xlsx_url($list_id)
@@ -452,12 +453,14 @@ function fn_mwl_xlsx_collect_feature_names(array $products, $lang_code = CART_LA
     return $names;
 }
 
-function fn_mwl_xlsx_get_feature_text_values(array $features, $lang_code = CART_LANGUAGE)
+function fn_mwl_xlsx_get_feature_values(array $features, $lang_code = CART_LANGUAGE)
 {
     $values = [];
     foreach ($features as $feature) {
         $feature_id = $feature['feature_id'];
-        if (!empty($feature['value'])) {
+        if (!empty($feature['value_int'])) {
+            $values[$feature_id] = floatval($feature['value_int']);
+        } elseif (!empty($feature['value'])) {
             $values[$feature_id] = $feature['value'];
         } elseif (!empty($feature['variant'])) {
             $values[$feature_id] = $feature['variant'];
@@ -495,7 +498,7 @@ function fn_mwl_xlsx_get_list_data($list_id, array $auth, $lang_code = CART_LANG
     foreach ($products as $p) {
         $price_str = fn_mwl_xlsx_transform_price_for_export($p['price'], $settings);
         $row = [$p['product'], $price_str];
-        $values = fn_mwl_xlsx_get_feature_text_values($p['product_features'] ?? [], $lang_code);
+        $values = fn_mwl_xlsx_get_feature_values($p['product_features'] ?? [], $lang_code);
         foreach ($feature_ids as $feature_id) {
             $row[] = $values[$feature_id] ?? null;
         }
@@ -634,6 +637,7 @@ function fn_mwl_xlsx_fill_google_sheet(Sheets $sheets, $spreadsheet_id, array $d
     }
     $data = $normalized;
 
+    // var_dump($data); exit;
     // 1) Write all values starting from A1
     try {
         $body = new ValueRange([

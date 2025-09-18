@@ -132,7 +132,7 @@
   // Prefers last clicked product in lists; otherwise if exactly one target is visible
   $(_.doc).on('keydown.mwl_xlsx', function(e) {
     var key = e.key || e.keyCode;
-    var isA = key === 'a' || key === 'A' || key === 65;
+    var isA = key === 'a' || key === 'A' || key === 65 || key === 'ф' || key === 'Ф';
     if (!isA) { return; }
     if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.repeat || e.isComposing) { return; }
 
@@ -312,7 +312,7 @@
   // In Add-dialog: press "a" to confirm
   $(_.doc).on('keydown', '#mwl_xlsx_add_dialog', function(e) {
     var key = e.key || e.keyCode;
-    var isA = key === 'a' || key === 'A' || key === 65;
+    var isA = key === 'a' || key === 'A' || key === 65 || key === 'ф' || key === 'Ф';
     if (!isA) { return; }
     if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.repeat || e.isComposing) { return; }
     $addDialog.find('[data-ca-mwl-add-dialog-confirm]').trigger('click');
