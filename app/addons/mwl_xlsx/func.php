@@ -349,16 +349,16 @@ function smarty_function_mwl_xlsx_get_customer_status_text(array $params, \Smart
 {
     $status = fn_mwl_xlsx_get_customer_status();
     $status_map = [
-        'bronze' => 'Бронзовый партнер',
-        'silver' => 'Серебряный партнер',
-        'gold' => 'Золотой партнер',
-        'platinum' => 'Платиновый партнер',
+        'bronze' => 'Local',
+        'silver' => 'National',
+        'gold' => 'Continental',
+        'platinum' => 'Global',
     ];
     $status_map_en = [
-        'bronze' => 'Bronze partner',
-        'silver' => 'Silver partner',
-        'gold' => 'Gold partner',
-        'platinum' => 'Platinum partner',
+        'bronze' => 'Local',
+        'silver' => 'National',
+        'gold' => 'Continental',
+        'platinum' => 'Global',
     ];
     $lang_code = Tygh::$app['session']['lang_code'] ?? CART_LANGUAGE;
     if ($lang_code == 'ru') {

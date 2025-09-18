@@ -70,62 +70,64 @@
         <item>
             <name>en</name>
             <values>
-                <value id="mwl_xlsx.name">Media Lists</value>
-                <value id="mwl_xlsx.description">Create and manage multiple media lists.</value>
-                <value id="mwl_xlsx.wishlists">Media lists</value>
-                <value id="mwl_xlsx.my_lists">My media lists</value>
-                <value id="mwl_xlsx.new_list">New list…</value>
-                <value id="mwl_xlsx.enter_list_name">Enter list name</value>
-                <value id="mwl_xlsx.added"><![CDATA[Added to <a href="[list_url]">[list_name]</a>]]></value>
-                <value id="mwl_xlsx.added_plain">Added to media list</value>
-                <value id="mwl_xlsx.rename">Rename</value>
-                <value id="mwl_xlsx.remove">Remove</value>
-                <value id="mwl_xlsx.confirm_remove">Remove this list?</value>
                 <value id="mwl_xlsx.add_all_to_wishlist">Add all to media list</value>
                 <value id="mwl_xlsx.add_to_wishlist">Add to media list</value>
-                <value id="mwl_xlsx.remove_from_list">Remove from list</value>
-                <value id="mwl_xlsx.removed">Removed</value>
-                <value id="mwl_xlsx.hide_price_for_guests">Hide price for unauthorized</value>
-                <value id="mwl_xlsx.authorized_usergroups">Authorized user groups</value>
-                <value id="mwl_xlsx.show_extra_button">Show extra button in list</value>
+                <value id="mwl_xlsx.added_plain">Added to media list</value>
+                <value id="mwl_xlsx.added"><![CDATA[Added to <a href="[list_url]">[list_name]</a>]]></value>
                 <value id="mwl_xlsx.allowed_usergroups">User groups allowed for media lists</value>
-                <value id="mwl_xlsx.login_to_view_price">Log in to view price</value>
-                <value id="mwl_xlsx.max_list_items">Maximum items per list</value>
-                <value id="mwl_xlsx.list_limit_reached">You cannot add more than [limit] items to a media list</value>
+                <value id="mwl_xlsx.authorized_usergroups">Authorized user groups</value>
+                <value id="mwl_xlsx.confirm_remove">Remove this list?</value>
+                <value id="mwl_xlsx.description">Create and manage multiple media lists.</value>
+                <value id="mwl_xlsx.enter_list_name">Enter list name</value>
                 <value id="mwl_xlsx.export_google">Export Google Sheets</value>
                 <value id="mwl_xlsx.google_credentials">Google credentials (JSON)</value>
                 <value id="mwl_xlsx.google_drive_folder_id">Google Drive folder ID (optional, Shared Drive supported)</value>
+                <value id="mwl_xlsx.hide_price_for_guests">Hide price for unauthorized</value>
+                <value id="mwl_xlsx.list_limit_reached">You cannot add more than [limit] items to a media list</value>
+                <value id="mwl_xlsx.login_to_view_price">Log in to view price</value>
+                <value id="mwl_xlsx.max_list_items">Maximum items per list</value>
+                <value id="mwl_xlsx.my_lists">My media lists</value>
+                <value id="mwl_xlsx.name">Media Lists</value>
+                <value id="mwl_xlsx.new_list">New list…</value>
+                <value id="mwl_xlsx.remove_from_list">Remove from list</value>
+                <value id="mwl_xlsx.remove">Remove</value>
+                <value id="mwl_xlsx.removed">Removed</value>
+                <value id="mwl_xlsx.rename">Rename</value>
+                <value id="mwl_xlsx.show_extra_button">Show extra button in list</value>
+                <value id="mwl_xlsx.select_list">Select media list</value>
+                <value id="mwl_xlsx.wishlists">Media lists</value>
             </values>
         </item>
         <item>
             <name>ru</name>
             <values>
-                <value id="mwl_xlsx.name">Несколько подборок</value>
-                <value id="mwl_xlsx.description">Создание и управление несколькими подборками.</value>
-                <value id="mwl_xlsx.wishlists">Подборки</value>
-                <value id="mwl_xlsx.my_lists">Мои подборки</value>
-                <value id="mwl_xlsx.new_list">Новая подборка…</value>
-                <value id="mwl_xlsx.enter_list_name">Введите название подборки</value>
-                <value id="mwl_xlsx.added"><![CDATA[Добавлено в <a href="[list_url]">[list_name]</a>]]></value>
-                <value id="mwl_xlsx.added_plain">Добавлено в подборку</value>
-                <value id="mwl_xlsx.rename">Переименовать</value>
-                <value id="mwl_xlsx.remove">Удалить</value>
-                <value id="mwl_xlsx.confirm_remove">Удалить эту подборку?</value>
                 <value id="mwl_xlsx.add_all_to_wishlist">Добавить все в подборку</value>
                 <value id="mwl_xlsx.add_to_wishlist">Добавить в подборку</value>
-                <value id="mwl_xlsx.remove_from_list">Удалить из подборки</value>
-                <value id="mwl_xlsx.removed">Удалено</value>
-                <value id="mwl_xlsx.hide_price_for_guests">Скрывать цену для неавторизованных</value>
-                <value id="mwl_xlsx.authorized_usergroups">Группы пользователей авторизованных</value>
-                <value id="mwl_xlsx.show_extra_button">Выводить кнопку extra в списке</value>
+                <value id="mwl_xlsx.added_plain">Добавлено в подборку</value>
+                <value id="mwl_xlsx.added"><![CDATA[Добавлено в <a href="[list_url]">[list_name]</a>]]></value>
                 <value id="mwl_xlsx.allowed_usergroups">Группы пользователей, которым разрешён доступ к mwl lists</value>
-                <value id="mwl_xlsx.login_to_view_price">Войдите, чтобы увидеть цену</value>
-                <value id="mwl_xlsx.max_list_items">Максимальное число товаров в подборке</value>
+                <value id="mwl_xlsx.authorized_usergroups">Группы пользователей авторизованных</value>
+                <value id="mwl_xlsx.confirm_remove">Удалить эту подборку?</value>
                 <value id="mwl_xlsx.currencies_path">Путь к JSON валют</value>
-                <value id="mwl_xlsx.list_limit_reached">Нельзя добавить более [limit] товаров в подборку</value>
+                <value id="mwl_xlsx.description">Создание и управление несколькими подборками.</value>
+                <value id="mwl_xlsx.enter_list_name">Введите название подборки</value>
                 <value id="mwl_xlsx.export_google">Экспорт в Google Таблицы</value>
                 <value id="mwl_xlsx.google_credentials">Учетные данные Google (JSON)</value>
                 <value id="mwl_xlsx.google_drive_folder_id">ID папки Google Диска (необязательно, поддерживаются Общие диски)</value>
+                <value id="mwl_xlsx.hide_price_for_guests">Скрывать цену для неавторизованных</value>
+                <value id="mwl_xlsx.list_limit_reached">Нельзя добавить более [limit] товаров в подборку</value>
+                <value id="mwl_xlsx.login_to_view_price">Войдите, чтобы увидеть цену</value>
+                <value id="mwl_xlsx.max_list_items">Максимальное число товаров в подборке</value>
+                <value id="mwl_xlsx.my_lists">Мои подборки</value>
+                <value id="mwl_xlsx.name">Несколько подборок</value>
+                <value id="mwl_xlsx.new_list">Новая подборка…</value>
+                <value id="mwl_xlsx.remove_from_list">Удалить из подборки</value>
+                <value id="mwl_xlsx.remove">Удалить</value>
+                <value id="mwl_xlsx.removed">Удалено</value>
+                <value id="mwl_xlsx.rename">Переименовать</value>
+                <value id="mwl_xlsx.show_extra_button">Выводить кнопку extra в списке</value>
+                <value id="mwl_xlsx.select_list">Выберите подборку</value>
+                <value id="mwl_xlsx.wishlists">Подборки</value>
             </values>
         </item>
     </languages>

@@ -213,3 +213,7 @@ msgstr "Ваш статус"
 msgctxt "Languages::mwl_xlsx.status_tooltip"
 msgid "Your status is [status]"
 msgstr "Ваш статус: [status]"
+
+msgctxt "Languages::mwl_xlsx.select_list"
+msgid "Select media list"
+msgstr "Выберите подборку"

@@ -1,5 +1,51 @@
 (function(_, $) {
+  var $renameDialog = $('#mwl_xlsx_rename_dialog');
+  var $deleteDialog = $('#mwl_xlsx_delete_dialog');
+  var $newListDialog = $('#mwl_xlsx_new_list_dialog');
+  var $addDialog = $('#mwl_xlsx_add_dialog');
+
   $.ceEvent('on', 'ce.commoninit', function(context) {
+    // init new list dialog
+    if (!$newListDialog.length) {
+      $('body').append(
+        '<div id="mwl_xlsx_new_list_dialog" class="hidden">' +
+        '<div class="ty-control-group">' +
+        '<label for="mwl_xlsx_new_list_input" class="ty-control-group__title">' + (_.tr('mwl_xlsx.enter_list_name') || 'Enter list name') + '</label>' +
+        '<input type="text" id="mwl_xlsx_new_list_input" maxlength="50" class="ty-input-text" />' +
+        '</div>' +
+        '<div class="buttons-container">' +
+        '<button class="ty-btn ty-btn__primary" data-ca-mwl-new-list-ok>' + (_.tr('save') || 'Save') + '</button>' +
+        '<button class="ty-btn" data-ca-mwl-new-list-cancel>' + (_.tr('cancel') || 'Cancel') + '</button>' +
+        '</div>' +
+        '</div>'
+      );
+      $newListDialog = $('#mwl_xlsx_new_list_dialog');
+    }
+  
+    // init add-to-list dialog
+    if (!$addDialog.length) {
+      $('body').append(
+        '<div id="mwl_xlsx_add_dialog" class="hidden">' +
+        '<div class="ty-control-group">' +
+        '<label for="mwl_xlsx_add_select" class="ty-control-group__title">' + (_.tr('mwl_xlsx.select_list') || 'Select media list') + '</label>' +
+        '<select id="mwl_xlsx_add_select" class="ty-input-text mwl_xlsx-select" data-ca-list-select-xlsx></select>' +
+        '</div>' +
+        '<div class="ty-control-group">' +
+        '<a href="/media-lists/" target="_blank" class="">' + (_.tr('mwl_xlsx.my_lists') || 'My media lists') + '</a>' +
+        ' · ' +
+        '<a href="#" target="_blank" class="hidden" id="mwl_xlsx_go_to_list_link">' + (_.tr('mwl_xlsx.go_to_list') || 'Go to media list') + '</a>' +
+        '</div>' +
+        '<div class="buttons-container">' +
+        '<button class="ty-btn ty-btn__primary" data-ca-mwl-add-dialog-confirm>' + (_.tr('add') || 'Add') + '</button>' +
+        '<button class="ty-btn" data-ca-mwl-add-dialog-cancel>' + (_.tr('cancel') || 'Cancel') + '</button>' +
+        '</div>' +
+        '</div>'
+      );
+      $addDialog = $('#mwl_xlsx_add_dialog');
+    }
+  
+  
+    // set last list id
     var last_list_id = localStorage.getItem('mwl_last_list');
     $('[data-ca-list-select-xlsx]', context).each(function() {
       var $select = $(this);
@@ -135,48 +181,6 @@
     });
     return false;
   });
-
-  var $renameDialog = $('#mwl_xlsx_rename_dialog');
-  var $deleteDialog = $('#mwl_xlsx_delete_dialog');
-  var $newListDialog = $('#mwl_xlsx_new_list_dialog');
-  var $addDialog = $('#mwl_xlsx_add_dialog');
-  if (!$newListDialog.length) {
-    $('body').append(
-      '<div id="mwl_xlsx_new_list_dialog" class="hidden">' +
-      '<div class="ty-control-group">' +
-      '<label for="mwl_xlsx_new_list_input" class="ty-control-group__title">' + (_.tr('mwl_xlsx.enter_list_name') || 'Enter list name') + '</label>' +
-      '<input type="text" id="mwl_xlsx_new_list_input" maxlength="50" class="ty-input-text" />' +
-      '</div>' +
-      '<div class="buttons-container">' +
-      '<button class="ty-btn ty-btn__primary" data-ca-mwl-new-list-ok>' + (_.tr('save') || 'Save') + '</button>' +
-      '<button class="ty-btn" data-ca-mwl-new-list-cancel>' + (_.tr('cancel') || 'Cancel') + '</button>' +
-      '</div>' +
-      '</div>'
-    );
-    $newListDialog = $('#mwl_xlsx_new_list_dialog');
-  }
-
-  // Add-to-list dialog (select list + Add button)
-  if (!$addDialog.length) {
-    $('body').append(
-      '<div id="mwl_xlsx_add_dialog" class="hidden">' +
-      '<div class="ty-control-group">' +
-      '<label for="mwl_xlsx_add_select" class="ty-control-group__title">' + (_.tr('mwl_xlsx.select_list') || 'Select media list') + '</label>' +
-      '<select id="mwl_xlsx_add_select" class="ty-input-text mwl_xlsx-select" data-ca-list-select-xlsx></select>' +
-      '</div>' +
-      '<div class="ty-control-group">' +
-      '<a href="/media-lists/" target="_blank" class="">' + (_.tr('mwl_xlsx.my_lists') || 'My media lists') + '</a>' +
-      ' · ' +
-      '<a href="#" target="_blank" class="hidden" id="mwl_xlsx_go_to_list_link">' + (_.tr('mwl_xlsx.go_to_list') || 'Go to media list') + '</a>' +
-      '</div>' +
-      '<div class="buttons-container">' +
-      '<button class="ty-btn ty-btn__primary" data-ca-mwl-add-dialog-confirm>' + (_.tr('add') || 'Add') + '</button>' +
-      '<button class="ty-btn" data-ca-mwl-add-dialog-cancel>' + (_.tr('cancel') || 'Cancel') + '</button>' +
-      '</div>' +
-      '</div>'
-    );
-    $addDialog = $('#mwl_xlsx_add_dialog');
-  }
 
   // New list dialog controls
   $(_.doc).on('click', '[data-ca-mwl-new-list-ok]', function() {

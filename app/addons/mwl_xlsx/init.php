@@ -2,8 +2,8 @@
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
 
 fn_register_hooks(
-    'auth_routines_post',
-    'init_user_session_data_post',
+    // 'auth_routines_post',
+    // 'init_user_session_data_post',
     'before_dispatch',
     'get_product_filter_fields',
     'init_templater_post'
