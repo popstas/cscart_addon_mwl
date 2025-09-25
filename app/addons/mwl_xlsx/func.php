@@ -300,7 +300,7 @@ function fn_mwl_xlsx_smarty_media_lists_count($params, \Smarty_Internal_Template
 
 function fn_mwl_xlsx_get_customer_status()
 {
-    $allowed_usergroups = ['platinum', 'gold', 'silver', 'bronze'];
+    $allowed_usergroups = ['Global', 'Continental', 'National', 'Local'];
 
     $status = '';
     $auth = Tygh::$app['session']['auth'] ?? [];
@@ -350,16 +350,16 @@ function smarty_function_mwl_xlsx_get_customer_status_text(array $params, \Smart
 {
     $status = fn_mwl_xlsx_get_customer_status();
     $status_map = [
-        'bronze' => 'Local',
-        'silver' => 'National',
-        'gold' => 'Continental',
-        'platinum' => 'Global',
+        'Local' => 'Local',
+        'National' => 'National',
+        'Continental' => 'Continental',
+        'Global' => 'Global',
     ];
     $status_map_en = [
-        'bronze' => 'Local',
-        'silver' => 'National',
-        'gold' => 'Continental',
-        'platinum' => 'Global',
+        'Local' => 'Local',
+        'National' => 'National',
+        'Continental' => 'Continental',
+        'Global' => 'Global',
     ];
     $lang_code = Tygh::$app['session']['lang_code'] ?? CART_LANGUAGE;
     if ($lang_code == 'ru') {
