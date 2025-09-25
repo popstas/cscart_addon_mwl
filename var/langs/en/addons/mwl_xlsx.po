@@ -243,3 +243,31 @@ msgstr "Your status is [status]"
 msgctxt "Languages::mwl_xlsx.select_list"
 msgid "Select media list"
 msgstr "Select media list"
+
+msgctxt "Languages::mwl_xlsx.send_recover_links"
+msgid "Send link to set password"
+msgstr "Send link to set password"
+
+msgctxt "Languages::mwl_xlsx.recover_links_sent"
+msgid "[n] email(s) sent"
+msgstr "[n] email(s) sent"
+
+msgctxt "Languages::mwl_xlsx.invite_subject"
+msgid "You've been invited to [store]"
+msgstr "You've been invited to [store]"
+
+msgctxt "Languages::mwl_xlsx.invite_hello"
+msgid "Hello, [name]!"
+msgstr "Hello, [name]!"
+
+msgctxt "Languages::mwl_xlsx.invite_text"
+msgid "You have been invited to create an account at [store]. Please set your password using the secure link below."
+msgstr "You have been invited to create an account at [store]. Please set your password using the secure link below."
+
+msgctxt "Languages::mwl_xlsx.invite_button"
+msgid "Set password"
+msgstr "Set password"
+
+msgctxt "Languages::mwl_xlsx.invite_hint"
+msgid "The link is available for 7 days."
+msgstr "The link is available for 7 days."

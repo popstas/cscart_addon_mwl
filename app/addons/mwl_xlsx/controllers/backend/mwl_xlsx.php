@@ -1,5 +1,8 @@
 <?php
+use Tygh\Tygh;
 use Tygh\Registry;
+use Tygh\Enum\UserTypes;
+
 
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
 
@@ -61,4 +64,98 @@ if ($mode === 'update_currencies') {
     }
 
     return [CONTROLLER_STATUS_NO_CONTENT];
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'send_recover_to_users') {
+    // Из настроек/контекста
+    $runtime_company_id = fn_get_runtime_company_id();
+
+    // 7 дней (можно вынести в настройку аддона)
+    $ttl_custom = defined('SECONDS_IN_DAY') ? 7 * SECONDS_IN_DAY : 7 * 24 * 60 * 60;
+
+    $user_ids = (array) ($_REQUEST['user_ids'] ?? []);
+    $sent = 0;
+    $skipped = 0;
+
+    /** @var \Tygh\Mailer\Mailer $mailer */
+    $mailer = Tygh::$app['mailer'];
+
+    foreach ($user_ids as $uid) {
+        $uid = (int) $uid;
+
+        // Тянем необходимые поля пользователя
+        $user = db_get_row(
+            "SELECT user_id, email, user_type, status, company_id, storefront_id, lang_code, firstname, lastname
+             FROM ?:users
+             WHERE user_id = ?i",
+            $uid
+        );
+
+        // Базовые проверки (аналогично fn_recover_password_generate_key)
+        if (
+            !$user
+            || $user['user_type'] !== UserTypes::CUSTOMER
+            || empty($user['email'])
+            || $user['status'] === 'D' // Disabled
+        ) {
+            $skipped++;
+            continue;
+        }
+
+        // Уважим лимит активных ключей (если функция доступна)
+        if (function_exists('fn_recovery_password_get_ekeys_count')
+            && defined('RECOVERY_PASSWORD_EKEYS_LIMIT')
+        ) {
+            $cnt = (int) fn_recovery_password_get_ekeys_count((int) $user['user_id']);
+            if ($cnt >= (int) RECOVERY_PASSWORD_EKEYS_LIMIT) {
+                $skipped++;
+                continue;
+            }
+        }
+
+        // Генерируем ekey с пользовательским TTL (ядро сохранит в хранилище восстановления)
+        if (!defined('RECOVERY_PASSWORD_EKEY_TYPE')) {
+            // На всякий случай: тип ключа должен быть определён ядром
+            $skipped++;
+            continue;
+        }
+
+        $ekey = fn_generate_ekey((int) $user['user_id'], RECOVERY_PASSWORD_EKEY_TYPE, (int) $ttl_custom);
+        if (!$ekey) {
+            $skipped++;
+            continue;
+        }
+
+        // Формируем ссылку "Установить пароль"
+        $invite_link = fn_url(
+            'auth.recover_password?ekey=' . rawurlencode($ekey), // . '&email=' . rawurlencode($user['email']),
+            'C',
+            'https'
+        );
+
+        // Данные для шаблона письма
+        $data = [
+            'invite_link'     => $invite_link,
+            'firstname'       => (string) ($user['firstname'] ?? ''),
+            'lastname'        => (string) ($user['lastname'] ?? ''),
+            'email'           => (string) $user['email'],
+            'store_name'      => Registry::get('settings.Company.company_name'),
+            'invite_ttl_days' => 7, // для вывода в письме
+        ];
+
+        // Отправляем письмо-приглашение через Mailer
+        $mailer->send([
+            'to'            => $user['email'],
+            'from'          => 'company_users_department', // Настройки → Компания → отдел по работе с пользователями
+            'tpl'           => 'addons/mwl_xlsx/invite_user.tpl',
+            'data'          => $data,
+            'company_id'    => $runtime_company_id ?: (int) $user['company_id'],
+            'storefront_id' => (int) ($user['storefront_id'] ?? 0) ?: null,
+        ], 'C', $user['lang_code'] ?: CART_LANGUAGE);
+
+        $sent++;
+    }
+
+    fn_set_notification('N', __('notice'), __('mwl_xlsx.recover_links_sent', ['[n]' => $sent]) . " / skipped: {$skipped}");
+    return [CONTROLLER_STATUS_OK, 'profiles.manage'];
 }

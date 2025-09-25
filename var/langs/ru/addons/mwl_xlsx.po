@@ -217,3 +217,31 @@ msgstr "Ваш статус: [status]"
 msgctxt "Languages::mwl_xlsx.select_list"
 msgid "Select media list"
 msgstr "Выберите подборку"
+
+msgctxt "Languages::mwl_xlsx.send_recover_links"
+msgid "Send link to set password"
+msgstr "Отправить ссылку на установку пароля"
+
+msgctxt "Languages::mwl_xlsx.recover_links_sent"
+msgid "[n] email(s) sent"
+msgstr "Отправлено писем: [n]"
+
+msgctxt "Languages::mwl_xlsx.invite_subject"
+msgid "You've been invited to [store]"
+msgstr "Приглашение в [store]"
+
+msgctxt "Languages::mwl_xlsx.invite_hello"
+msgid "Hello, [name]!"
+msgstr "Здравствуйте, [name]!"
+
+msgctxt "Languages::mwl_xlsx.invite_text"
+msgid "You have been invited to create an account at [store]. Please set your password using the secure link below."
+msgstr "Вас пригласили создать аккаунт в [store]. Пожалуйста, установите пароль по безопасной ссылке ниже."
+
+msgctxt "Languages::mwl_xlsx.invite_button"
+msgid "Set password"
+msgstr "Установить пароль"
+
+msgctxt "Languages::mwl_xlsx.invite_hint"
+msgid "The link is available for 7 days."
+msgstr "Ссылка доступна в течение 7 дней."
