@@ -13,6 +13,7 @@ if ($mode === 'search') {
     $orders = (array) $view->getTemplateVars('orders');
     $view->assign('mwl_xlsx_order_messages', []);
     $view->assign('mwl_xlsx_order_items', []);
+    $auth = Tygh::$app['session']['auth'];
 
     if (!$orders || !function_exists('fn_vendor_communication_get_threads')) {
         return;
@@ -29,9 +30,56 @@ if ($mode === 'search') {
 
     $order_items = [];
     $order_products = db_get_array(
-        'SELECT order_id, product, amount FROM ?:order_details WHERE order_id IN (?n) ORDER BY order_id, item_id',
+        'SELECT item_id, order_id, product_id, product_code, amount, extra FROM ?:order_details WHERE order_id IN (?n) ORDER BY order_id, item_id',
         $order_ids
     );
+
+    $product_ids = [];
+
+    foreach ($order_products as &$order_product) {
+        $order_product['extra'] = is_string($order_product['extra']) ? $order_product['extra'] : '';
+
+        if ($order_product['extra'] !== '') {
+            if (PHP_VERSION_ID >= 70000) {
+                $order_product['extra'] = @unserialize($order_product['extra'], ['allowed_classes' => false]);
+            } else {
+                $order_product['extra'] = @unserialize($order_product['extra']);
+            }
+        } else {
+            $order_product['extra'] = [];
+        }
+
+        if (!is_array($order_product['extra'])) {
+            $order_product['extra'] = [];
+        }
+
+        $product_name = '';
+
+        if (!empty($order_product['extra']['product'])) {
+            $product_name = (string) $order_product['extra']['product'];
+        }
+
+        $order_product['product_name'] = $product_name;
+
+        if ($product_name === '' && !empty($order_product['product_id'])) {
+            $product_ids[] = (int) $order_product['product_id'];
+        }
+    }
+    unset($order_product);
+
+    $product_names = [];
+    $product_ids = array_unique(array_filter($product_ids));
+
+    if ($product_ids) {
+        $lang_code = !empty($auth['lang_code']) ? (string) $auth['lang_code'] : (defined('CART_LANGUAGE') ? CART_LANGUAGE : 'en');
+
+        $product_names = db_get_hash_single_array(
+            'SELECT product_id, product FROM ?:product_descriptions WHERE product_id IN (?n) AND lang_code = ?s',
+            ['product_id', 'product'],
+            $product_ids,
+            $lang_code
+        );
+    }
 
     foreach ($order_products as $order_product) {
         $order_id = (int) $order_product['order_id'];
@@ -40,8 +88,20 @@ if ($mode === 'search') {
             $order_items[$order_id] = [];
         }
 
+        $product_name = $order_product['product_name'];
+
+        if ($product_name === '' && isset($product_names[$order_product['product_id']])) {
+            $product_name = (string) $product_names[$order_product['product_id']];
+        }
+
+        if ($product_name === '') {
+            $product_name = !empty($order_product['product_code'])
+                ? (string) $order_product['product_code']
+                : sprintf('#%d', (int) $order_product['product_id']);
+        }
+
         $order_items[$order_id][] = [
-            'product' => (string) $order_product['product'],
+            'product' => $product_name,
             'amount' => (int) $order_product['amount'],
         ];
     }
@@ -53,7 +113,6 @@ if ($mode === 'search') {
     ]);
 
     $order_messages = [];
-    $auth = Tygh::$app['session']['auth'];
     $auth_user_id = isset($auth['user_id']) ? (int) $auth['user_id'] : 0;
 
     if ($threads) {
