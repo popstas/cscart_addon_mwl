@@ -64,11 +64,22 @@
             <td class="ty-orders-search__item">
                 {include file="common/price.tpl" value=$o.total}
             </td>
-            {assign var="order_messages" value=$mwl_xlsx_order_messages[$o.order_id]}
+            {assign var="order_messages" value=$mwl_xlsx_order_messages[$o.order_id]|default:[]}
+            {assign var="messages_total" value=$order_messages.total|default:0}
+            {assign var="messages_class" value="mwl-xlsx-order-messages-count"}
+            {if $order_messages.has_unread}
+                {assign var="messages_class" value="`$messages_class` ty-text-warning"}
+            {/if}
             <td class="ty-orders-search__item">
-                <span class="mwl-xlsx-order-messages-count{if $order_messages.has_unread} ty-text-warning{/if}">
-                    {if $order_messages}{$order_messages.total|default:0}{else}0{/if}
-                </span>
+                {if $order_messages.thread_id}
+                    <a class="{$messages_class}" href="{"vendor_communication.view?thread_id=`$order_messages.thread_id`"|fn_url}">
+                        {$messages_total}
+                    </a>
+                {else}
+                    <span class="{$messages_class}">
+                        {$messages_total}
+                    </span>
+                {/if}
                 {if $order_messages.has_unread}
                     <span class="ty-label ty-label--warning ty-label--inline">{__("mwl_xlsx.order_messages_unread")}</span>
                 {/if}

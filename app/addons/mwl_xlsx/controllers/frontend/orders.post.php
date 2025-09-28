@@ -56,7 +56,10 @@ if ($mode === 'search') {
                 $order_messages[$order_id] = [
                     'total' => 0,
                     'has_unread' => false,
+                    'thread_id' => $thread_id,
                 ];
+            } elseif (empty($order_messages[$order_id]['thread_id'])) {
+                $order_messages[$order_id]['thread_id'] = $thread_id;
             }
 
             $order_messages[$order_id]['total'] += $messages_count;
