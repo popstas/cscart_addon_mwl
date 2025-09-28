@@ -39,6 +39,9 @@
                 </a>
                 {if $search.sort_by === "total"}{$sort_sign nofilter}{/if}
             </th>
+            <th>
+                {__("mwl_xlsx.order_messages")}
+            </th>
             <th class="ty-orders-search__header ty-orders-search__header--actions">
                 {__("actions")}
             </th>
@@ -61,6 +64,9 @@
             <td class="ty-orders-search__item">
                 {include file="common/price.tpl" value=$o.total}
             </td>
+            <td class="ty-orders-search__item">
+                {$mwl_xlsx_order_messages_count[$o.order_id]|default:0}
+            </td>
             <td class="ty-orders-search__item ty-orders-search__item--actions">
                 <a class="ty-btn ty-btn__secondary" href="{"orders.details?order_id=`$o.order_id`"|fn_url}">
                     {__("view")}
@@ -69,7 +75,7 @@
         </tr>
     {foreachelse}
         <tr class="ty-table__no-items">
-            <td colspan="4">
+            <td colspan="5">
                 <p class="ty-no-items">{__("text_no_orders")}</p>
             </td>
         </tr>
