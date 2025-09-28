@@ -64,8 +64,14 @@
             <td class="ty-orders-search__item">
                 {include file="common/price.tpl" value=$o.total}
             </td>
+            {assign var="order_messages" value=$mwl_xlsx_order_messages[$o.order_id]}
             <td class="ty-orders-search__item">
-                {$mwl_xlsx_order_messages_count[$o.order_id]|default:0}
+                <span class="mwl-xlsx-order-messages-count{if $order_messages.has_unread} ty-text-warning{/if}">
+                    {if $order_messages}{$order_messages.total|default:0}{else}0{/if}
+                </span>
+                {if $order_messages.has_unread}
+                    <span class="ty-label ty-label--warning ty-label--inline">{__("mwl_xlsx.order_messages_unread")}</span>
+                {/if}
             </td>
             <td class="ty-orders-search__item ty-orders-search__item--actions">
                 <a class="ty-btn ty-btn__secondary" href="{"orders.details?order_id=`$o.order_id`"|fn_url}">

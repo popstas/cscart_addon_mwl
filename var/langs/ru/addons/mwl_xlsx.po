@@ -82,6 +82,10 @@ msgctxt "Languages::mwl_xlsx.order_messages"
 msgid "Messages"
 msgstr "Сообщения"
 
+msgctxt "Languages::mwl_xlsx.order_messages_unread"
+msgid "Unread"
+msgstr "Новые"
+
 msgctxt "Languages::mwl_xlsx.add_to_wishlist"
 msgid "Add to media list"
 msgstr "Добавить в подборку"

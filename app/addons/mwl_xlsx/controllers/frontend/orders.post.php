@@ -11,7 +11,7 @@ if ($mode === 'search') {
 
     $orders = (array) $view->getTemplateVars('orders');
     if (!$orders || !function_exists('fn_vendor_communication_get_threads')) {
-        $view->assign('mwl_xlsx_order_messages_count', []);
+        $view->assign('mwl_xlsx_order_messages', []);
         return;
     }
 
@@ -21,7 +21,7 @@ if ($mode === 'search') {
     $order_ids = array_filter($order_ids);
 
     if (!$order_ids) {
-        $view->assign('mwl_xlsx_order_messages_count', []);
+        $view->assign('mwl_xlsx_order_messages', []);
         return;
     }
 
@@ -31,7 +31,9 @@ if ($mode === 'search') {
         'items_per_page' => 0,
     ]);
 
-    $order_message_counts = [];
+    $order_messages = [];
+    $auth = Tygh::$app['session']['auth'];
+    $auth_user_id = isset($auth['user_id']) ? (int) $auth['user_id'] : 0;
 
     if ($threads) {
         $thread_ids = array_keys($threads);
@@ -50,13 +52,27 @@ if ($mode === 'search') {
             $thread_id = (int) $thread['thread_id'];
             $messages_count = isset($message_counts[$thread_id]) ? (int) $message_counts[$thread_id] : 0;
 
-            if (!isset($order_message_counts[$order_id])) {
-                $order_message_counts[$order_id] = 0;
+            if (!isset($order_messages[$order_id])) {
+                $order_messages[$order_id] = [
+                    'total' => 0,
+                    'has_unread' => false,
+                ];
             }
 
-            $order_message_counts[$order_id] += $messages_count;
+            $order_messages[$order_id]['total'] += $messages_count;
+
+            if ($order_messages[$order_id]['has_unread']) {
+                continue;
+            }
+
+            $is_customer_message = isset($thread['last_message_user_type']) && $thread['last_message_user_type'] === VC_USER_TYPE_CUSTOMER;
+            $is_own_message = $auth_user_id && isset($thread['last_message_user_id']) && (int) $thread['last_message_user_id'] === $auth_user_id;
+
+            if (!$is_customer_message && !$is_own_message) {
+                $order_messages[$order_id]['has_unread'] = true;
+            }
         }
     }
 
-    $view->assign('mwl_xlsx_order_messages_count', $order_message_counts);
+    $view->assign('mwl_xlsx_order_messages', $order_messages);
 }
