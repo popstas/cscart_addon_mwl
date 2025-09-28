@@ -80,6 +80,18 @@ msgctxt "Languages::mwl_xlsx.upload_xlsx_template"
 msgid "Upload XLSX template"
 msgstr "Upload XLSX template"
 
+msgctxt "Languages::mwl_xlsx.order_messages"
+msgid "Messages"
+msgstr "Messages"
+
+msgctxt "Languages::mwl_xlsx.order_items"
+msgid "Items"
+msgstr "Items"
+
+msgctxt "Languages::mwl_xlsx.order_messages_unread"
+msgid "Unread"
+msgstr "Unread"
+
 msgctxt "Languages::mwl_xlsx.add_to_wishlist"
 msgid "Add to media list"
 msgstr "Add to media list"
