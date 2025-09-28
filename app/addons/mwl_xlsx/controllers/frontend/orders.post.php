@@ -14,6 +14,9 @@ if ($mode === 'search') {
     $view->assign('mwl_xlsx_order_messages', []);
     $view->assign('mwl_xlsx_order_items', []);
     $auth = Tygh::$app['session']['auth'];
+    $lang_code = !empty($auth['lang_code']) ? (string) $auth['lang_code'] : (defined('CART_LANGUAGE') ? CART_LANGUAGE : 'en');
+    $is_ru_language = strncasecmp($lang_code, 'ru', 2) === 0;
+    $view->assign('mwl_xlsx_is_ru_language', $is_ru_language);
 
     if (!$orders || !function_exists('fn_vendor_communication_get_threads')) {
         return;
@@ -71,8 +74,6 @@ if ($mode === 'search') {
     $product_ids = array_unique(array_filter($product_ids));
 
     if ($product_ids) {
-        $lang_code = !empty($auth['lang_code']) ? (string) $auth['lang_code'] : (defined('CART_LANGUAGE') ? CART_LANGUAGE : 'en');
-
         $product_names = db_get_hash_single_array(
             'SELECT product_id, product FROM ?:product_descriptions WHERE product_id IN (?n) AND lang_code = ?s',
             ['product_id', 'product'],
