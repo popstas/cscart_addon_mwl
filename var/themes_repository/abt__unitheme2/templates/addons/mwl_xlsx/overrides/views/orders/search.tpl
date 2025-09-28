@@ -34,6 +34,9 @@
             {hook name="orders:manage_header"}{/hook}
 
             <th>
+                {__("mwl_xlsx.order_items")}
+            </th>
+            <th>
                 <a class="{$ajax_class}" href="{"`$c_url`&sort_by=total&sort_order=`$search.sort_order_rev`"|fn_url}" data-ca-target-id="pagination_contents">
                     {__("total")}
                 </a>
@@ -61,6 +64,20 @@
 
             {hook name="orders:manage_data"}{/hook}
 
+            {assign var="order_items" value=$mwl_xlsx_order_items[$o.order_id]|default:[]}
+            <td class="ty-orders-search__item ty-orders-search__item--products">
+                {if $order_items}
+                    <ul class="mwl-xlsx-order-items">
+                        {foreach from=$order_items item="order_item"}
+                            <li class="mwl-xlsx-order-items__item">
+                                {$order_item.amount}&times;&nbsp;{$order_item.product|escape}
+                            </li>
+                        {/foreach}
+                    </ul>
+                {else}
+                    <span class="mwl-xlsx-order-items__empty">&mdash;</span>
+                {/if}
+            </td>
             <td class="ty-orders-search__item">
                 {include file="common/price.tpl" value=$o.total}
             </td>
@@ -92,7 +109,7 @@
         </tr>
     {foreachelse}
         <tr class="ty-table__no-items">
-            <td colspan="5">
+            <td colspan="6">
                 <p class="ty-no-items">{__("text_no_orders")}</p>
             </td>
         </tr>

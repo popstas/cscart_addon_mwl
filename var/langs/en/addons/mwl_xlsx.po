@@ -84,6 +84,10 @@ msgctxt "Languages::mwl_xlsx.order_messages"
 msgid "Messages"
 msgstr "Messages"
 
+msgctxt "Languages::mwl_xlsx.order_items"
+msgid "Items"
+msgstr "Items"
+
 msgctxt "Languages::mwl_xlsx.order_messages_unread"
 msgid "Unread"
 msgstr "Unread"

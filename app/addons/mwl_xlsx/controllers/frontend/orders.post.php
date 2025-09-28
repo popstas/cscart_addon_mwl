@@ -1,5 +1,6 @@
 <?php
 
+use Tygh\Enum\UserTypes;
 use Tygh\Tygh;
 
 if (!defined('BOOTSTRAP')) {
@@ -10,8 +11,10 @@ if ($mode === 'search') {
     $view = Tygh::$app['view'];
 
     $orders = (array) $view->getTemplateVars('orders');
+    $view->assign('mwl_xlsx_order_messages', []);
+    $view->assign('mwl_xlsx_order_items', []);
+
     if (!$orders || !function_exists('fn_vendor_communication_get_threads')) {
-        $view->assign('mwl_xlsx_order_messages', []);
         return;
     }
 
@@ -21,8 +24,26 @@ if ($mode === 'search') {
     $order_ids = array_filter($order_ids);
 
     if (!$order_ids) {
-        $view->assign('mwl_xlsx_order_messages', []);
         return;
+    }
+
+    $order_items = [];
+    $order_products = db_get_array(
+        'SELECT order_id, product, amount FROM ?:order_details WHERE order_id IN (?n) ORDER BY order_id, item_id',
+        $order_ids
+    );
+
+    foreach ($order_products as $order_product) {
+        $order_id = (int) $order_product['order_id'];
+
+        if (!isset($order_items[$order_id])) {
+            $order_items[$order_id] = [];
+        }
+
+        $order_items[$order_id][] = [
+            'product' => (string) $order_product['product'],
+            'amount' => (int) $order_product['amount'],
+        ];
     }
 
     list($threads) = fn_vendor_communication_get_threads([
@@ -68,7 +89,7 @@ if ($mode === 'search') {
                 continue;
             }
 
-            $is_customer_message = isset($thread['last_message_user_type']) && $thread['last_message_user_type'] === VC_USER_TYPE_CUSTOMER;
+            $is_customer_message = isset($thread['last_message_user_type']) && $thread['last_message_user_type'] === UserTypes::CUSTOMER;
             $is_own_message = $auth_user_id && isset($thread['last_message_user_id']) && (int) $thread['last_message_user_id'] === $auth_user_id;
 
             if (!$is_customer_message && !$is_own_message) {
@@ -78,4 +99,5 @@ if ($mode === 'search') {
     }
 
     $view->assign('mwl_xlsx_order_messages', $order_messages);
+    $view->assign('mwl_xlsx_order_items', $order_items);
 }
