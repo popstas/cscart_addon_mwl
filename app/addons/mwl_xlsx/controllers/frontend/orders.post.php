@@ -13,10 +13,6 @@ if ($mode === 'search') {
     $orders = (array) $view->getTemplateVars('orders');
     $view->assign('mwl_xlsx_order_messages', []);
     $view->assign('mwl_xlsx_order_items', []);
-    $auth = Tygh::$app['session']['auth'];
-    $lang_code = !empty($auth['lang_code']) ? (string) $auth['lang_code'] : (defined('CART_LANGUAGE') ? CART_LANGUAGE : 'en');
-    $is_ru_language = strncasecmp($lang_code, 'ru', 2) === 0;
-    $view->assign('mwl_xlsx_is_ru_language', $is_ru_language);
 
     if (!$orders || !function_exists('fn_vendor_communication_get_threads')) {
         return;
