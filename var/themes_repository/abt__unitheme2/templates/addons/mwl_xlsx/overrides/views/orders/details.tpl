@@ -1,3 +1,4 @@
+{assign var="without_customer" value="Y"}
 <div class="ty-orders-detail">
 
     {if $order_info}
