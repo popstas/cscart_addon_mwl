@@ -54,9 +54,6 @@
     {foreach from=$orders item="o"}
         <tr>
             {assign var="order_date_format" value="`$settings.Appearance.date_format`, `$settings.Appearance.time_format`"}
-            {if $mwl_xlsx_is_ru_language}
-                {assign var="order_date_format" value="%d.%m.%Y, `$settings.Appearance.time_format`"}
-            {/if}
             <td class="ty-orders-search__item">
                 <a href="{"orders.details?order_id=`$o.order_id`"|fn_url}">
                     {$o.timestamp|date_format:$order_date_format}, <strong>#{$o.order_id}</strong>

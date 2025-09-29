@@ -1,4 +1,5 @@
 <?php
+use Tygh\Registry;
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
 
 fn_register_hooks(
@@ -37,8 +38,15 @@ function fn_mwl_xlsx_get_product_filter_fields(&$filters)
     unset($filters['P']);
 }
 
-/** Регистрируем {mwl_media_lists_count} как безопасную smarty-функцию */
 function fn_mwl_xlsx_init_templater_post(&$view)
 {
+    // Регистрируем {mwl_media_lists_count} как безопасную smarty-функцию
     $view->registerPlugin('function', 'mwl_media_lists_count', 'fn_mwl_xlsx_smarty_media_lists_count');
+
+    // override date format for RU
+    $lang = defined('CART_LANGUAGE') ? CART_LANGUAGE : (Registry::get('runtime.language') ?: 'en');
+    if ($lang === 'ru') {
+        Registry::set('settings.Appearance.date_format', '%d.%m.%Y');
+        $view->assign('settings', Registry::get('settings'));
+    }
 }
