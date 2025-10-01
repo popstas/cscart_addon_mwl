@@ -291,3 +291,20 @@ msgstr "General"
 msgctxt "SettingsOptions::mwl_xlsx::notifications"
 msgid "Notifications"
 msgstr "Notifications"
+
+msgctxt "Languages::mwl_xlsx.shortnum_thousand"
+msgid " K"
+msgstr " K"
+
+msgctxt "Languages::mwl_xlsx.shortnum_million"
+msgid " M"
+msgstr " M"
+
+msgctxt "Languages::mwl_xlsx.shortnum_billion"
+msgid " B"
+msgstr " B"
+
+msgctxt "Languages::mwl_xlsx.shortnum_trillion"
+msgid " T"
+msgstr " T"
+

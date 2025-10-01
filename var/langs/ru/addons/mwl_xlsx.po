@@ -261,3 +261,24 @@ msgstr "Ссылка доступна в течение 7 дней."
 msgctxt "SettingsOptions::mwl_xlsx::general"
 msgid "General"
 msgstr "Общие"
+
+msgctxt "SettingsOptions::mwl_xlsx::notifications"
+msgid "Notifications"
+msgstr "Уведомления"
+
+msgctxt "Languages::mwl_xlsx.shortnum_thousand"
+msgid " K"
+msgstr " тыс."
+
+msgctxt "Languages::mwl_xlsx.shortnum_million"
+msgid " M"
+msgstr " млн."
+
+msgctxt "Languages::mwl_xlsx.shortnum_billion"
+msgid " B"
+msgstr " млрд."
+
+msgctxt "Languages::mwl_xlsx.shortnum_trillion"
+msgid " T"
+msgstr " трлн."
+

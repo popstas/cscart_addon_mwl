@@ -109,6 +109,8 @@
 
     // Инициализация при загрузке страницы
     $(document).ready(function() {
+        // console.log('[MWL] Document ready, compact_labels:', Tygh.addons.mwl_xlsx.compact_price_slider_labels);
+        
         // Вызываем initSlider для инициализации всех слайдеров
         setTimeout(function() {
             window.initSlider(document);
@@ -172,7 +174,7 @@
 
     // Полностью заменяем оригинальную функцию initSlider
     window.initSlider = function(parent) {
-        parent.find('.cm-range-slider').each(function () {
+        $(parent).find('.cm-range-slider').each(function () {
             var $el = $(this);
             var id = $el.prop('id');
             var json_data = $('#' + id + '_json').val();
@@ -185,6 +187,8 @@
             if (!data) {
                 return false;
             }
+            
+            console.log('[MWL] initSlider: initializing', id, 'values:', data.left, '-', data.right);
             
             $el.slider({
                 disabled: data.disabled,
