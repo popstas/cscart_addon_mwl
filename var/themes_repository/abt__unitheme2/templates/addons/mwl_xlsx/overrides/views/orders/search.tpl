@@ -94,9 +94,30 @@
                         {$messages_total}
                     </a>
                 {else}
-                    <span class="{$messages_class}">
+                    <!--<span class="{$messages_class}">
                         {$messages_total}
-                    </span>
+                    </span>-->
+                    {if $addons.vendor_communication.show_on_order === "YesNo::YES"|enum
+                        && !$vendor_communication_order_thread
+                    }
+                        {include file="addons/vendor_communication/views/vendor_communication/components/new_thread_button.tpl"
+                            title=__("vendor_communication.start_communication")
+                            object_id=$o.order_id
+                            meta="ty-btn ty-btn__text"
+                            show_form=false
+                        }
+                    {/if}
+                    
+                    {include
+                        file="addons/vendor_communication/views/vendor_communication/components/new_thread_form.tpl"
+                        object_type=$smarty.const.VC_OBJECT_TYPE_ORDER
+                        object_id=$o.order_id
+                        company_id=$o.company_id
+                        vendor_name=$o.company_name|default:''
+                        redirect_url="`$config.current_url`&selected_section=vendor_communication"
+                        no_ajax=true
+                        product=false
+                    }
                 {/if}
                 {if $order_messages.has_unread}
                     <span class="ty-label ty-label--warning ty-label--inline">{__("mwl_xlsx.order_messages_unread")}</span>
