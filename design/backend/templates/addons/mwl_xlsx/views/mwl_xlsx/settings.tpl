@@ -40,6 +40,15 @@
             </div>
         </div>
 
+        <div class="control-group">
+            <label class="control-label" for="elm_compact_price_slider_labels">{__("mwl_xlsx.setting.compact_price_slider_labels")}:</label>
+            <div class="controls">
+                <input type="hidden" name="mwl_xlsx[compact_price_slider_labels]" value="N" />
+                <input type="checkbox" name="mwl_xlsx[compact_price_slider_labels]" id="elm_compact_price_slider_labels" value="Y" {if $mwl_xlsx.compact_price_slider_labels == 'Y'}checked="checked"{/if} />
+                <p class="muted description">{__("mwl_xlsx.setting.compact_price_slider_labels.desc")}</p>
+            </div>
+        </div>
+
         <div class="buttons-container">
             {include file="buttons/save_changes.tpl" but_name="dispatch[mwl_xlsx.settings]"}
         </div>

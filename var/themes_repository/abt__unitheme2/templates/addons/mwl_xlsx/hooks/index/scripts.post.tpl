@@ -15,14 +15,20 @@
     "mwl_xlsx.removed": '{__("mwl_xlsx.removed")|escape:"javascript"}',
     "mwl_xlsx.rename": '{__("mwl_xlsx.rename")|escape:"javascript"}',
     "mwl_xlsx.select_list": '{__("mwl_xlsx.select_list")|escape:"javascript"}',
+    "mwl_xlsx.shortnum_trillion": '{__("mwl_xlsx.shortnum_trillion")|escape:"javascript"}',
+    "mwl_xlsx.shortnum_billion": '{__("mwl_xlsx.shortnum_billion")|escape:"javascript"}',
+    "mwl_xlsx.shortnum_million": '{__("mwl_xlsx.shortnum_million")|escape:"javascript"}',
+    "mwl_xlsx.shortnum_thousand": '{__("mwl_xlsx.shortnum_thousand")|escape:"javascript"}',
     "save": '{__("save")|escape:"javascript"}',
   });
 })(Tygh, Tygh.$);
 </script>
 
 {script src="js/addons/mwl_xlsx/mwl_xlsx.js"}
+{script src="js/addons/mwl_xlsx/short_price_slider.js"}
 <script>
 Tygh.addons = Tygh.addons || {};
 Tygh.addons.mwl_xlsx = Tygh.addons.mwl_xlsx || {};
 Tygh.addons.mwl_xlsx.max_list_items = {$addons.mwl_xlsx.max_list_items|default:0};
+Tygh.addons.mwl_xlsx.compact_price_slider_labels = {if $addons.mwl_xlsx.compact_price_slider_labels == "Y"}true{else}false{/if};
 </script>

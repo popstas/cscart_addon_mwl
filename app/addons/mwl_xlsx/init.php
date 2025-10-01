@@ -43,10 +43,31 @@ function fn_mwl_xlsx_init_templater_post(&$view)
     // Регистрируем {mwl_media_lists_count} как безопасную smarty-функцию
     $view->registerPlugin('function', 'mwl_media_lists_count', 'fn_mwl_xlsx_smarty_media_lists_count');
 
+    // Регистрируем модификатор shortnum для компактного отображения чисел
+    $view->registerPlugin('modifier', 'shortnum', 'fn_mwl_xlsx_smarty_modifier_shortnum');
+
     // override date format for RU
     $lang = defined('CART_LANGUAGE') ? CART_LANGUAGE : (Registry::get('runtime.language') ?: 'en');
     if ($lang === 'ru') {
         Registry::set('settings.Appearance.date_format', '%d.%m.%Y');
         $view->assign('settings', Registry::get('settings'));
     }
+}
+
+/**
+ * Smarty modifier for compact number display
+ * 275435920 -> "275 млн." (ru) / "275 M" (en)
+ */
+function fn_mwl_xlsx_smarty_modifier_shortnum($n) {
+    $n = floatval($n);
+    $t = __('mwl_xlsx.shortnum_trillion'); // " трлн." / " T"
+    $b = __('mwl_xlsx.shortnum_billion');  // " млрд." / " B"
+    $m = __('mwl_xlsx.shortnum_million');  // " млн." / " M"
+    $k = __('mwl_xlsx.shortnum_thousand'); // " тыс." / " K"
+
+    if (abs($n) >= 1e12) return floor($n / 1e12) . $t;
+    if (abs($n) >= 1e9)  return floor($n / 1e9)  . $b;
+    if (abs($n) >= 1e6)  return floor($n / 1e6)  . $m;
+    if (abs($n) >= 1e3)  return floor($n / 1e3)  . $k;
+    return (string) intval($n);
 }

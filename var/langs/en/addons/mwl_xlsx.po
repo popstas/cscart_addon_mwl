@@ -283,3 +283,11 @@ msgstr "Set password"
 msgctxt "Languages::mwl_xlsx.invite_hint"
 msgid "The link is available for 7 days."
 msgstr "The link is available for 7 days."
+
+msgctxt "SettingsOptions::mwl_xlsx::general"
+msgid "General"
+msgstr "General"
+
+msgctxt "SettingsOptions::mwl_xlsx::notifications"
+msgid "Notifications"
+msgstr "Notifications"

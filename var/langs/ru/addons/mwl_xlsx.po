@@ -257,3 +257,7 @@ msgstr "Установить пароль"
 msgctxt "Languages::mwl_xlsx.invite_hint"
 msgid "The link is available for 7 days."
 msgstr "Ссылка доступна в течение 7 дней."
+
+msgctxt "SettingsOptions::mwl_xlsx::general"
+msgid "General"
+msgstr "Общие"

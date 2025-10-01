@@ -4,6 +4,36 @@
   var $newListDialog = $('#mwl_xlsx_new_list_dialog');
   var $addDialog = $('#mwl_xlsx_add_dialog');
 
+  // === MWL: минимальное отслеживание целей Метрики ===
+  function mwlGetMetrikaId() {
+    if (window.MWL_METRIKA_ID) return parseInt(window.MWL_METRIKA_ID, 10);
+    try {
+      if (window.Ya && window.Ya._metrika && typeof window.Ya._metrika.counters === 'function') {
+        var cs = window.Ya._metrika.counters();
+        if (cs && cs[0] && cs[0].id) return cs[0].id;
+      }
+    } catch (e) {}
+    for (var k in window) { if (/^yaCounter\d+$/.test(k)) return parseInt(k.replace('yaCounter',''), 10); }
+    return null;
+  }
+  function mwlReach(goal, el) {
+    var id = mwlGetMetrikaId();
+    if (!goal || !id) return;
+    var params = {};
+    try {
+      var ds = (el && el.dataset) ? el.dataset : {};
+      for (var key in ds) { if (/^mwl/i.test(key)) params[key] = ds[key]; }
+      var $el = $(el);
+      var href = $el.attr('href'); if (href) params.href = href;
+    } catch (e) {}
+    if (typeof window.ym === 'function') { try { window.ym(id, 'reachGoal', goal, params); } catch (e) {} }
+    else if (window['yaCounter' + id] && typeof window['yaCounter' + id].reachGoal === 'function') { try { window['yaCounter' + id].reachGoal(goal, params); } catch (e) {} }
+  }
+  $(_.doc).on('click', '.mwl_xlsx-export, .mwl_google-export', function() {
+    mwlReach($(this).is('.mwl_google-export') ? 'MWL_GSHEETS_EXPORT' : 'MWL_XLSX_DOWNLOAD', this);
+  });
+  // === /MWL ===
+
   $.ceEvent('on', 'ce.commoninit', function(context) {
     // init new list dialog
     if (!$newListDialog.length) {
@@ -522,4 +552,3 @@
     return data || {};
   }
 })(Tygh, Tygh.$);
-

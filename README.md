@@ -26,6 +26,7 @@
 - Configure price visibility, extra list button, and access groups via the add-on's **Settings** page in the admin panel.
 - Provide Google API credentials JSON in the add-on settings to enable Google Sheets export.
 - Limit the number of items in a media list via the **Max list items** setting (default 50).
+- Compact price slider labels: Display min/max values in shortened format (1,000 → 1 K / 1 тыс.) with localization support for Russian and English.
 
 ### Shortcuts
 - Press "a" on a product page to open the "Add to media list" dialog.
@@ -60,6 +61,26 @@
 ```bash
 cscart-sdk addon:symlink mwl_xlsx /path/to/mwl_xlsx /path/to/public_html --templates-to-design
 ```
+
+### Compact Price Slider Labels
+
+The add-on includes a feature to display compact price slider labels with localization support:
+
+#### Features
+- **Compact Format**: Large numbers are displayed in shortened format (e.g., 275,435,920 → 275 млн. / 275 M)
+- **Localization**: Supports Russian and English with appropriate suffixes:
+  - Russian: тыс., млн., млрд., трлн.
+  - English: K, M, B, T
+- **Currency Preservation**: Maintains currency prefix/suffix from filter settings
+- **Non-intrusive**: Only affects display labels, doesn't change filter logic or values
+- **Configurable**: Can be enabled/disabled via add-on settings
+
+#### Test Cases
+- 950 → 950 (no change)
+- 12,345 → 12 тыс. / 12 K
+- 1,234,567 → 1 млн. / 1 M
+- 2,147,483,647 → 2 млрд. / 2 B
+- 1,999,999,999,999 → 1 трлн. / 1 T
 
 ### Dev tools
 
