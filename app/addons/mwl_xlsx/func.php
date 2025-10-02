@@ -715,29 +715,36 @@ function fn_mwl_xlsx_fill_google_sheet(Sheets $sheets, $spreadsheet_id, array $d
  */
 function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions)
 {
-    error_log(print_r($receiver_search_conditions, true));
     // Получаем данные из схемы
     $data = $schema->data ?? [];
     $thread_id = $data['thread_id'] ?? null;
-    $user_id = $data['user_id'] ?? null;
-    $order_id = $data['order_id'] ?? null;
+    // $user_id = $data['user_id'] ?? null;
+    $order_id = $data['object_type'] === 'O' ? $data['object_id'] : null;
     $last_message = $data['last_message'] ?? null;
-    $communication_type = $data['communication_type'] ?? null;
-    $firstname = $data['firstname'] ?? null;
-    $lastname = $data['lastname'] ?? null;
+    $last_message_user_type = $data['last_message_user_type'] ?? null;
+    $last_message_user_id = $data['last_message_user_id'] ?? null;
+    // $communication_type = $data['communication_type'] ?? null;
+    $message_author = $data['message_author'] ?? null;
+    $action_url = $data['action_url'] ?? null;
     $customer_email = $data['customer_email'] ?? null;
     $company = $data['company'] ?? null;
+    $is_admin = $last_message_user_type === 'A';
 
+    // error_log(print_r($data, true));
     // Формируем текст сообщения для Telegram
-    $text = "Новое сообщение в коммуникации\n"
-          . "— Thread ID: {$thread_id}\n"
-          . "— Пользователь: {$firstname} {$lastname} (ID {$user_id})\n"
-          . "— Email: {$customer_email}\n"
-          . "— Заказ: {$order_id}\n"
-          . "— Тип: {$communication_type}\n"
-          . "— Компания: {$company}\n"
-          . "— Сообщение: {$last_message}\n"
-          . "— Время: " . date('Y-m-d H:i:s');
+    $text = "Новое сообщение по заказу {$order_id}\n"
+          //   . "— Thread ID: {$thread_id}\n"
+          . "- Компания: {$company}\n"
+          . "- Заказ: {$order_id}\n"
+          . "- Пользователь: {$message_author}\n"
+          //   . "— Email: {$customer_email}\n"
+          . "- Кто написал: " . ($is_admin ? 'Администратор' : 'Клиент') . "\n"
+          . "- Время: " . date('Y-m-d H:i:s')
+          . "\n"
+          . "<a href=\"" . fn_url($action_url, 'A') . "\">URL</a>"
+          . "\n\n"
+          . "Сообщение: \n"
+          . $last_message;
 
     // Отправляем в Telegram
     $token = trim((string) Registry::get('addons.mwl_xlsx.telegram_bot_token'));
