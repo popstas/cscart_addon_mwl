@@ -159,3 +159,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'send_recover_to_users') 
     fn_set_notification('N', __('notice'), __('mwl_xlsx.recover_links_sent', ['[n]' => $sent]) . " / skipped: {$skipped}");
     return [CONTROLLER_STATUS_OK, 'profiles.manage'];
 }
+

@@ -286,3 +286,31 @@ msgctxt "Languages::mwl_xlsx.notification_transport_name"
 msgid "Media Lists Transport"
 msgstr "Транспорт подборок"
 
+msgctxt "Languages::mwl_xlsx.invites"
+msgid "Invites"
+msgstr "Приглашения"
+
+msgctxt "Languages::mwl_xlsx.remaining_hours"
+msgid "Remaining time"
+msgstr "Осталось времени"
+
+msgctxt "Languages::mwl_xlsx.no_name"
+msgid "No name"
+msgstr "Без имени"
+
+msgctxt "Languages::mwl_xlsx.no_company"
+msgid "No company"
+msgstr "Без компании"
+
+msgctxt "Languages::mwl_xlsx.no_invites"
+msgid "No active invites found"
+msgstr "Активных приглашений не найдено"
+
+msgctxt "Languages::mwl_xlsx.last_login"
+msgid "Last login"
+msgstr "Последний вход"
+
+msgctxt "Languages::mwl_xlsx.never_logged_in"
+msgid "Never"
+msgstr "Никогда"
+

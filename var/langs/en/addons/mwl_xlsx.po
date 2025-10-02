@@ -312,3 +312,31 @@ msgctxt "Languages::mwl_xlsx.notification_transport_name"
 msgid "Media Lists Transport"
 msgstr "Media Lists Transport"
 
+msgctxt "Languages::mwl_xlsx.invites"
+msgid "Invites"
+msgstr "Invites"
+
+msgctxt "Languages::mwl_xlsx.remaining_hours"
+msgid "Remaining time"
+msgstr "Remaining time"
+
+msgctxt "Languages::mwl_xlsx.no_name"
+msgid "No name"
+msgstr "No name"
+
+msgctxt "Languages::mwl_xlsx.no_company"
+msgid "No company"
+msgstr "No company"
+
+msgctxt "Languages::mwl_xlsx.no_invites"
+msgid "No active invites found"
+msgstr "No active invites found"
+
+msgctxt "Languages::mwl_xlsx.last_login"
+msgid "Last login"
+msgstr "Last login"
+
+msgctxt "Languages::mwl_xlsx.never_logged_in"
+msgid "Never"
+msgstr "Never"
+
