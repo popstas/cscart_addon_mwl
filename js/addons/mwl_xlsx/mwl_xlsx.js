@@ -29,12 +29,37 @@
     if (typeof window.ym === 'function') { try { window.ym(id, 'reachGoal', goal, params); } catch (e) {} }
     else if (window['yaCounter' + id] && typeof window['yaCounter' + id].reachGoal === 'function') { try { window['yaCounter' + id].reachGoal(goal, params); } catch (e) {} }
   }
+
+  // Один раз прокинем user_id в Метрику, если есть
+  function setMwlUserId() {
+    var id = mwlGetMetrikaId();
+    if (!id || typeof window.ym !== 'function') { return; }
+
+    var uid = window.MWL_USER_ID
+      || (typeof _ !== 'undefined' && _.auth && _.auth.user_id)
+      || null;
+
+    if (!uid) {
+      var el = document.body || document.documentElement;
+      if (el && el.getAttribute) {
+        uid = el.getAttribute('data-mwl-user-id');
+      }
+    }
+
+    if (uid && String(uid) !== '0') {
+      try { window.ym(id, 'userParams', { user_id: String(uid) }); } catch (e) {}
+    }
+  }
+
   $(_.doc).on('click', '.mwl_xlsx-export, .mwl_google-export', function() {
     mwlReach($(this).is('.mwl_google-export') ? 'MWL_GSHEETS_EXPORT' : 'MWL_XLSX_DOWNLOAD', this);
   });
   // === /MWL ===
 
   $.ceEvent('on', 'ce.commoninit', function(context) {
+    // init user id in Metrika
+    setMwlUserId();
+
     // init new list dialog
     if (!$newListDialog.length) {
       $('body').append(
