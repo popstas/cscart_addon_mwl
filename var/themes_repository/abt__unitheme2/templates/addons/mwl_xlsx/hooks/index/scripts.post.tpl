@@ -32,3 +32,6 @@ Tygh.addons.mwl_xlsx = Tygh.addons.mwl_xlsx || {};
 Tygh.addons.mwl_xlsx.max_list_items = {$addons.mwl_xlsx.max_list_items|default:0};
 Tygh.addons.mwl_xlsx.compact_price_slider_labels = {if $addons.mwl_xlsx.compact_price_slider_labels == "Y"}true{else}false{/if};
 </script>
+<script>
+  window.MWL_USER_ID = {$auth.user_id|default:0};
+</script>

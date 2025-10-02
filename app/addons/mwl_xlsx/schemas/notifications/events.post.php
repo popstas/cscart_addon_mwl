@@ -1,33 +1,43 @@
 <?php
 
-defined('BOOTSTRAP') or die('Access denied!');
+defined('BOOTSTRAP') or die('Access denied');
 
 /** @var array $schema */
 
-// Расширяем события vendor_communication для перехвата сообщений
-$vendor_communication_events = [
+$targets = [
     'vendor_communication.message_received',
-    'vendor_communication.vendor_to_admin_message_received', 
-    'vendor_communication.order_message_received'
+    'vendor_communication.order_message_received',
 ];
 
-foreach ($vendor_communication_events as $event_name) {
-    if (!isset($schema[$event_name])) {
-        $schema[$event_name] = [];
+// Схема событий для транспорта mwl
+
+foreach ($targets as $event_id) {
+    // Проверяем, существует ли уже событие
+    if (!isset($schema[$event_id])) {
+        $schema[$event_id] = [
+            'group'     => 'vendor_communication',
+            'name'      => ['template' => $event_id],
+            'receivers' => [],
+        ];
     }
     
-    if (!isset($schema[$event_name]['receivers'])) {
-        $schema[$event_name]['receivers'] = [];
+    // Гарантируем, что у нас есть получатель A (Admin)
+    if (!isset($schema[$event_id]['receivers']['A'])) {
+        $schema[$event_id]['receivers']['A'] = [];
     }
     
-    // Добавляем наш транспорт для перехвата сообщений
-    $schema[$event_name]['receivers']['mwl_xlsx_message_interceptor'] = [
-        'transport' => 'mwl_xlsx_message_interceptor',
-        'data_modifier' => 'fn_mwl_xlsx_modify_vendor_communication_data',
-        'conditions' => [
-            'user_status' => ['A'], // Активные пользователи
-        ],
-    ];
+    // Гарантируем, что у нас есть получатель C (Customer)
+    if (!isset($schema[$event_id]['receivers']['C'])) {
+        $schema[$event_id]['receivers']['C'] = [];
+    }
+    
+    // Добавляем наш транспорт с правильной схемой сообщения
+    // Используем InternalMessageSchema как базовую схему
+    $schema[$event_id]['receivers']['A']['mwl'] = new \Tygh\Notifications\Transports\Internal\InternalMessageSchema();
+    $schema[$event_id]['receivers']['C']['mwl'] = new \Tygh\Notifications\Transports\Internal\InternalMessageSchema();
 }
 
+// Возвращаем обновленную схему
+
 return $schema;
+

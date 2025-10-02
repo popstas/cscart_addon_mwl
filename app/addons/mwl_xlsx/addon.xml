@@ -2,8 +2,13 @@
 <addon scheme="3.0">
     <id>mwl_xlsx</id>
     <version>0.1.0</version>
-    <priority>500</priority>
+    <priority>1100</priority>
     <position>0</position>
+    <compatibility>
+        <dependencies>
+            <item>vendor_communication</item>
+        </dependencies>
+    </compatibility>
 
     <!-- Устанавливать во всех редакциях с витриной -->
     <auto_install>MULTIVENDOR,ULTIMATE</auto_install>

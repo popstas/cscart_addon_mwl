@@ -282,3 +282,7 @@ msgctxt "Languages::mwl_xlsx.shortnum_trillion"
 msgid " T"
 msgstr " трлн."
 
+msgctxt "Languages::mwl_xlsx.notification_transport_name"
+msgid "Media Lists Transport"
+msgstr "Транспорт подборок"
+

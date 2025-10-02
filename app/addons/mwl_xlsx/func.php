@@ -1,4 +1,5 @@
 <?php
+use Tygh\Http;
 use Tygh\Registry;
 use Tygh\Storage;
 use Google\Service\Sheets;
@@ -704,6 +705,67 @@ function fn_mwl_xlsx_fill_google_sheet(Sheets $sheets, $spreadsheet_id, array $d
     }
 
     return true;
+}
+
+/**
+ * Обработка события из Vendor Communication.
+ *
+ * @param BaseMessageSchema $schema
+ * @param array $receiver_search_conditions
+ */
+function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions)
+{
+    error_log(print_r($receiver_search_conditions, true));
+    // Получаем данные из схемы
+    $data = $schema->data ?? [];
+    $thread_id = $data['thread_id'] ?? null;
+    $user_id = $data['user_id'] ?? null;
+    $order_id = $data['order_id'] ?? null;
+    $last_message = $data['last_message'] ?? null;
+    $communication_type = $data['communication_type'] ?? null;
+    $firstname = $data['firstname'] ?? null;
+    $lastname = $data['lastname'] ?? null;
+    $customer_email = $data['customer_email'] ?? null;
+    $company = $data['company'] ?? null;
+
+    // Формируем текст сообщения для Telegram
+    $text = "Новое сообщение в коммуникации\n"
+          . "— Thread ID: {$thread_id}\n"
+          . "— Пользователь: {$firstname} {$lastname} (ID {$user_id})\n"
+          . "— Email: {$customer_email}\n"
+          . "— Заказ: {$order_id}\n"
+          . "— Тип: {$communication_type}\n"
+          . "— Компания: {$company}\n"
+          . "— Сообщение: {$last_message}\n"
+          . "— Время: " . date('Y-m-d H:i:s');
+
+    // Отправляем в Telegram
+    $token = trim((string) Registry::get('addons.mwl_xlsx.telegram_bot_token'));
+    $chat_id = trim((string) Registry::get('addons.mwl_xlsx.telegram_chat_id'));
+    
+    if ($token && $chat_id) {
+        // Telegram Bot API
+        $url = "https://api.telegram.org/bot{$token}/sendMessage";
+        $resp = Http::post($url, [
+            'chat_id'    => $chat_id,
+            'text'       => $text,
+            'parse_mode' => 'HTML',
+        ], [
+            'timeout'    => 10,
+            'headers'    => [
+                'Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8',
+            ],
+            'log_pre'    => 'mwl_xlsx.telegram_vc_request',
+            'log_result' => true,
+        ]);
+        $ok = $resp && ($resp = json_decode($resp, true)) && !empty($resp['ok']);
+        
+        if (!$ok) {
+            error_log('Failed to send Telegram notification for VC event: ' . print_r($resp, true));
+        }
+    } else {
+        error_log('Telegram bot token or chat_id not configured for VC notifications');
+    }
 }
 
 /**

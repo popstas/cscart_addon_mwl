@@ -27,6 +27,7 @@
 - Provide Google API credentials JSON in the add-on settings to enable Google Sheets export.
 - Limit the number of items in a media list via the **Max list items** setting (default 50).
 - Compact price slider labels: Display min/max values in shortened format (1,000 → 1 K / 1 тыс.) with localization support for Russian and English.
+- Yandex Metrika tracking includes `user_id` for segmentation via `userParams` when available.
 
 ### Shortcuts
 - Press "a" on a product page to open the "Add to media list" dialog.

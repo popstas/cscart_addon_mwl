@@ -2,5 +2,10 @@
     "require": {
         "phpoffice/phpspreadsheet": "^1.29",
         "google/apiclient": "^2.15"
+    },
+    "autoload": {
+        "psr-4": {
+            "Tygh\\Addons\\MwlXlsx\\": "src/"
+        }
     }
 }

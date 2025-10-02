@@ -10,6 +10,16 @@ fn_register_hooks(
     'init_templater_post'
 );
 
+/**
+ * Регистрируем наш собственный транспорт 'mwl'
+ */
+// Подключаем класс транспорта
+require_once __DIR__ . '/src/Notifications/Transports/MwlTransport.php';
+
+Tygh::$app['event.transports.mwl'] = static function ($app) {
+    return new \Tygh\Addons\MwlXlsx\Notifications\Transports\MwlTransport();
+};
+
 function fn_mwl_xlsx_before_dispatch(&$controller, &$mode, &$action, &$dispatch_extra, &$area)
 {
     $path = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
