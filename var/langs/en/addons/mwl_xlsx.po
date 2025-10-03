@@ -92,6 +92,31 @@ msgctxt "Languages::mwl_xlsx.order_messages_unread"
 msgid "Unread"
 msgstr "Unread"
 
+msgctxt "Languages::mwl_xlsx.initial_thread_message"
+msgid "Initial message for order communication"
+msgstr "Initial message for order communication"
+
+msgctxt "Languages::mwl_xlsx.thread_created"
+msgid "Thread created successfully"
+msgstr "Thread created successfully"
+
+msgctxt "Languages::mwl_xlsx.no_response_error"
+msgid "No response from server"
+msgstr "No response from server"
+
+msgctxt "Languages::mwl_xlsx.redirect_error"
+msgid "Server returned HTML instead of JSON. Check if thread creation requires additional permissions."
+msgstr "Server returned HTML instead of JSON. Check if thread creation requires additional permissions."
+
+msgctxt "Languages::mwl_xlsx.opening_thread_form"
+msgid "Opening thread creation form..."
+msgstr "Opening thread creation form..."
+
+msgctxt "Languages::mwl_xlsx.cannot_create_thread"
+msgid "Cannot create thread"
+msgstr "Cannot create thread"
+
+
 msgctxt "Languages::mwl_xlsx.add_to_wishlist"
 msgid "Add to media list"
 msgstr "Add to media list"

@@ -90,6 +90,31 @@ msgctxt "Languages::mwl_xlsx.order_messages_unread"
 msgid "Unread"
 msgstr "Новые"
 
+msgctxt "Languages::mwl_xlsx.initial_thread_message"
+msgid "Initial message for order communication"
+msgstr "Начальное сообщение для общения по заказу"
+
+msgctxt "Languages::mwl_xlsx.thread_created"
+msgid "Thread created successfully"
+msgstr "Тема успешно создана"
+
+msgctxt "Languages::mwl_xlsx.no_response_error"
+msgid "No response from server"
+msgstr "Нет ответа от сервера"
+
+msgctxt "Languages::mwl_xlsx.redirect_error"
+msgid "Server returned HTML instead of JSON. Check if thread creation requires additional permissions."
+msgstr "Сервер вернул HTML вместо JSON. Проверьте, требуются ли дополнительные разрешения для создания темы."
+
+msgctxt "Languages::mwl_xlsx.opening_thread_form"
+msgid "Opening thread creation form..."
+msgstr "Открывается форма создания темы..."
+
+msgctxt "Languages::mwl_xlsx.cannot_create_thread"
+msgid "Cannot create thread"
+msgstr "Не удается создать тему"
+
+
 msgctxt "Languages::mwl_xlsx.add_to_wishlist"
 msgid "Add to media list"
 msgstr "Добавить в подборку"
