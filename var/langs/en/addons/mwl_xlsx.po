@@ -140,6 +140,26 @@ msgctxt "Languages::mwl_xlsx.settings"
 msgid "Price setting for agencies"
 msgstr "Price setting for agencies"
 
+msgctxt "Languages::mwl_xlsx.settings_backup"
+msgid "Backup settings"
+msgstr "Backup settings"
+
+msgctxt "Languages::mwl_xlsx.settings_backup_done"
+msgid "Settings backup updated"
+msgstr "Settings backup updated"
+
+msgctxt "Languages::mwl_xlsx.settings_backup_last_run"
+msgid "Last backup"
+msgstr "Last backup"
+
+msgctxt "Languages::mwl_xlsx.settings_backup_never"
+msgid "Never"
+msgstr "Never"
+
+msgctxt "Languages::mwl_xlsx.settings_backup_run"
+msgid "Run backup"
+msgstr "Run backup"
+
 msgctxt "Languages::mwl_xlsx.settings_saved"
 msgid "Settings saved"
 msgstr "Settings saved"

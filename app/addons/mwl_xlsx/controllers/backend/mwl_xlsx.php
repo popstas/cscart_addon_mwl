@@ -2,6 +2,7 @@
 use Tygh\Tygh;
 use Tygh\Registry;
 use Tygh\Enum\UserTypes;
+use Tygh\Addons\MwlXlsx\Service\SettingsBackup;
 
 
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
@@ -36,6 +37,28 @@ if ($mode === 'settings') {
     \Tygh::$app['view']->assign('mwl_xlsx', $settings);
     \Tygh::$app['view']->assign('usergroups', fn_get_usergroups(['type' => 'C'], CART_LANGUAGE));
 }
+
+if ($mode === 'backup_settings') {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        SettingsBackup::backup();
+        fn_set_notification('N', __('notice'), __('mwl_xlsx.settings_backup_done'));
+
+        return [CONTROLLER_STATUS_REDIRECT, 'mwl_xlsx.backup_settings'];
+    }
+
+    $row = db_get_row('SELECT created_at FROM ?:mwl_settings_backup WHERE addon = ?s', 'mwl_xlsx');
+    $last_backup = null;
+
+    if ($row && !empty($row['created_at'])) {
+        $date_format = Registry::get('settings.Appearance.date_format');
+        $time_format = Registry::get('settings.Appearance.time_format');
+        $format = trim($date_format . ' ' . $time_format);
+        $last_backup = fn_date_format($row['created_at'], $format);
+    }
+
+    Tygh::$app['view']->assign('last_backup', $last_backup);
+}
+
 
 if ($mode === 'update_currencies') {
     $path = Registry::get('addons.mwl_xlsx.currencies_path');
