@@ -43,7 +43,7 @@ class McpClient
 
     public function createTask(array $payload): array
     {
-        return $this->request('create_task', $payload);
+        return $this->request('planfix_create_sell_task', $payload);
     }
 
     public function bindTask(array $payload): array

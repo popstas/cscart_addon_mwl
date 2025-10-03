@@ -399,6 +399,75 @@
     return false;
   });
 
+  $(_.doc).on('click', '.mwl-planfix-create-task', function(e) {
+    e.preventDefault();
+
+    var $button = $(this);
+    var orderId = $button.data('caOrderId');
+
+    if (!orderId) {
+      return;
+    }
+
+    var planfixEnabled = _.tr('mwl_xlsx.planfix_enabled') === 'Y';
+    var planfixUrl = _.tr('mwl_xlsx.planfix_create_task_url');
+
+    if (!planfixEnabled || !planfixUrl) {
+      return;
+    }
+    var url = planfixUrl;
+
+    $button.prop('disabled', true);
+
+    $.ceAjax('request', url, {
+      method: 'post',
+      data: {
+        order_id: orderId
+      },
+      callback: function(response) {
+        $button.prop('disabled', false);
+
+        if (!response) {
+          return;
+        }
+
+        var message = response.message || _.tr('error') || 'Error';
+        var responseBody = response.mcp_response && response.mcp_response.body ? String(response.mcp_response.body) : '';
+
+        if (responseBody) {
+          message += '\n' + responseBody;
+        }
+
+        if (response.success) {
+          var link = response.link || {};
+          var $row = $button.closest('tr');
+          var $linkCell = $row.find('.mwl-planfix-link-cell');
+
+          if ($linkCell.length && link.planfix_object_id) {
+            if (link.planfix_url) {
+              $linkCell.html(`<a href="${link.planfix_url}" target="_blank" rel="noopener noreferrer">${link.planfix_object_id}</a>`);
+            } else {
+              $linkCell.text(link.planfix_object_id);
+            }
+          }
+
+          $button.remove();
+          $.ceNotification('show', {
+            type: 'N',
+            title: _.tr('notice') || 'Notice',
+            message: message
+          });
+        } else {
+          $.ceNotification('show', {
+            type: 'E',
+            title: _.tr('error') || 'Error',
+            message: message
+          });
+        }
+      }
+    });
+  });
+
   function populateAddDialogOptions() {
     var $dlgSelect = $addDialog.find('[data-ca-list-select-xlsx]');
     $dlgSelect.empty();
@@ -514,7 +583,7 @@
   }
 
   function addProductsToList(product_ids, list_id) {
-    var limit = _.addons && _.addons.mwl_xlsx && parseInt(_.addons.mwl_xlsx.max_list_items, 10);
+    var limit = parseInt(_.tr('mwl_xlsx.max_list_items') || 0, 10);
     if (limit > 0) {
       product_ids = product_ids.slice(0, limit);
     }

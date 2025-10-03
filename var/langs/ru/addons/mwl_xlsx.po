@@ -287,8 +287,8 @@ msgid "Notifications"
 msgstr "Уведомления"
 
 msgctxt "Languages::mwl_xlsx.planfix_task"
-msgid "Planfix task"
-msgstr "Задача Planfix"
+msgid "Planfix"
+msgstr "Planfix"
 
 msgctxt "Languages::mwl_xlsx.planfix_tab_title"
 msgid "Planfix"
@@ -313,14 +313,6 @@ msgstr "Метаданные Planfix"
 msgctxt "Languages::mwl_xlsx.planfix_status_id"
 msgid "Status ID"
 msgstr "ID статуса"
-
-msgctxt "Languages::mwl_xlsx.planfix_status_name"
-msgid "Status name"
-msgstr "Название статуса"
-
-msgctxt "Languages::mwl_xlsx.planfix_status_type"
-msgid "Status type"
-msgstr "Тип статуса"
 
 msgctxt "Languages::mwl_xlsx.planfix_direction"
 msgid "Direction"
@@ -365,6 +357,22 @@ msgstr "Последний входящий payload"
 msgctxt "Languages::mwl_xlsx.planfix_task_created"
 msgid "Planfix task [id] was created"
 msgstr "Задача Planfix [id] создана"
+
+msgctxt "Languages::mwl_xlsx.planfix_button_link"
+msgid "Link"
+msgstr "Связать"
+
+msgctxt "Languages::mwl_xlsx.planfix_payload_name"
+msgid "Planfix task name"
+msgstr "Название задачи Planfix"
+
+msgctxt "Languages::mwl_xlsx.planfix_payload_email"
+msgid "Planfix email"
+msgstr "Email для Planfix"
+
+msgctxt "Languages::mwl_xlsx.planfix_payload_description"
+msgid "Planfix description"
+msgstr "Описание для Planfix"
 
 msgctxt "Languages::mwl_xlsx.planfix_task_bound"
 msgid "Planfix task [id] was bound to the order"

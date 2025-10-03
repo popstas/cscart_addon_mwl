@@ -99,14 +99,12 @@
             `entity_type` VARCHAR(32) NOT NULL,
             `entity_status` VARCHAR(32) NOT NULL,
             `planfix_status_id` VARCHAR(64) NOT NULL,
-            `planfix_status_name` VARCHAR(255) NOT NULL,
-            `planfix_status_type` VARCHAR(32) NOT NULL,
             `is_default` TINYINT(1) NOT NULL DEFAULT 0,
             `created_at` INT UNSIGNED NOT NULL,
             `updated_at` INT UNSIGNED NOT NULL,
             PRIMARY KEY (`map_id`),
             UNIQUE KEY `entity_status` (`company_id`, `entity_type`, `entity_status`),
-            KEY `planfix_status` (`planfix_status_id`, `planfix_status_type`)
+            KEY `planfix_status` (`planfix_status_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ]]></item>
 

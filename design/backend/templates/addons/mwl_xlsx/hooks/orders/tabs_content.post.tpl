@@ -65,22 +65,14 @@
                 <td>{$planfix_meta.status_id|default:''|escape}</td>
             </tr>
             <tr>
-                <th>{__("mwl_xlsx.planfix_status_name")}</th>
-                <td>{$planfix_meta.status_name|default:''|escape}</td>
-            </tr>
-            <tr>
-                <th>{__("mwl_xlsx.planfix_status_type")}</th>
-                <td>{$planfix_meta.status_type|default:''|escape}</td>
-            </tr>
-            <tr>
                 <th>{__("mwl_xlsx.planfix_direction")}</th>
                 <td>{$planfix_meta.direction|default:''|escape}</td>
             </tr>
             <tr>
                 <th>{__("mwl_xlsx.planfix_last_status_from_planfix")}</th>
                 <td>
-                    {if $last_incoming.status_name|default:''}
-                        {$last_incoming.status_name|escape}
+                    {if $last_incoming.status_id|default:''}
+                        {$last_incoming.status_id|escape}
                         <small class="muted">{$last_incoming.received_at|default:0|date_format:"`$settings.Appearance.date_format` `$settings.Appearance.time_format`"}</small>
                     {else}
                         <span class="muted">{__("mwl_xlsx.planfix_no_data")}</span>
