@@ -26,6 +26,7 @@
 - Configure price visibility, extra list button, and access groups via the add-on's **Settings** page in the admin panel.
 - Provide Google API credentials JSON in the add-on settings to enable Google Sheets export.
 - Limit the number of items in a media list via the **Max list items** setting (default 50).
+- Configure the Planfix origin used for deep links so orders and customers with Planfix bindings show the task number with a direct link in the admin grids.
 - Compact price slider labels: Display min/max values in shortened format (1,000 → 1 K / 1 тыс.) with localization support for Russian and English.
 - Yandex Metrika tracking includes `user_id` for segmentation via `userParams` when available.
 

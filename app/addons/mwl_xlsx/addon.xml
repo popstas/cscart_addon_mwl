@@ -23,6 +23,43 @@
     <queries>
         <!-- install -->
         <item for="install"><![CDATA[
+        CREATE TABLE IF NOT EXISTS `?:mwl_xlsx_lists` (
+        `list_id` INT AUTO_INCREMENT PRIMARY KEY,
+        `user_id` INT UNSIGNED NOT NULL DEFAULT 0,
+        `session_id` VARCHAR(64) NOT NULL DEFAULT '',
+        `name` VARCHAR(255) NOT NULL,
+        `is_private` TINYINT(1) NOT NULL DEFAULT 0,
+        `created_at` DATETIME NOT NULL,
+        `updated_at` DATETIME NOT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+        ]]></item>
+
+        <item for="install"><![CDATA[
+        CREATE TABLE IF NOT EXISTS `?:mwl_xlsx_list_products` (
+        `list_id` INT NOT NULL,
+        `product_id` INT NOT NULL,
+        `product_options` TEXT,
+        `amount` INT NOT NULL DEFAULT 1,
+        `timestamp` INT NOT NULL,
+        PRIMARY KEY (`list_id`, `product_id`, `timestamp`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+        ]]></item>
+
+        <item for="install"><![CDATA[
+        CREATE TABLE IF NOT EXISTS `?:mwl_xlsx_templates` (
+        `template_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        `company_id` INT UNSIGNED NOT NULL DEFAULT 0,
+        `name` VARCHAR(255) NOT NULL,
+        `path` VARCHAR(255) NOT NULL,
+        `size` INT UNSIGNED NOT NULL DEFAULT 0,
+        `created_at` INT UNSIGNED NOT NULL,
+        `updated_at` INT UNSIGNED NOT NULL,
+        PRIMARY KEY (`template_id`),
+        KEY `company_id` (`company_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8
+        ]]></item>
+
+        <item for="install"><![CDATA[
         CREATE TABLE IF NOT EXISTS `?:mwl_planfix_links` (
             `link_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
             `company_id` INT UNSIGNED NOT NULL DEFAULT 0,
@@ -89,6 +126,18 @@
         <item for="uninstall"><![CDATA[
         DROP TABLE IF EXISTS `?:mwl_planfix_links`;
         ]]></item>
+
+        <item for="uninstall"><![CDATA[
+        DROP TABLE IF EXISTS `?:mwl_xlsx_templates`;
+        ]]></item>
+
+        <item for="uninstall"><![CDATA[
+        DROP TABLE IF EXISTS `?:mwl_xlsx_list_products`;
+        ]]></item>
+
+        <item for="uninstall"><![CDATA[
+        DROP TABLE IF EXISTS `?:mwl_xlsx_lists`;
+        ]]></item>
     </queries>
 
 
@@ -129,6 +178,9 @@
                 <value id="mwl_xlsx.show_extra_button">Show extra button in list</value>
                 <value id="mwl_xlsx.select_list">Select media list</value>
                 <value id="mwl_xlsx.wishlists">Media lists</value>
+                <value id="mwl_xlsx.planfix_task">Planfix task</value>
+                <value id="mwl_xlsx.planfix_origin">Planfix origin</value>
+                <value id="mwl_xlsx.planfix_origin.desc">Base Planfix URL (example: https://example.planfix.com). Example task link: https://example.planfix.com/task/12345 where 12345 is the planfix_object_id.</value>
             </values>
         </item>
         <item>
@@ -167,6 +219,9 @@
                 <value id="mwl_xlsx.show_extra_button">Выводить кнопку extra в списке</value>
                 <value id="mwl_xlsx.select_list">Выберите подборку</value>
                 <value id="mwl_xlsx.wishlists">Подборки</value>
+                <value id="mwl_xlsx.planfix_task">Задача Planfix</value>
+                <value id="mwl_xlsx.planfix_origin">Адрес Planfix</value>
+                <value id="mwl_xlsx.planfix_origin.desc"><![CDATA[Базовый адрес Planfix (пример: https://example.planfix.com). Пример ссылки на задачу: https://example.planfix.com/task/12345, где 12345 — planfix_object_id.]]></value>
             </values>
         </item>
     </languages>
@@ -197,6 +252,11 @@
                     </item>
                     <item id="currencies_path" type="input">
                         <name>mwl_xlsx.currencies_path</name>
+                        <value></value>
+                    </item>
+                    <item id="planfix_origin" type="input">
+                        <name>mwl_xlsx.planfix_origin</name>
+                        <tooltip>mwl_xlsx.planfix_origin.desc</tooltip>
                         <value></value>
                     </item>
                     <item id="google_credentials" type="textarea">

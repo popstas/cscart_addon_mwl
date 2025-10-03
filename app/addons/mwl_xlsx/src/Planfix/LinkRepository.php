@@ -40,6 +40,41 @@ class LinkRepository
         ) ?: null;
     }
 
+    public function findByEntities(string $entity_type, array $entity_ids, array $company_ids = []): array
+    {
+        $entity_ids = array_values(array_filter(array_map('intval', $entity_ids)));
+
+        if (!$entity_ids) {
+            return [];
+        }
+
+        $query = 'SELECT * FROM ?:mwl_planfix_links WHERE entity_type = ?s AND entity_id IN (?n)';
+        $params = [$entity_type, $entity_ids];
+
+        $company_ids = array_values(array_filter(array_map('intval', $company_ids)));
+
+        if ($company_ids) {
+            $query .= ' AND company_id IN (?n)';
+            $params[] = $company_ids;
+        }
+
+        $query .= ' ORDER BY updated_at DESC';
+
+        $rows = $this->db->getArray($query, ...$params);
+
+        $result = [];
+
+        foreach ($rows as $row) {
+            $entity_id = (int) $row['entity_id'];
+
+            if (!isset($result[$entity_id])) {
+                $result[$entity_id] = $row;
+            }
+        }
+
+        return $result;
+    }
+
     public function findByPlanfix(string $planfix_object_type, string $planfix_object_id, ?int $company_id = null): ?array
     {
         $conditions = ['planfix_object_type = ?s', 'planfix_object_id = ?s'];

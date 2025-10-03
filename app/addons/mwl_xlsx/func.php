@@ -45,6 +45,38 @@ function fn_mwl_planfix_status_map_repository(): StatusMapRepository
     return $repository;
 }
 
+function fn_mwl_planfix_build_object_url(array $link, ?string $origin = null): string
+{
+    $planfix_object_id = isset($link['planfix_object_id']) ? (string) $link['planfix_object_id'] : '';
+
+    if ($planfix_object_id === '') {
+        return '';
+    }
+
+    if ($origin === null) {
+        $origin = (string) Registry::get('addons.mwl_xlsx.planfix_origin');
+    }
+
+    $origin = trim($origin);
+
+    if ($origin === '') {
+        return '';
+    }
+
+    $origin = rtrim($origin, '/');
+    $type = '';
+
+    if (!empty($link['planfix_object_type'])) {
+        $type = trim((string) $link['planfix_object_type']);
+    }
+
+    if ($type !== '') {
+        $origin .= '/' . ltrim($type, '/');
+    }
+
+    return $origin . '/' . rawurlencode($planfix_object_id);
+}
+
 /**
  * Check if user belongs to user groups defined in add-on setting.
  *

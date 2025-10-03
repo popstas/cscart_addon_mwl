@@ -292,6 +292,18 @@ msgctxt "SettingsOptions::mwl_xlsx::notifications"
 msgid "Notifications"
 msgstr "Notifications"
 
+msgctxt "Languages::mwl_xlsx.planfix_task"
+msgid "Planfix task"
+msgstr "Planfix task"
+
+msgctxt "SettingsOptions::mwl_xlsx::planfix_origin"
+msgid "Planfix origin"
+msgstr "Planfix origin"
+
+msgctxt "SettingsTooltips::mwl_xlsx::planfix_origin"
+msgid "Base Planfix URL (example: https://example.planfix.com). Example task link: https://example.planfix.com/task/12345 where 12345 is the planfix_object_id."
+msgstr "Base Planfix URL (example: https://example.planfix.com). Example task link: https://example.planfix.com/task/12345 where 12345 is the planfix_object_id."
+
 msgctxt "Languages::mwl_xlsx.shortnum_thousand"
 msgid " K"
 msgstr " K"
