@@ -2,17 +2,17 @@
 $schema['central']['mwl_xlsx'] = [
     'position' => 500,
     'items' => [
-        'xlsx_templates 2' => [
+        'mwl_xlsx.xlsx_templates' => [
             'href'        => 'mwl_xlsx_templates.manage',
             'position'    => 100,
             'permissions' => 'view_catalog',
         ],
-        'invites' => [
+        'mwl_xlsx.invites' => [
             'href'        => 'mwl_xlsx_invites.invites',
             'position'    => 150,
             'permissions' => 'view_catalog',
         ],
-        'settings' => [
+        'mwl_xlsx.settings' => [
             'href'        => 'mwl_xlsx.settings',
             'position'    => 200,
             'permissions' => 'view_catalog',
