@@ -316,6 +316,106 @@ msgctxt "Languages::mwl_xlsx.planfix_task"
 msgid "Planfix task"
 msgstr "Planfix task"
 
+msgctxt "Languages::mwl_xlsx.planfix_tab_title"
+msgid "Planfix"
+msgstr "Planfix"
+
+msgctxt "Languages::mwl_xlsx.planfix_button_create"
+msgid "Create Planfix task"
+msgstr "Create Planfix task"
+
+msgctxt "Languages::mwl_xlsx.planfix_button_bind"
+msgid "Bind existing task"
+msgstr "Bind existing task"
+
+msgctxt "Languages::mwl_xlsx.planfix_placeholder_task_id"
+msgid "Task ID"
+msgstr "Task ID"
+
+msgctxt "Languages::mwl_xlsx.planfix_metadata_heading"
+msgid "Planfix metadata"
+msgstr "Planfix metadata"
+
+msgctxt "Languages::mwl_xlsx.planfix_status_id"
+msgid "Status ID"
+msgstr "Status ID"
+
+msgctxt "Languages::mwl_xlsx.planfix_status_name"
+msgid "Status name"
+msgstr "Status name"
+
+msgctxt "Languages::mwl_xlsx.planfix_status_type"
+msgid "Status type"
+msgstr "Status type"
+
+msgctxt "Languages::mwl_xlsx.planfix_direction"
+msgid "Direction"
+msgstr "Direction"
+
+msgctxt "Languages::mwl_xlsx.planfix_linked_task"
+msgid "Linked Planfix task"
+msgstr "Linked Planfix task"
+
+msgctxt "Languages::mwl_xlsx.planfix_actions"
+msgid "Actions"
+msgstr "Actions"
+
+msgctxt "Languages::mwl_xlsx.planfix_no_link"
+msgid "No Planfix task linked"
+msgstr "No Planfix task linked"
+
+msgctxt "Languages::mwl_xlsx.planfix_no_data"
+msgid "No data"
+msgstr "No data"
+
+msgctxt "Languages::mwl_xlsx.planfix_last_status_from_planfix"
+msgid "Last status from Planfix"
+msgstr "Last status from Planfix"
+
+msgctxt "Languages::mwl_xlsx.planfix_last_status_from_cs"
+msgid "Last status sent to Planfix"
+msgstr "Last status sent to Planfix"
+
+msgctxt "Languages::mwl_xlsx.planfix_last_push_at"
+msgid "Last push time"
+msgstr "Last push time"
+
+msgctxt "Languages::mwl_xlsx.planfix_last_payload_out"
+msgid "Last payload (outgoing)"
+msgstr "Last payload (outgoing)"
+
+msgctxt "Languages::mwl_xlsx.planfix_last_payload_in"
+msgid "Last payload (incoming)"
+msgstr "Last payload (incoming)"
+
+msgctxt "Languages::mwl_xlsx.planfix_task_created"
+msgid "Planfix task [id] was created"
+msgstr "Planfix task [id] was created"
+
+msgctxt "Languages::mwl_xlsx.planfix_task_bound"
+msgid "Planfix task [id] was bound to the order"
+msgstr "Planfix task [id] was bound to the order"
+
+msgctxt "Languages::mwl_xlsx.planfix_task_already_bound"
+msgid "Planfix task is already bound to order #[order_id]"
+msgstr "Planfix task is already bound to order #[order_id]"
+
+msgctxt "Languages::mwl_xlsx.planfix_error_order_not_found"
+msgid "Order was not found"
+msgstr "Order was not found"
+
+msgctxt "Languages::mwl_xlsx.planfix_error_mcp_request"
+msgid "Planfix MCP request failed"
+msgstr "Planfix MCP request failed"
+
+msgctxt "Languages::mwl_xlsx.planfix_error_task_id_missing"
+msgid "Planfix task ID is missing"
+msgstr "Planfix task ID is missing"
+
+msgctxt "Languages::mwl_xlsx.planfix_error_unknown"
+msgid "Planfix integration error"
+msgstr "Planfix integration error"
+
 msgctxt "SettingsOptions::mwl_xlsx::planfix_origin"
 msgid "Planfix origin"
 msgstr "Planfix origin"

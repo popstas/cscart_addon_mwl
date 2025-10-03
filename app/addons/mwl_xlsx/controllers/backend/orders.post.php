@@ -158,6 +158,15 @@ if ($mode === 'manage') {
             continue;
         }
 
+        $link['extra'] = fn_mwl_planfix_decode_link_extra($link['extra'] ?? null);
+        $payload_out = isset($link['last_payload_out']) ? $link['last_payload_out'] : '';
+        if (is_string($payload_out) && $payload_out !== '') {
+            $decoded_payload = json_decode($payload_out, true);
+            if (is_array($decoded_payload)) {
+                $link['last_payload_out_decoded'] = $decoded_payload;
+            }
+        }
+
         $link['planfix_url'] = fn_mwl_planfix_build_object_url($link, $planfix_origin);
         $planfix_links[(int) $entity_id] = $link;
     }
@@ -220,4 +229,32 @@ if ($mode === 'manage') {
     }
 
     $view->assign('mwl_xlsx_order_messages', $order_messages);
+}
+
+if ($mode === 'details' || $mode === 'update') {
+    $order_id = isset($_REQUEST['order_id']) ? (int) $_REQUEST['order_id'] : 0;
+
+    if ($order_id) {
+        $company_id = (int) db_get_field('SELECT company_id FROM ?:orders WHERE order_id = ?i', $order_id);
+
+        $link_repository = fn_mwl_planfix_link_repository();
+        $link = $link_repository->findByEntity($company_id, 'order', $order_id);
+
+        if ($link) {
+            $link['extra'] = fn_mwl_planfix_decode_link_extra($link['extra'] ?? null);
+            $payload_out = isset($link['last_payload_out']) ? $link['last_payload_out'] : '';
+            if (is_string($payload_out) && $payload_out !== '') {
+                $decoded_payload = json_decode($payload_out, true);
+                if (is_array($decoded_payload)) {
+                    $link['last_payload_out_decoded'] = $decoded_payload;
+                }
+            }
+            $link['planfix_url'] = fn_mwl_planfix_build_object_url(
+                $link,
+                (string) Registry::get('addons.mwl_xlsx.planfix_origin')
+            );
+        }
+
+        Tygh::$app['view']->assign('mwl_planfix_order_link', $link);
+    }
 }

@@ -13,6 +13,11 @@ use Google\Service\Sheets\Spreadsheet;
 use Google\Service\Sheets\ValueRange;
 use Google\Service\Sheets\BatchUpdateSpreadsheetRequest;
 
+if ($mode === 'planfix_changed_status') {
+    fn_mwl_planfix_handle_planfix_status_webhook();
+    return [CONTROLLER_STATUS_NO_CONTENT];
+}
+
 if (!fn_mwl_xlsx_user_can_access_lists($auth)) {
     return [CONTROLLER_STATUS_DENIED];
 }

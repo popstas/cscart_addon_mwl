@@ -73,6 +73,8 @@
             `extra` TEXT NULL,
             `created_at` INT UNSIGNED NOT NULL,
             `updated_at` INT UNSIGNED NOT NULL,
+            `last_push_at` INT UNSIGNED NULL DEFAULT NULL,
+            `last_payload_out` MEDIUMTEXT NULL,
             PRIMARY KEY (`link_id`),
             UNIQUE KEY `entity_planfix` (`company_id`, `entity_type`, `entity_id`, `planfix_object_type`, `planfix_object_id`),
             KEY `planfix_object` (`planfix_object_type`, `planfix_object_id`)

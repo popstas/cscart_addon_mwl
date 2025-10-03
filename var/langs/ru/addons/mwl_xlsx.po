@@ -290,6 +290,106 @@ msgctxt "Languages::mwl_xlsx.planfix_task"
 msgid "Planfix task"
 msgstr "Задача Planfix"
 
+msgctxt "Languages::mwl_xlsx.planfix_tab_title"
+msgid "Planfix"
+msgstr "Planfix"
+
+msgctxt "Languages::mwl_xlsx.planfix_button_create"
+msgid "Create Planfix task"
+msgstr "Создать задачу в Planfix"
+
+msgctxt "Languages::mwl_xlsx.planfix_button_bind"
+msgid "Bind existing task"
+msgstr "Привязать существующую задачу"
+
+msgctxt "Languages::mwl_xlsx.planfix_placeholder_task_id"
+msgid "Task ID"
+msgstr "ID задачи"
+
+msgctxt "Languages::mwl_xlsx.planfix_metadata_heading"
+msgid "Planfix metadata"
+msgstr "Метаданные Planfix"
+
+msgctxt "Languages::mwl_xlsx.planfix_status_id"
+msgid "Status ID"
+msgstr "ID статуса"
+
+msgctxt "Languages::mwl_xlsx.planfix_status_name"
+msgid "Status name"
+msgstr "Название статуса"
+
+msgctxt "Languages::mwl_xlsx.planfix_status_type"
+msgid "Status type"
+msgstr "Тип статуса"
+
+msgctxt "Languages::mwl_xlsx.planfix_direction"
+msgid "Direction"
+msgstr "Направление"
+
+msgctxt "Languages::mwl_xlsx.planfix_linked_task"
+msgid "Linked Planfix task"
+msgstr "Привязанная задача Planfix"
+
+msgctxt "Languages::mwl_xlsx.planfix_actions"
+msgid "Actions"
+msgstr "Действия"
+
+msgctxt "Languages::mwl_xlsx.planfix_no_link"
+msgid "No Planfix task linked"
+msgstr "Задача не привязана"
+
+msgctxt "Languages::mwl_xlsx.planfix_no_data"
+msgid "No data"
+msgstr "Нет данных"
+
+msgctxt "Languages::mwl_xlsx.planfix_last_status_from_planfix"
+msgid "Last status from Planfix"
+msgstr "Последний статус из Planfix"
+
+msgctxt "Languages::mwl_xlsx.planfix_last_status_from_cs"
+msgid "Last status sent to Planfix"
+msgstr "Последний статус, отправленный в Planfix"
+
+msgctxt "Languages::mwl_xlsx.planfix_last_push_at"
+msgid "Last push time"
+msgstr "Время последней отправки"
+
+msgctxt "Languages::mwl_xlsx.planfix_last_payload_out"
+msgid "Last payload (outgoing)"
+msgstr "Последний исходящий payload"
+
+msgctxt "Languages::mwl_xlsx.planfix_last_payload_in"
+msgid "Last payload (incoming)"
+msgstr "Последний входящий payload"
+
+msgctxt "Languages::mwl_xlsx.planfix_task_created"
+msgid "Planfix task [id] was created"
+msgstr "Задача Planfix [id] создана"
+
+msgctxt "Languages::mwl_xlsx.planfix_task_bound"
+msgid "Planfix task [id] was bound to the order"
+msgstr "Задача Planfix [id] привязана к заказу"
+
+msgctxt "Languages::mwl_xlsx.planfix_task_already_bound"
+msgid "Planfix task is already bound to order #[order_id]"
+msgstr "Задача Planfix уже привязана к заказу #[order_id]"
+
+msgctxt "Languages::mwl_xlsx.planfix_error_order_not_found"
+msgid "Order was not found"
+msgstr "Заказ не найден"
+
+msgctxt "Languages::mwl_xlsx.planfix_error_mcp_request"
+msgid "Planfix MCP request failed"
+msgstr "Ошибка запроса к Planfix MCP"
+
+msgctxt "Languages::mwl_xlsx.planfix_error_task_id_missing"
+msgid "Planfix task ID is missing"
+msgstr "Не указан ID задачи Planfix"
+
+msgctxt "Languages::mwl_xlsx.planfix_error_unknown"
+msgid "Planfix integration error"
+msgstr "Ошибка интеграции с Planfix"
+
 msgctxt "SettingsOptions::mwl_xlsx::planfix_origin"
 msgid "Planfix origin"
 msgstr "Адрес Planfix"
