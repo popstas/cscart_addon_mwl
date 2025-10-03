@@ -1707,7 +1707,7 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
     $planfix_task_id = $link['planfix_object_id'] ?? '';
     if ($planfix_task_id !== '') {
         $planfix_client = fn_mwl_planfix_mcp_client();
-        $planfix_client->createComment(['taskId' => (int) $planfix_task_id, 'description' => $text]);
+        $planfix_client->createComment(['taskId' => (int) $planfix_task_id, 'description' => $text, 'recipients' => ['roles' => ['assignee']]]);
     }
 
     return $event_id;
