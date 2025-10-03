@@ -1660,7 +1660,6 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
     // Отправляем в Telegram
     $token = trim((string) Registry::get('addons.mwl_xlsx.telegram_bot_token'));
     $chat_id = trim((string) Registry::get('addons.mwl_xlsx.telegram_chat_id'));
-    
     if ($token && $chat_id) {
         // Telegram Bot API
         $url = "https://api.telegram.org/bot{$token}/sendMessage";
@@ -1690,6 +1689,15 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
         $error_message = 'Telegram bot token or chat_id not configured for VC notifications';
         error_log($error_message);
         $event_repository->markProcessed($event_id, EventRepository::STATUS_FAILED, $error_message);
+    }
+
+    // Отправляем в Планфикс
+    $link_repository = fn_mwl_planfix_link_repository();
+    $link = $link_repository->findByEntity($data['company_id'], 'order', $order_id);
+    $planfix_task_id = $link['planfix_object_id'] ?? '';
+    if ($planfix_task_id !== '') {
+        $planfix_client = fn_mwl_planfix_mcp_client();
+        $planfix_client->createComment(['taskId' => (int) $planfix_task_id, 'description' => $text]);
     }
 
     return $event_id;

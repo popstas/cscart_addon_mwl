@@ -51,6 +51,11 @@ class McpClient
         return $this->request('bind_task', $payload);
     }
 
+    public function createComment(array $payload): array
+    {
+        return $this->request('planfix_create_comment', $payload);
+    }
+
     private function request(string $path, array $payload): array
     {
         if ($this->endpoint === '') {
