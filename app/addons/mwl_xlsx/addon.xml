@@ -183,6 +183,24 @@
                 <value id="mwl_xlsx.planfix_task">Planfix task</value>
                 <value id="mwl_xlsx.planfix_origin">Planfix origin</value>
                 <value id="mwl_xlsx.planfix_origin.desc">Base Planfix URL (example: https://example.planfix.com). Example task link: https://example.planfix.com/task/12345 where 12345 is the planfix_object_id.</value>
+                <value id="mwl_xlsx.planfix_mcp_endpoint">MCP endpoint URL</value>
+                <value id="mwl_xlsx.planfix_mcp_endpoint.desc">Base URL for the MCP integration endpoint.</value>
+                <value id="mwl_xlsx.planfix_mcp_auth_token">MCP auth token</value>
+                <value id="mwl_xlsx.planfix_mcp_auth_token.desc">Token used to authorize requests to the MCP endpoint.</value>
+                <value id="mwl_xlsx.planfix_webhook_basic_login">Webhook Basic Auth login</value>
+                <value id="mwl_xlsx.planfix_webhook_basic_login.desc">Login for protecting the incoming webhook with HTTP Basic authentication.</value>
+                <value id="mwl_xlsx.planfix_webhook_basic_password">Webhook Basic Auth password</value>
+                <value id="mwl_xlsx.planfix_webhook_basic_password.desc">Password for protecting the incoming webhook with HTTP Basic authentication.</value>
+                <value id="mwl_xlsx.planfix_direction_default">Default task direction</value>
+                <value id="mwl_xlsx.planfix_direction_default.desc">Direction that will be assigned to new tasks when MCP does not provide one.</value>
+                <value id="mwl_xlsx.planfix_auto_task_statuses">Statuses for automatic task creation</value>
+                <value id="mwl_xlsx.planfix_auto_task_statuses.desc">List of CS-Cart statuses that trigger automatic Planfix task creation (comma or newline separated).</value>
+                <value id="mwl_xlsx.planfix_sync_comments">Sync comments with Planfix</value>
+                <value id="mwl_xlsx.planfix_sync_comments.desc">Enable synchronization of CS-Cart comments with Planfix.</value>
+                <value id="mwl_xlsx.planfix_sync_payments">Sync payments with Planfix</value>
+                <value id="mwl_xlsx.planfix_sync_payments.desc">Enable synchronization of payment information with Planfix.</value>
+                <value id="mwl_xlsx.planfix_webhook_allowlist_ips">Webhook IP allowlist</value>
+                <value id="mwl_xlsx.planfix_webhook_allowlist_ips.desc">Optional list of IP addresses allowed to call the webhook (comma or newline separated). Leave empty to allow all.</value>
             </values>
         </item>
         <item>
@@ -224,6 +242,24 @@
                 <value id="mwl_xlsx.planfix_task">Задача Planfix</value>
                 <value id="mwl_xlsx.planfix_origin">Адрес Planfix</value>
                 <value id="mwl_xlsx.planfix_origin.desc"><![CDATA[Базовый адрес Planfix (пример: https://example.planfix.com). Пример ссылки на задачу: https://example.planfix.com/task/12345, где 12345 — planfix_object_id.]]></value>
+                <value id="mwl_xlsx.planfix_mcp_endpoint">URL MCP-эндпоинта</value>
+                <value id="mwl_xlsx.planfix_mcp_endpoint.desc">Базовый адрес эндпоинта MCP для интеграции.</value>
+                <value id="mwl_xlsx.planfix_mcp_auth_token">Токен авторизации MCP</value>
+                <value id="mwl_xlsx.planfix_mcp_auth_token.desc">Токен, используемый для авторизации запросов к MCP.</value>
+                <value id="mwl_xlsx.planfix_webhook_basic_login">Логин Basic Auth вебхука</value>
+                <value id="mwl_xlsx.planfix_webhook_basic_login.desc">Логин для защиты входящего вебхука базовой HTTP-аутентификацией.</value>
+                <value id="mwl_xlsx.planfix_webhook_basic_password">Пароль Basic Auth вебхука</value>
+                <value id="mwl_xlsx.planfix_webhook_basic_password.desc">Пароль для защиты входящего вебхука базовой HTTP-аутентификацией.</value>
+                <value id="mwl_xlsx.planfix_direction_default">Направление по умолчанию</value>
+                <value id="mwl_xlsx.planfix_direction_default.desc">Направление, которое будет присваиваться новым задачам, если MCP не передаёт значение.</value>
+                <value id="mwl_xlsx.planfix_auto_task_statuses">Статусы для автосоздания задач</value>
+                <value id="mwl_xlsx.planfix_auto_task_statuses.desc">Список статусов CS-Cart, при которых автоматически создаются задачи в Planfix (разделяйте запятыми или переводами строки).</value>
+                <value id="mwl_xlsx.planfix_sync_comments">Синхронизировать комментарии</value>
+                <value id="mwl_xlsx.planfix_sync_comments.desc">Включите синхронизацию комментариев из CS-Cart с Planfix.</value>
+                <value id="mwl_xlsx.planfix_sync_payments">Синхронизировать платежи</value>
+                <value id="mwl_xlsx.planfix_sync_payments.desc">Включите синхронизацию информации об оплате с Planfix.</value>
+                <value id="mwl_xlsx.planfix_webhook_allowlist_ips">Allowlist IP вебхука</value>
+                <value id="mwl_xlsx.planfix_webhook_allowlist_ips.desc">Необязательный список IP-адресов, которым разрешён доступ к вебхуку (разделяйте запятыми или переводами строки). Оставьте пустым, чтобы разрешить всем.</value>
                 <value id="mwl_xlsx.xlsx_templates">XLSX Шаблоны</value>
                 <value id="mwl_xlsx.invites">Приглашения</value>
                 <value id="mwl_xlsx.settings">Настройки</value>
@@ -304,6 +340,48 @@
                     </item>
                     <item id="notify_email" type="input">
                         <name>mwl_xlsx.notify_email</name>
+                    </item>
+                </items>
+            </section>
+            <section id="planfix_integration">
+                <items>
+                    <item id="planfix_mcp_endpoint" type="input">
+                        <name>mwl_xlsx.planfix_mcp_endpoint</name>
+                        <tooltip>mwl_xlsx.planfix_mcp_endpoint.desc</tooltip>
+                    </item>
+                    <item id="planfix_mcp_auth_token" type="input">
+                        <name>mwl_xlsx.planfix_mcp_auth_token</name>
+                        <tooltip>mwl_xlsx.planfix_mcp_auth_token.desc</tooltip>
+                    </item>
+                    <item id="planfix_webhook_basic_login" type="input">
+                        <name>mwl_xlsx.planfix_webhook_basic_login</name>
+                        <tooltip>mwl_xlsx.planfix_webhook_basic_login.desc</tooltip>
+                    </item>
+                    <item id="planfix_webhook_basic_password" type="input">
+                        <name>mwl_xlsx.planfix_webhook_basic_password</name>
+                        <tooltip>mwl_xlsx.planfix_webhook_basic_password.desc</tooltip>
+                    </item>
+                    <item id="planfix_direction_default" type="input">
+                        <name>mwl_xlsx.planfix_direction_default</name>
+                        <tooltip>mwl_xlsx.planfix_direction_default.desc</tooltip>
+                    </item>
+                    <item id="planfix_auto_task_statuses" type="textarea">
+                        <name>mwl_xlsx.planfix_auto_task_statuses</name>
+                        <tooltip>mwl_xlsx.planfix_auto_task_statuses.desc</tooltip>
+                    </item>
+                    <item id="planfix_sync_comments" type="checkbox">
+                        <name>mwl_xlsx.planfix_sync_comments</name>
+                        <tooltip>mwl_xlsx.planfix_sync_comments.desc</tooltip>
+                        <value>N</value>
+                    </item>
+                    <item id="planfix_sync_payments" type="checkbox">
+                        <name>mwl_xlsx.planfix_sync_payments</name>
+                        <tooltip>mwl_xlsx.planfix_sync_payments.desc</tooltip>
+                        <value>N</value>
+                    </item>
+                    <item id="planfix_webhook_allowlist_ips" type="textarea">
+                        <name>mwl_xlsx.planfix_webhook_allowlist_ips</name>
+                        <tooltip>mwl_xlsx.planfix_webhook_allowlist_ips.desc</tooltip>
                     </item>
                 </items>
             </section>

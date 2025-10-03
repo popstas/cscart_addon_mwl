@@ -1,5 +1,6 @@
 <?php
 use Tygh\Addons\MwlXlsx\Planfix\EventRepository;
+use Tygh\Addons\MwlXlsx\Planfix\IntegrationSettings;
 use Tygh\Addons\MwlXlsx\Planfix\LinkRepository;
 use Tygh\Addons\MwlXlsx\Planfix\StatusMapRepository;
 use Tygh\Http;
@@ -97,6 +98,72 @@ function fn_mwl_planfix_build_object_url(array $link, ?string $origin = null): s
     }
 
     return $origin . '/' . rawurlencode($planfix_object_id);
+}
+
+function fn_mwl_planfix_integration_settings(bool $force_reload = false): IntegrationSettings
+{
+    static $settings;
+
+    if ($force_reload || $settings === null) {
+        $settings = IntegrationSettings::fromRegistry();
+    }
+
+    return $settings;
+}
+
+function fn_mwl_planfix_get_integration_settings(bool $force_reload = false): array
+{
+    return fn_mwl_planfix_integration_settings($force_reload)->toArray();
+}
+
+function fn_mwl_planfix_get_mcp_endpoint(): string
+{
+    return fn_mwl_planfix_integration_settings()->getMcpEndpoint();
+}
+
+function fn_mwl_planfix_get_mcp_auth_token(): string
+{
+    return fn_mwl_planfix_integration_settings()->getMcpAuthToken();
+}
+
+function fn_mwl_planfix_get_webhook_basic_login(): string
+{
+    return fn_mwl_planfix_integration_settings()->getWebhookBasicLogin();
+}
+
+function fn_mwl_planfix_get_webhook_basic_password(): string
+{
+    return fn_mwl_planfix_integration_settings()->getWebhookBasicPassword();
+}
+
+function fn_mwl_planfix_get_webhook_basic_auth_credentials(): array
+{
+    return fn_mwl_planfix_integration_settings()->getWebhookBasicAuthCredentials();
+}
+
+function fn_mwl_planfix_get_direction_default(): string
+{
+    return fn_mwl_planfix_integration_settings()->getDirectionDefault();
+}
+
+function fn_mwl_planfix_get_auto_task_statuses(): array
+{
+    return fn_mwl_planfix_integration_settings()->getAutoTaskStatuses();
+}
+
+function fn_mwl_planfix_should_sync_comments(): bool
+{
+    return fn_mwl_planfix_integration_settings()->shouldSyncComments();
+}
+
+function fn_mwl_planfix_should_sync_payments(): bool
+{
+    return fn_mwl_planfix_integration_settings()->shouldSyncPayments();
+}
+
+function fn_mwl_planfix_get_webhook_allowlist_ips(): array
+{
+    return fn_mwl_planfix_integration_settings()->getWebhookAllowlistIps();
 }
 
 /**
