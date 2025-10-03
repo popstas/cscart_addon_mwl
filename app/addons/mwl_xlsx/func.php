@@ -12,6 +12,28 @@ use Google\Service\Sheets\BatchUpdateSpreadsheetRequest;
 
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
 
+/**
+ * Ленивая загрузка Composer vendor autoloader
+ * Загружается только когда действительно нужны vendor-библиотеки
+ */
+function fn_mwl_xlsx_load_vendor_autoloader()
+{
+    static $loaded = false;
+    
+    if (!$loaded && file_exists(__DIR__ . '/vendor/autoload.php')) {
+        // Временно подавляем warnings от HTMLPurifier
+        $old_error_reporting = error_reporting();
+        error_reporting($old_error_reporting & ~E_USER_WARNING);
+        
+        require_once __DIR__ . '/vendor/autoload.php';
+        
+        // Восстанавливаем уровень error_reporting
+        error_reporting($old_error_reporting);
+        
+        $loaded = true;
+    }
+}
+
 function fn_mwl_planfix_event_repository(): EventRepository
 {
     static $repository;
@@ -659,8 +681,8 @@ function fn_mwl_xlsx_delete_list($list_id, $user_id = null, $session_id = null)
 
 function fn_mwl_xlsx_uninstall()
 {
-    db_query("DROP TABLE IF EXISTS ?:mwl_xlsx_templates");
-    Storage::instance('custom_files')->deleteDir('mwl_xlsx/templates');
+    // db_query("DROP TABLE IF EXISTS ?:mwl_xlsx_templates");
+    // Storage::instance('custom_files')->deleteDir('mwl_xlsx/templates');
 }
 
 
@@ -677,6 +699,8 @@ function fn_mwl_xlsx_uninstall()
  */
 function fn_mwl_xlsx_fill_google_sheet(Sheets $sheets, $spreadsheet_id, array $data, $debug = false)
 {
+    fn_mwl_xlsx_load_vendor_autoloader();
+    
     // Limit to 50 rows total (including headers)
     $data = array_slice($data, 0, 51);
 
