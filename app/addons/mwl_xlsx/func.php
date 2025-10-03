@@ -798,6 +798,14 @@ function fn_mwl_xlsx_change_order_status_post(
         return;
     }
 
+    if (!is_array($order_info) || !$order_info) {
+        $order_info = fn_get_order_info($order_id, false, true, true, false);
+
+        if (!$order_info) {
+            return;
+        }
+    }
+
     if (fn_mwl_planfix_should_skip_status_push($order_id)) {
         return;
     }
@@ -808,7 +816,7 @@ function fn_mwl_xlsx_change_order_status_post(
     $link = $link_repository->findByEntity($company_id, 'order', $order_id);
 
     if (!$link || empty($link['planfix_object_id'])) {
-        $creation_result = fn_mwl_planfix_create_task_for_order($order_id, $order_info);
+        $creation_result = fn_mwl_planfix_create_task_for_order($order_id);
 
         if (empty($creation_result['success'])) {
             return;
