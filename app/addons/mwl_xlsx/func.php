@@ -808,7 +808,17 @@ function fn_mwl_xlsx_change_order_status_post(
     $link = $link_repository->findByEntity($company_id, 'order', $order_id);
 
     if (!$link || empty($link['planfix_object_id'])) {
-        return;
+        $creation_result = fn_mwl_planfix_create_task_for_order($order_id);
+
+        if (empty($creation_result['success'])) {
+            return;
+        }
+
+        $link = $creation_result['link'] ?? $link_repository->findByEntity($company_id, 'order', $order_id);
+
+        if (!$link || empty($link['planfix_object_id'])) {
+            return;
+        }
     }
 
     $planfix_object_id = (string) $link['planfix_object_id'];
