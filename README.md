@@ -18,6 +18,7 @@
 - Rename or remove media lists from the manage page.
 - Track when each media list was last updated.
 - SEO-friendly URLs for media list pages (`/media-lists` and `/media-lists/{list_id}`).
+- Create Planfix tasks for orders directly from the orders list and display the resulting task link inline.
 - UT2 top panel block displaying the number of media lists for the current user or session.
 - New media lists appear in all selection controls and update the header counter instantly.
 - Hide prices for guests or unauthorized user groups.
@@ -61,7 +62,7 @@ backend). The table below summarises their purpose.
 | Mode | Direction | Purpose |
 | ---- | --------- | ------- |
 | `mwl_xlsx.planfix_changed_status` | Planfix → CS-Cart | Receives status webhooks, updates the linked order, and records payload metadata. |
-| `mwl_xlsx.planfix_create_task` | CS-Cart admin → Planfix MCP | Creates a Planfix task for the current order through MCP and stores the binding. |
+| `mwl_xlsx.planfix_create_sell_task` | CS-Cart admin → Planfix MCP | Creates a Planfix sell task for the current order through MCP and stores the binding. |
 | `mwl_xlsx.planfix_bind_task` | CS-Cart admin → Planfix MCP | Binds an existing Planfix object to an order without creating a new task. |
 
 #### `dispatch=mwl_xlsx.planfix_changed_status`
@@ -71,8 +72,8 @@ backend). The table below summarises their purpose.
 * **Method**: `POST` only. Any other HTTP method produces `405 Method Not Allowed`.
 * **Body**: Accepts JSON (`Content-Type: application/json`) or traditional form data. The
   handler looks for `planfix_task_id` (preferred), `task_id`, or `id` to resolve the binding.
-  Optional fields `status_id`, `status_type`, and `status_name` populate the metadata and can
-  trigger a status mapping to CS-Cart orders.
+  Optional field `status_id` populates the metadata and can trigger a status mapping to CS-Cart
+  orders.
 * **Response**: Returns JSON with `success` and `message` fields. CS-Cart responds with
   `200 OK` when the incoming status is processed, `404` when the Planfix task is not bound,
   or `500` if the order status update fails.
@@ -89,8 +90,6 @@ X-Forwarded-For: 203.0.113.15
 {
   "planfix_task_id": "PF-1288",
   "status_id": "done",
-  "status_type": "taskStatus",
-  "status_name": "Completed",
   "changed_at": "2024-05-01T10:45:00+03:00"
 }
 ```
@@ -116,6 +115,8 @@ Content-Type: application/json
 * **Behaviour**: Sends the order snapshot to MCP, stores the returned Planfix object binding,
   and records the outbound payload metadata in `cscart_mwl_planfix_links`.
 * **Response**: Redirects back to `return_url` and shows a notification about the outcome.
+
+When a CS-Cart administrator clicks **Create Planfix task** on an order, the add-on sends a JSON payload to the MCP endpoint with a full sell-task payload: the task name follows the pattern `Продажа {товар} на pressfinity.com`, includes the fixed agency identity (“Жууу”), contact email (`agency@example.com`), responsible employee (“Имя Сотрудника”), Telegram handle (`agency_telegram`), a line-by-line order description, and direct order metadata (ID, formatted number, admin URL) along with status, total, direction, currency, and optional customer data. The MCP endpoint performs authenticated `planfix_create_sell_task` requests and records the outbound payload metadata in `cscart_mwl_planfix_links`.
 
 Example request (line breaks added for readability):
 

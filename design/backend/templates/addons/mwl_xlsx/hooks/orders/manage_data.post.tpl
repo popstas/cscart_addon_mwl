@@ -43,7 +43,7 @@
     {/if}
 </td>
 
-<td class="center">
+<td class="center mwl-planfix-link-cell">
     {if $__planfix_link.planfix_object_id|default:''}
         {if $__planfix_link.planfix_url|default:''}
             <a href="{$__planfix_link.planfix_url|escape}" target="_blank" rel="noopener noreferrer">
@@ -53,6 +53,13 @@
             <span>{$__planfix_link.planfix_object_id|escape}</span>
         {/if}
     {else}
-        <span class="muted">&mdash;</span>
+        {if $mwl_planfix_can_create_links|default:false && !($__planfix_link.planfix_object_id|default:'')}
+            <a class="btn btn-link mwl-planfix-create-task"
+            data-ca-order-id="{$__order_id}">
+                {__("mwl_xlsx.planfix_button_link")}
+            </a>
+        {else}
+            <span class="muted">&mdash;</span>
+        {/if}
     {/if}
 </td>

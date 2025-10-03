@@ -172,6 +172,7 @@ if ($mode === 'manage') {
     }
 
     $view->assign('mwl_planfix_order_links', $planfix_links);
+    $view->assign('mwl_planfix_can_create_links', true);
 
     if (!function_exists('fn_vendor_communication_get_threads') || !defined('VC_OBJECT_TYPE_ORDER')) {
         return;

@@ -14,15 +14,13 @@ class StatusMapRepository
         $this->db = $db;
     }
 
-    public function setStatus(int $company_id, string $entity_type, string $entity_status, string $planfix_status_id, string $planfix_status_name, string $planfix_status_type, bool $is_default = false): int
+    public function setStatus(int $company_id, string $entity_type, string $entity_status, string $planfix_status_id, bool $is_default = false): int
     {
         $data = [
             'company_id'         => $company_id,
             'entity_type'        => $entity_type,
             'entity_status'      => $entity_status,
             'planfix_status_id'  => $planfix_status_id,
-            'planfix_status_name'=> $planfix_status_name,
-            'planfix_status_type'=> $planfix_status_type,
             'is_default'         => $is_default ? 1 : 0,
             'created_at'         => TIME,
             'updated_at'         => TIME,
@@ -41,14 +39,13 @@ class StatusMapRepository
         ) ?: null;
     }
 
-    public function findLocalStatus(int $company_id, string $entity_type, string $planfix_status_id, string $planfix_status_type): ?array
+    public function findLocalStatus(int $company_id, string $entity_type, string $planfix_status_id): ?array
     {
         return $this->db->getRow(
-            'SELECT * FROM ?:mwl_planfix_status_map WHERE company_id = ?i AND entity_type = ?s AND planfix_status_id = ?s AND planfix_status_type = ?s',
+            'SELECT * FROM ?:mwl_planfix_status_map WHERE company_id = ?i AND entity_type = ?s AND planfix_status_id = ?s',
             $company_id,
             $entity_type,
-            $planfix_status_id,
-            $planfix_status_type
+            $planfix_status_id
         ) ?: null;
     }
 

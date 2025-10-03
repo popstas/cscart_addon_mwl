@@ -33,6 +33,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'planfix_create_task') {
     $order_info = $order_id ? fn_get_order_info($order_id, false, true, true, false) : [];
 
     if (!$order_id || !$order_info) {
+        if (defined('AJAX_REQUEST')) {
+            Tygh::$app['ajax']->assign('success', false);
+            Tygh::$app['ajax']->assign('message', __('mwl_xlsx.planfix_error_order_not_found'));
+
+            return [CONTROLLER_STATUS_NO_CONTENT];
+        }
+
         fn_set_notification('E', __('error'), __('mwl_xlsx.planfix_error_order_not_found'));
         $return_url = !empty($_REQUEST['return_url']) ? (string) $_REQUEST['return_url'] : 'orders.manage';
 
@@ -40,6 +47,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'planfix_create_task') {
     }
 
     $result = fn_mwl_planfix_create_task_for_order($order_id, $order_info);
+
+    if (defined('AJAX_REQUEST')) {
+        Tygh::$app['ajax']->assign('success', (bool) ($result['success'] ?? false));
+        Tygh::$app['ajax']->assign('message', (string) ($result['message'] ?? __('mwl_xlsx.planfix_error_unknown')));
+
+        if (!empty($result['link']) && is_array($result['link'])) {
+            Tygh::$app['ajax']->assign('link', [
+                'planfix_object_id' => (string) ($result['link']['planfix_object_id'] ?? ''),
+                'planfix_url'       => (string) ($result['link']['planfix_url'] ?? ''),
+            ]);
+        }
+
+        if (!empty($result['response']) && is_array($result['response'])) {
+            Tygh::$app['ajax']->assign('mcp_response', $result['response']);
+        }
+
+        return [CONTROLLER_STATUS_NO_CONTENT];
+    }
 
     if (!empty($result['success'])) {
         fn_set_notification('N', __('notice'), $result['message']);

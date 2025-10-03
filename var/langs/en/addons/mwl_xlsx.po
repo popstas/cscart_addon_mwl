@@ -313,8 +313,8 @@ msgid "Notifications"
 msgstr "Notifications"
 
 msgctxt "Languages::mwl_xlsx.planfix_task"
-msgid "Planfix task"
-msgstr "Planfix task"
+msgid "Planfix"
+msgstr "Planfix"
 
 msgctxt "Languages::mwl_xlsx.planfix_tab_title"
 msgid "Planfix"
@@ -323,6 +323,22 @@ msgstr "Planfix"
 msgctxt "Languages::mwl_xlsx.planfix_button_create"
 msgid "Create Planfix task"
 msgstr "Create Planfix task"
+
+msgctxt "Languages::mwl_xlsx.planfix_button_link"
+msgid "Link"
+msgstr "Link"
+
+msgctxt "Languages::mwl_xlsx.planfix_payload_name"
+msgid "Planfix task name"
+msgstr "Planfix task name"
+
+msgctxt "Languages::mwl_xlsx.planfix_payload_email"
+msgid "Planfix email"
+msgstr "Planfix email"
+
+msgctxt "Languages::mwl_xlsx.planfix_payload_description"
+msgid "Planfix description"
+msgstr "Planfix description"
 
 msgctxt "Languages::mwl_xlsx.planfix_button_bind"
 msgid "Bind existing task"
@@ -339,14 +355,6 @@ msgstr "Planfix metadata"
 msgctxt "Languages::mwl_xlsx.planfix_status_id"
 msgid "Status ID"
 msgstr "Status ID"
-
-msgctxt "Languages::mwl_xlsx.planfix_status_name"
-msgid "Status name"
-msgstr "Status name"
-
-msgctxt "Languages::mwl_xlsx.planfix_status_type"
-msgid "Status type"
-msgstr "Status type"
 
 msgctxt "Languages::mwl_xlsx.planfix_direction"
 msgid "Direction"
