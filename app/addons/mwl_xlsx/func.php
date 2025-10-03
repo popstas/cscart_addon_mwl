@@ -3,6 +3,7 @@ use Tygh\Addons\MwlXlsx\Planfix\EventRepository;
 use Tygh\Addons\MwlXlsx\Planfix\IntegrationSettings;
 use Tygh\Addons\MwlXlsx\Planfix\LinkRepository;
 use Tygh\Addons\MwlXlsx\Planfix\StatusMapRepository;
+use Tygh\Addons\MwlXlsx\Service\SettingsBackup;
 use Tygh\Http;
 use Tygh\Registry;
 use Tygh\Storage;
@@ -746,10 +747,14 @@ function fn_mwl_xlsx_delete_list($list_id, $user_id = null, $session_id = null)
     return false;
 }
 
+function fn_mwl_xlsx_install()
+{
+    SettingsBackup::restore();
+}
+
 function fn_mwl_xlsx_uninstall()
 {
-    // db_query("DROP TABLE IF EXISTS ?:mwl_xlsx_templates");
-    // Storage::instance('custom_files')->deleteDir('mwl_xlsx/templates');
+    SettingsBackup::backup();
 }
 
 
