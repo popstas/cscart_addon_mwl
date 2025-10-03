@@ -23,49 +23,71 @@
     <queries>
         <!-- install -->
         <item for="install"><![CDATA[
-        CREATE TABLE IF NOT EXISTS `?:mwl_xlsx_lists` (
-        `list_id` INT AUTO_INCREMENT PRIMARY KEY,
-        `user_id` INT UNSIGNED NOT NULL DEFAULT 0,
-        `session_id` VARCHAR(64) NOT NULL DEFAULT '',
-        `name` VARCHAR(255) NOT NULL,
-        `is_private` TINYINT(1) NOT NULL DEFAULT 0,
-        `created_at` DATETIME NOT NULL,
-        `updated_at` DATETIME NOT NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+        CREATE TABLE IF NOT EXISTS `?:mwl_planfix_links` (
+            `link_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            `company_id` INT UNSIGNED NOT NULL DEFAULT 0,
+            `entity_type` VARCHAR(32) NOT NULL,
+            `entity_id` INT UNSIGNED NOT NULL,
+            `planfix_object_id` VARCHAR(64) NOT NULL,
+            `planfix_object_type` VARCHAR(32) NOT NULL DEFAULT '',
+            `extra` TEXT NULL,
+            `created_at` INT UNSIGNED NOT NULL,
+            `updated_at` INT UNSIGNED NOT NULL,
+            PRIMARY KEY (`link_id`),
+            UNIQUE KEY `entity_planfix` (`company_id`, `entity_type`, `entity_id`, `planfix_object_type`, `planfix_object_id`),
+            KEY `planfix_object` (`planfix_object_type`, `planfix_object_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ]]></item>
 
         <item for="install"><![CDATA[
-        CREATE TABLE IF NOT EXISTS `?:mwl_xlsx_list_products` (
-        `list_id` INT NOT NULL,
-        `product_id` INT NOT NULL,
-        `product_options` TEXT,
-        `amount` INT NOT NULL DEFAULT 1,
-        `timestamp` INT NOT NULL,
-        PRIMARY KEY (`list_id`, `product_id`, `timestamp`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+        CREATE TABLE IF NOT EXISTS `?:mwl_planfix_status_map` (
+            `map_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            `company_id` INT UNSIGNED NOT NULL DEFAULT 0,
+            `entity_type` VARCHAR(32) NOT NULL,
+            `entity_status` VARCHAR(32) NOT NULL,
+            `planfix_status_id` VARCHAR(64) NOT NULL,
+            `planfix_status_name` VARCHAR(255) NOT NULL,
+            `planfix_status_type` VARCHAR(32) NOT NULL,
+            `is_default` TINYINT(1) NOT NULL DEFAULT 0,
+            `created_at` INT UNSIGNED NOT NULL,
+            `updated_at` INT UNSIGNED NOT NULL,
+            PRIMARY KEY (`map_id`),
+            UNIQUE KEY `entity_status` (`company_id`, `entity_type`, `entity_status`),
+            KEY `planfix_status` (`planfix_status_id`, `planfix_status_type`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ]]></item>
 
         <item for="install"><![CDATA[
-        CREATE TABLE IF NOT EXISTS `?:mwl_xlsx_templates` (
-        `template_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-        `company_id` INT UNSIGNED NOT NULL DEFAULT 0,
-        `name` VARCHAR(255) NOT NULL,
-        `path` VARCHAR(255) NOT NULL,
-        `size` INT UNSIGNED NOT NULL DEFAULT 0,
-        `created_at` INT UNSIGNED NOT NULL,
-        `updated_at` INT UNSIGNED NOT NULL,
-        PRIMARY KEY (`template_id`),
-        KEY `company_id` (`company_id`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8
+        CREATE TABLE IF NOT EXISTS `?:mwl_planfix_events` (
+            `event_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            `company_id` INT UNSIGNED NOT NULL DEFAULT 0,
+            `link_id` INT UNSIGNED DEFAULT NULL,
+            `event_type` VARCHAR(64) NOT NULL,
+            `status` VARCHAR(16) NOT NULL DEFAULT 'pending',
+            `payload` MEDIUMTEXT NOT NULL,
+            `error` TEXT NULL,
+            `attempts` INT UNSIGNED NOT NULL DEFAULT 0,
+            `created_at` INT UNSIGNED NOT NULL,
+            `updated_at` INT UNSIGNED NOT NULL,
+            `processed_at` INT UNSIGNED DEFAULT NULL,
+            PRIMARY KEY (`event_id`),
+            KEY `status` (`status`),
+            KEY `company_event` (`company_id`, `event_type`),
+            KEY `link_id` (`link_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ]]></item>
 
         <!-- uninstall -->
         <item for="uninstall"><![CDATA[
-        DROP TABLE IF EXISTS `?:mwl_xlsx_list_products`;
+        DROP TABLE IF EXISTS `?:mwl_planfix_events`;
         ]]></item>
 
         <item for="uninstall"><![CDATA[
-        DROP TABLE IF EXISTS `?:mwl_xlsx_lists`;
+        DROP TABLE IF EXISTS `?:mwl_planfix_status_map`;
+        ]]></item>
+
+        <item for="uninstall"><![CDATA[
+        DROP TABLE IF EXISTS `?:mwl_planfix_links`;
         ]]></item>
     </queries>
 

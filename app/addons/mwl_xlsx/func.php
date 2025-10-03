@@ -1,12 +1,49 @@
 <?php
+use Tygh\Addons\MwlXlsx\Planfix\EventRepository;
+use Tygh\Addons\MwlXlsx\Planfix\LinkRepository;
+use Tygh\Addons\MwlXlsx\Planfix\StatusMapRepository;
 use Tygh\Http;
 use Tygh\Registry;
 use Tygh\Storage;
+use Tygh\Tygh;
 use Google\Service\Sheets;
 use Google\Service\Sheets\ValueRange;
 use Google\Service\Sheets\BatchUpdateSpreadsheetRequest;
 
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
+
+function fn_mwl_planfix_event_repository(): EventRepository
+{
+    static $repository;
+
+    if ($repository === null) {
+        $repository = new EventRepository(Tygh::$app['db']);
+    }
+
+    return $repository;
+}
+
+function fn_mwl_planfix_link_repository(): LinkRepository
+{
+    static $repository;
+
+    if ($repository === null) {
+        $repository = new LinkRepository(Tygh::$app['db']);
+    }
+
+    return $repository;
+}
+
+function fn_mwl_planfix_status_map_repository(): StatusMapRepository
+{
+    static $repository;
+
+    if ($repository === null) {
+        $repository = new StatusMapRepository(Tygh::$app['db']);
+    }
+
+    return $repository;
+}
 
 /**
  * Check if user belongs to user groups defined in add-on setting.
@@ -713,8 +750,14 @@ function fn_mwl_xlsx_fill_google_sheet(Sheets $sheets, $spreadsheet_id, array $d
  * @param BaseMessageSchema $schema
  * @param array $receiver_search_conditions
  */
-function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions)
+function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int $event_id = null)
 {
+    $event_repository = fn_mwl_planfix_event_repository();
+
+    if ($event_id === null) {
+        $event_id = $event_repository->logVendorCommunicationEvent($schema, $receiver_search_conditions);
+    }
+
     // Получаем данные из схемы
     $data = $schema->data ?? [];
     $thread_id = $data['thread_id'] ?? null;
@@ -767,12 +810,21 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions)
         ]);
         $ok = $resp && ($resp = json_decode($resp, true)) && !empty($resp['ok']);
         
+        $error_message = null;
         if (!$ok) {
-            error_log('Failed to send Telegram notification for VC event: ' . print_r($resp, true));
+            $error_message = 'Failed to send Telegram notification for VC event: ' . print_r($resp, true);
+            error_log($error_message);
+            $event_repository->markProcessed($event_id, EventRepository::STATUS_FAILED, $error_message);
+        } else {
+            $event_repository->markProcessed($event_id, EventRepository::STATUS_PROCESSED);
         }
     } else {
-        error_log('Telegram bot token or chat_id not configured for VC notifications');
+        $error_message = 'Telegram bot token or chat_id not configured for VC notifications';
+        error_log($error_message);
+        $event_repository->markProcessed($event_id, EventRepository::STATUS_FAILED, $error_message);
     }
+
+    return $event_id;
 }
 
 /**
