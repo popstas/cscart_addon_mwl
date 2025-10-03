@@ -1,12 +1,103 @@
 <?php
+use Tygh\Addons\MwlXlsx\Planfix\EventRepository;
+use Tygh\Addons\MwlXlsx\Planfix\LinkRepository;
+use Tygh\Addons\MwlXlsx\Planfix\StatusMapRepository;
 use Tygh\Http;
 use Tygh\Registry;
 use Tygh\Storage;
+use Tygh\Tygh;
 use Google\Service\Sheets;
 use Google\Service\Sheets\ValueRange;
 use Google\Service\Sheets\BatchUpdateSpreadsheetRequest;
 
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
+
+/**
+ * Ленивая загрузка Composer vendor autoloader
+ * Загружается только когда действительно нужны vendor-библиотеки
+ */
+function fn_mwl_xlsx_load_vendor_autoloader()
+{
+    static $loaded = false;
+    
+    if (!$loaded && file_exists(__DIR__ . '/vendor/autoload.php')) {
+        // Временно подавляем warnings от HTMLPurifier
+        $old_error_reporting = error_reporting();
+        error_reporting($old_error_reporting & ~E_USER_WARNING);
+        
+        require_once __DIR__ . '/vendor/autoload.php';
+        
+        // Восстанавливаем уровень error_reporting
+        error_reporting($old_error_reporting);
+        
+        $loaded = true;
+    }
+}
+
+function fn_mwl_planfix_event_repository(): EventRepository
+{
+    static $repository;
+
+    if ($repository === null) {
+        $repository = new EventRepository(Tygh::$app['db']);
+    }
+
+    return $repository;
+}
+
+function fn_mwl_planfix_link_repository(): LinkRepository
+{
+    static $repository;
+
+    if ($repository === null) {
+        $repository = new LinkRepository(Tygh::$app['db']);
+    }
+
+    return $repository;
+}
+
+function fn_mwl_planfix_status_map_repository(): StatusMapRepository
+{
+    static $repository;
+
+    if ($repository === null) {
+        $repository = new StatusMapRepository(Tygh::$app['db']);
+    }
+
+    return $repository;
+}
+
+function fn_mwl_planfix_build_object_url(array $link, ?string $origin = null): string
+{
+    $planfix_object_id = isset($link['planfix_object_id']) ? (string) $link['planfix_object_id'] : '';
+
+    if ($planfix_object_id === '') {
+        return '';
+    }
+
+    if ($origin === null) {
+        $origin = (string) Registry::get('addons.mwl_xlsx.planfix_origin');
+    }
+
+    $origin = trim($origin);
+
+    if ($origin === '') {
+        return '';
+    }
+
+    $origin = rtrim($origin, '/');
+    $type = '';
+
+    if (!empty($link['planfix_object_type'])) {
+        $type = trim((string) $link['planfix_object_type']);
+    }
+
+    if ($type !== '') {
+        $origin .= '/' . ltrim($type, '/');
+    }
+
+    return $origin . '/' . rawurlencode($planfix_object_id);
+}
 
 /**
  * Check if user belongs to user groups defined in add-on setting.
@@ -590,8 +681,8 @@ function fn_mwl_xlsx_delete_list($list_id, $user_id = null, $session_id = null)
 
 function fn_mwl_xlsx_uninstall()
 {
-    db_query("DROP TABLE IF EXISTS ?:mwl_xlsx_templates");
-    Storage::instance('custom_files')->deleteDir('mwl_xlsx/templates');
+    // db_query("DROP TABLE IF EXISTS ?:mwl_xlsx_templates");
+    // Storage::instance('custom_files')->deleteDir('mwl_xlsx/templates');
 }
 
 
@@ -608,6 +699,8 @@ function fn_mwl_xlsx_uninstall()
  */
 function fn_mwl_xlsx_fill_google_sheet(Sheets $sheets, $spreadsheet_id, array $data, $debug = false)
 {
+    fn_mwl_xlsx_load_vendor_autoloader();
+    
     // Limit to 50 rows total (including headers)
     $data = array_slice($data, 0, 51);
 
@@ -713,8 +806,14 @@ function fn_mwl_xlsx_fill_google_sheet(Sheets $sheets, $spreadsheet_id, array $d
  * @param BaseMessageSchema $schema
  * @param array $receiver_search_conditions
  */
-function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions)
+function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int $event_id = null)
 {
+    $event_repository = fn_mwl_planfix_event_repository();
+
+    if ($event_id === null) {
+        $event_id = $event_repository->logVendorCommunicationEvent($schema, $receiver_search_conditions);
+    }
+
     // Получаем данные из схемы
     $data = $schema->data ?? [];
     $thread_id = $data['thread_id'] ?? null;
@@ -767,12 +866,21 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions)
         ]);
         $ok = $resp && ($resp = json_decode($resp, true)) && !empty($resp['ok']);
         
+        $error_message = null;
         if (!$ok) {
-            error_log('Failed to send Telegram notification for VC event: ' . print_r($resp, true));
+            $error_message = 'Failed to send Telegram notification for VC event: ' . print_r($resp, true);
+            error_log($error_message);
+            $event_repository->markProcessed($event_id, EventRepository::STATUS_FAILED, $error_message);
+        } else {
+            $event_repository->markProcessed($event_id, EventRepository::STATUS_PROCESSED);
         }
     } else {
-        error_log('Telegram bot token or chat_id not configured for VC notifications');
+        $error_message = 'Telegram bot token or chat_id not configured for VC notifications';
+        error_log($error_message);
+        $event_repository->markProcessed($event_id, EventRepository::STATUS_FAILED, $error_message);
     }
+
+    return $event_id;
 }
 
 /**

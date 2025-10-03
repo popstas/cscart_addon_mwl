@@ -1,6 +1,7 @@
 <?php
 
 use Tygh\Enum\UserTypes;
+use Tygh\Registry;
 use Tygh\Tygh;
 
 if (!defined('BOOTSTRAP')) {
@@ -16,6 +17,7 @@ if ($mode === 'manage') {
     $orders = (array) $view->getTemplateVars('orders');
     $view->assign('mwl_xlsx_order_messages', []);
     $view->assign('mwl_xlsx_order_items', []);
+    $view->assign('mwl_planfix_order_links', []);
 
     if (!$orders) {
         return;
@@ -29,6 +31,11 @@ if ($mode === 'manage') {
     if (!$order_ids) {
         return;
     }
+
+    $company_ids = array_map(static function ($order) {
+        return isset($order['company_id']) ? (int) $order['company_id'] : 0;
+    }, $orders);
+    $company_ids = array_unique(array_filter($company_ids));
 
     $user_ids = array_map(static function ($order) {
         return isset($order['user_id']) ? (int) $order['user_id'] : 0;
@@ -140,6 +147,22 @@ if ($mode === 'manage') {
     }
 
     $view->assign('mwl_xlsx_order_items', $order_items);
+
+    $link_repository = fn_mwl_planfix_link_repository();
+    $planfix_origin = (string) Registry::get('addons.mwl_xlsx.planfix_origin');
+    $planfix_links_raw = $link_repository->findByEntities('order', $order_ids, $company_ids);
+    $planfix_links = [];
+
+    foreach ($planfix_links_raw as $entity_id => $link) {
+        if (!is_array($link)) {
+            continue;
+        }
+
+        $link['planfix_url'] = fn_mwl_planfix_build_object_url($link, $planfix_origin);
+        $planfix_links[(int) $entity_id] = $link;
+    }
+
+    $view->assign('mwl_planfix_order_links', $planfix_links);
 
     if (!function_exists('fn_vendor_communication_get_threads') || !defined('VC_OBJECT_TYPE_ORDER')) {
         return;

@@ -4,3 +4,4 @@
 {/if}
 <th class="nowrap">{__("mwl_xlsx.order_items")}</th>
 <th class="center">{__("mwl_xlsx.order_messages")}</th>
+<th class="center">{__("mwl_xlsx.planfix_task")}</th>

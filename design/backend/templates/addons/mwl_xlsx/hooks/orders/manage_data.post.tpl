@@ -9,6 +9,7 @@
 {/if}
 
 {assign var="__order_items" value=$mwl_xlsx_order_items[$__order_id]|default:[]}
+{assign var="__planfix_link" value=$mwl_planfix_order_links[$__order_id]|default:[]}
 <td class="nowrap">
     {if $__order_items}
         <ul class="mwl-xlsx-order-items">
@@ -39,5 +40,19 @@
     {/if}
     {if $__order_messages.has_unread}
         <span class="mwl-xlsx-order-messages__unread text-warning">{__("mwl_xlsx.order_messages_unread")}</span>
+    {/if}
+</td>
+
+<td class="center">
+    {if $__planfix_link.planfix_object_id|default:''}
+        {if $__planfix_link.planfix_url|default:''}
+            <a href="{$__planfix_link.planfix_url|escape}" target="_blank" rel="noopener noreferrer">
+                {$__planfix_link.planfix_object_id|escape}
+            </a>
+        {else}
+            <span>{$__planfix_link.planfix_object_id|escape}</span>
+        {/if}
+    {else}
+        <span class="muted">&mdash;</span>
     {/if}
 </td>

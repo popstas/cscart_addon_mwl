@@ -83,6 +83,8 @@ if ($mode === 'export') {
     $data = $list_data['data'];
 
     // load xlsx template
+    fn_mwl_xlsx_load_vendor_autoloader();
+    
     $storage    = Storage::instance('custom_files');
     $company_id = fn_get_runtime_company_id();
     $tpl        = db_get_row('SELECT path FROM ?:mwl_xlsx_templates WHERE company_id = ?i', (int) $company_id);
@@ -178,6 +180,8 @@ if ($mode === 'export_google') {
 
     // create spreadsheet without template
     if (!$id) {
+        fn_mwl_xlsx_load_vendor_autoloader();
+        
         $spreadsheet = new Spreadsheet([
             'properties' => ['title' => $doc_title]
         ]);

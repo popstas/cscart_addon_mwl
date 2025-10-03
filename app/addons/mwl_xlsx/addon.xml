@@ -5,10 +5,12 @@
     <priority>1100</priority>
     <position>0</position>
     <compatibility>
-        <dependencies>
-            <item>vendor_communication</item>
-        </dependencies>
+        <dependencies>vendor_communication</dependencies>
     </compatibility>
+
+    <autoload>
+        <psr4 prefix="Tygh\Addons\MwlXlsx\">src</psr4>
+    </autoload>
 
     <!-- Устанавливать во всех редакциях с витриной -->
     <auto_install>MULTIVENDOR,ULTIMATE</auto_install>
@@ -59,14 +61,85 @@
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8
         ]]></item>
 
+        <item for="install"><![CDATA[
+        CREATE TABLE IF NOT EXISTS `?:mwl_planfix_links` (
+            `link_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            `company_id` INT UNSIGNED NOT NULL DEFAULT 0,
+            `entity_type` VARCHAR(32) NOT NULL,
+            `entity_id` INT UNSIGNED NOT NULL,
+            `planfix_object_id` VARCHAR(64) NOT NULL,
+            `planfix_object_type` VARCHAR(32) NOT NULL DEFAULT '',
+            `extra` TEXT NULL,
+            `created_at` INT UNSIGNED NOT NULL,
+            `updated_at` INT UNSIGNED NOT NULL,
+            PRIMARY KEY (`link_id`),
+            UNIQUE KEY `entity_planfix` (`company_id`, `entity_type`, `entity_id`, `planfix_object_type`, `planfix_object_id`),
+            KEY `planfix_object` (`planfix_object_type`, `planfix_object_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ]]></item>
+
+        <item for="install"><![CDATA[
+        CREATE TABLE IF NOT EXISTS `?:mwl_planfix_status_map` (
+            `map_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            `company_id` INT UNSIGNED NOT NULL DEFAULT 0,
+            `entity_type` VARCHAR(32) NOT NULL,
+            `entity_status` VARCHAR(32) NOT NULL,
+            `planfix_status_id` VARCHAR(64) NOT NULL,
+            `planfix_status_name` VARCHAR(255) NOT NULL,
+            `planfix_status_type` VARCHAR(32) NOT NULL,
+            `is_default` TINYINT(1) NOT NULL DEFAULT 0,
+            `created_at` INT UNSIGNED NOT NULL,
+            `updated_at` INT UNSIGNED NOT NULL,
+            PRIMARY KEY (`map_id`),
+            UNIQUE KEY `entity_status` (`company_id`, `entity_type`, `entity_status`),
+            KEY `planfix_status` (`planfix_status_id`, `planfix_status_type`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ]]></item>
+
+        <item for="install"><![CDATA[
+        CREATE TABLE IF NOT EXISTS `?:mwl_planfix_events` (
+            `event_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            `company_id` INT UNSIGNED NOT NULL DEFAULT 0,
+            `link_id` INT UNSIGNED DEFAULT NULL,
+            `event_type` VARCHAR(64) NOT NULL,
+            `status` VARCHAR(16) NOT NULL DEFAULT 'pending',
+            `payload` MEDIUMTEXT NOT NULL,
+            `error` TEXT NULL,
+            `attempts` INT UNSIGNED NOT NULL DEFAULT 0,
+            `created_at` INT UNSIGNED NOT NULL,
+            `updated_at` INT UNSIGNED NOT NULL,
+            `processed_at` INT UNSIGNED DEFAULT NULL,
+            PRIMARY KEY (`event_id`),
+            KEY `status` (`status`),
+            KEY `company_event` (`company_id`, `event_type`),
+            KEY `link_id` (`link_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ]]></item>
+
         <!-- uninstall -->
+        <!-- <item for="uninstall"><![CDATA[
+        DROP TABLE IF EXISTS `?:mwl_planfix_events`;
+        ]]></item>
+
+        <item for="uninstall"><![CDATA[
+        DROP TABLE IF EXISTS `?:mwl_planfix_status_map`;
+        ]]></item>
+
+        <item for="uninstall"><![CDATA[
+        DROP TABLE IF EXISTS `?:mwl_planfix_links`;
+        ]]></item>
+
+        <item for="uninstall"><![CDATA[
+        DROP TABLE IF EXISTS `?:mwl_xlsx_templates`;
+        ]]></item>
+
         <item for="uninstall"><![CDATA[
         DROP TABLE IF EXISTS `?:mwl_xlsx_list_products`;
         ]]></item>
 
         <item for="uninstall"><![CDATA[
         DROP TABLE IF EXISTS `?:mwl_xlsx_lists`;
-        ]]></item>
+        ]]></item> -->
     </queries>
 
 
@@ -107,6 +180,9 @@
                 <value id="mwl_xlsx.show_extra_button">Show extra button in list</value>
                 <value id="mwl_xlsx.select_list">Select media list</value>
                 <value id="mwl_xlsx.wishlists">Media lists</value>
+                <value id="mwl_xlsx.planfix_task">Planfix task</value>
+                <value id="mwl_xlsx.planfix_origin">Planfix origin</value>
+                <value id="mwl_xlsx.planfix_origin.desc">Base Planfix URL (example: https://example.planfix.com). Example task link: https://example.planfix.com/task/12345 where 12345 is the planfix_object_id.</value>
             </values>
         </item>
         <item>
@@ -145,6 +221,18 @@
                 <value id="mwl_xlsx.show_extra_button">Выводить кнопку extra в списке</value>
                 <value id="mwl_xlsx.select_list">Выберите подборку</value>
                 <value id="mwl_xlsx.wishlists">Подборки</value>
+                <value id="mwl_xlsx.planfix_task">Задача Planfix</value>
+                <value id="mwl_xlsx.planfix_origin">Адрес Planfix</value>
+                <value id="mwl_xlsx.planfix_origin.desc"><![CDATA[Базовый адрес Planfix (пример: https://example.planfix.com). Пример ссылки на задачу: https://example.planfix.com/task/12345, где 12345 — planfix_object_id.]]></value>
+                <value id="mwl_xlsx.xlsx_templates">XLSX Шаблоны</value>
+                <value id="mwl_xlsx.invites">Приглашения</value>
+                <value id="mwl_xlsx.settings">Настройки</value>
+                <value id="mwl_xlsx.notify_via">Способ уведомления</value>
+                <value id="mwl_xlsx.notify_via_telegram">Telegram</value>
+                <value id="mwl_xlsx.notify_via_email">Email</value>
+                <value id="mwl_xlsx.telegram_bot_token">Токен Telegram бота</value>
+                <value id="mwl_xlsx.telegram_chat_id">ID чата Telegram</value>
+                <value id="mwl_xlsx.notify_email">Email для уведомлений</value>
             </values>
         </item>
     </languages>
@@ -175,6 +263,11 @@
                     </item>
                     <item id="currencies_path" type="input">
                         <name>mwl_xlsx.currencies_path</name>
+                        <value></value>
+                    </item>
+                    <item id="planfix_origin" type="input">
+                        <name>mwl_xlsx.planfix_origin</name>
+                        <tooltip>mwl_xlsx.planfix_origin.desc</tooltip>
                         <value></value>
                     </item>
                     <item id="google_credentials" type="textarea">

@@ -2,6 +2,25 @@
 use Tygh\Registry;
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
 
+// Подключаем Composer autoloader с подавлением warnings от HTMLPurifier
+if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+    $old_error_reporting = error_reporting();
+    error_reporting($old_error_reporting & ~E_USER_WARNING);
+    require_once __DIR__ . '/vendor/autoload.php';
+
+    if (class_exists('HTMLPurifier_ConfigSchema')) {
+        $schema = HTMLPurifier_ConfigSchema::instance();
+        if ($schema && is_array($schema->info)) {
+            $directive_key = 'Core.RemoveBlanks';
+            if (!isset($schema->info[$directive_key])) {
+                $schema->add($directive_key, false, 'bool', false);
+            }
+        }
+    }
+
+    error_reporting($old_error_reporting);
+}
+
 fn_register_hooks(
     // 'auth_routines_post',
     // 'init_user_session_data_post',
