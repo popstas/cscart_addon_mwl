@@ -26,7 +26,8 @@ fn_register_hooks(
     // 'init_user_session_data_post',
     'before_dispatch',
     'get_product_filter_fields',
-    'init_templater_post'
+    'init_templater_post',
+    'change_order_status_post'
 );
 
 /**

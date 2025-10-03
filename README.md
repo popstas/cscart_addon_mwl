@@ -28,6 +28,9 @@
 - Limit the number of items in a media list via the **Max list items** setting (default 50).
 - Configure the Planfix origin used for deep links so orders and customers with Planfix bindings show the task number with a direct link in the admin grids.
 - Configure Planfix MCP integration parameters (endpoint, auth token, webhook Basic Auth, default direction, status filters, comment/payment sync, IP allowlist) directly from the add-on settings.
+- Accept Planfix webhooks via `dispatch=mwl_xlsx.planfix_changed_status`, apply status mapping to CS-Cart orders, persist incoming payloads, and prevent ping-pong updates.
+- Manage Planfix bindings from a dedicated tab in the order details page: create tasks via MCP, bind existing tasks, and review the full metadata/payload history for each link.
+- Push order status changes, comments, and payment summaries to Planfix through MCP while storing the latest payload snapshot and timestamp in the binding record.
 - Compact price slider labels: Display min/max values in shortened format (1,000 → 1 K / 1 тыс.) with localization support for Russian and English.
 - Yandex Metrika tracking includes `user_id` for segmentation via `userParams` when available.
 
@@ -46,6 +49,7 @@
 - `index.php?dispatch=mwl_xlsx.remove` – remove a product from a media list (POST).
 - `index.php?dispatch=mwl_xlsx.rename_list` – rename a media list (POST).
 - `index.php?dispatch=mwl_xlsx.delete_list` – remove a media list (POST).
+- `index.php?dispatch=mwl_xlsx.planfix_changed_status` – Planfix webhook for status updates (POST).
 
 ### Manual setup
 

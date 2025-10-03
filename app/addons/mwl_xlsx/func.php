@@ -3,6 +3,7 @@ use Tygh\Addons\MwlXlsx\Planfix\EventRepository;
 use Tygh\Addons\MwlXlsx\Planfix\IntegrationSettings;
 use Tygh\Addons\MwlXlsx\Planfix\LinkRepository;
 use Tygh\Addons\MwlXlsx\Planfix\StatusMapRepository;
+use Tygh\Addons\MwlXlsx\Planfix\McpClient;
 use Tygh\Addons\MwlXlsx\Service\SettingsBackup;
 use Tygh\Http;
 use Tygh\Registry;
@@ -52,10 +53,32 @@ function fn_mwl_planfix_link_repository(): LinkRepository
     static $repository;
 
     if ($repository === null) {
+        fn_mwl_planfix_ensure_planfix_links_schema();
         $repository = new LinkRepository(Tygh::$app['db']);
     }
 
     return $repository;
+}
+
+function fn_mwl_planfix_ensure_planfix_links_schema(): void
+{
+    static $ensured = false;
+
+    if ($ensured) {
+        return;
+    }
+
+    $ensured = true;
+
+    $columns = db_get_hash_array('SHOW COLUMNS FROM ?:mwl_planfix_links', 'Field');
+
+    if (!isset($columns['last_push_at'])) {
+        db_query('ALTER TABLE ?:mwl_planfix_links ADD COLUMN `last_push_at` INT UNSIGNED NULL DEFAULT NULL AFTER `updated_at`');
+    }
+
+    if (!isset($columns['last_payload_out'])) {
+        db_query('ALTER TABLE ?:mwl_planfix_links ADD COLUMN `last_payload_out` MEDIUMTEXT NULL AFTER `last_push_at`');
+    }
 }
 
 function fn_mwl_planfix_status_map_repository(): StatusMapRepository
@@ -165,6 +188,596 @@ function fn_mwl_planfix_should_sync_payments(): bool
 function fn_mwl_planfix_get_webhook_allowlist_ips(): array
 {
     return fn_mwl_planfix_integration_settings()->getWebhookAllowlistIps();
+}
+
+function fn_mwl_planfix_mcp_client(bool $force_reload = false): McpClient
+{
+    static $client;
+    static $cache_key;
+
+    $endpoint = fn_mwl_planfix_get_mcp_endpoint();
+    $token = fn_mwl_planfix_get_mcp_auth_token();
+    $key = md5($endpoint . '|' . $token);
+
+    if ($force_reload || $client === null || $cache_key !== $key) {
+        $client = new McpClient($endpoint, $token);
+        $cache_key = $key;
+    }
+
+    return $client;
+}
+
+function fn_mwl_planfix_decode_link_extra($extra): array
+{
+    if (is_array($extra)) {
+        return $extra;
+    }
+
+    if (is_string($extra) && $extra !== '') {
+        $decoded = json_decode($extra, true);
+        if (is_array($decoded)) {
+            return $decoded;
+        }
+    }
+
+    return [];
+}
+
+function fn_mwl_planfix_update_link_extra(array $link, array $extra_updates, array $additional_fields = []): void
+{
+    if (empty($link['link_id'])) {
+        return;
+    }
+
+    $extra = fn_mwl_planfix_decode_link_extra($link['extra'] ?? null);
+
+    foreach ($extra_updates as $key => $value) {
+        if ($value === null) {
+            unset($extra[$key]);
+        } else {
+            $extra[$key] = $value;
+        }
+    }
+
+    $data = ['extra' => $extra];
+
+    if ($additional_fields) {
+        $data = array_merge($data, $additional_fields);
+    }
+
+    fn_mwl_planfix_link_repository()->update((int) $link['link_id'], $data);
+}
+
+function fn_mwl_planfix_validate_basic_auth(): bool
+{
+    [$expected_login, $expected_password] = fn_mwl_planfix_get_webhook_basic_auth_credentials();
+
+    $expected_login = (string) $expected_login;
+    $expected_password = (string) $expected_password;
+
+    if ($expected_login === '' && $expected_password === '') {
+        return true;
+    }
+
+    $login = null;
+    $password = null;
+
+    if (isset($_SERVER['PHP_AUTH_USER'])) {
+        $login = (string) $_SERVER['PHP_AUTH_USER'];
+        $password = isset($_SERVER['PHP_AUTH_PW']) ? (string) $_SERVER['PHP_AUTH_PW'] : '';
+    } else {
+        $headers = [];
+
+        foreach (['HTTP_AUTHORIZATION', 'REDIRECT_HTTP_AUTHORIZATION'] as $header) {
+            if (!empty($_SERVER[$header])) {
+                $headers[] = (string) $_SERVER[$header];
+            }
+        }
+
+        foreach ($headers as $header) {
+            if (stripos($header, 'Basic ') === 0) {
+                $decoded = base64_decode(substr($header, 6), true);
+                if ($decoded !== false) {
+                    $parts = explode(':', $decoded, 2);
+                    if (count($parts) === 2) {
+                        $login = (string) $parts[0];
+                        $password = (string) $parts[1];
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    if ($login === null) {
+        return false;
+    }
+
+    if (!function_exists('hash_equals')) {
+        return $expected_login === $login && $expected_password === $password;
+    }
+
+    return hash_equals($expected_login, $login) && hash_equals($expected_password, $password);
+}
+
+function fn_mwl_planfix_is_ip_allowlisted(): bool
+{
+    $allowlist = fn_mwl_planfix_get_webhook_allowlist_ips();
+    if (!$allowlist) {
+        return true;
+    }
+
+    $remote_ip = isset($_SERVER['REMOTE_ADDR']) ? trim((string) $_SERVER['REMOTE_ADDR']) : '';
+    if ($remote_ip === '') {
+        return false;
+    }
+
+    $allowlist = array_map(static function ($ip) {
+        return trim((string) $ip);
+    }, $allowlist);
+
+    return in_array($remote_ip, $allowlist, true);
+}
+
+function fn_mwl_planfix_get_raw_body(): string
+{
+    static $body;
+
+    if ($body === null) {
+        $body = file_get_contents('php://input');
+    }
+
+    return is_string($body) ? $body : '';
+}
+
+function fn_mwl_planfix_get_json_body(): array
+{
+    $raw = fn_mwl_planfix_get_raw_body();
+
+    if ($raw === '') {
+        return [];
+    }
+
+    $decoded = json_decode($raw, true);
+
+    return is_array($decoded) ? $decoded : [];
+}
+
+function fn_mwl_planfix_output_json(int $status_code, array $data): void
+{
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=utf-8', true, $status_code);
+    }
+
+    echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+function fn_mwl_planfix_handle_planfix_status_webhook(): void
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        fn_mwl_planfix_output_json(405, [
+            'success' => false,
+            'message' => 'Method Not Allowed',
+        ]);
+    }
+
+    if (!fn_mwl_planfix_is_ip_allowlisted()) {
+        fn_mwl_planfix_output_json(403, [
+            'success' => false,
+            'message' => 'IP is not allowed',
+        ]);
+    }
+
+    if (!fn_mwl_planfix_validate_basic_auth()) {
+        header('WWW-Authenticate: Basic realm="Planfix webhook"');
+        fn_mwl_planfix_output_json(401, [
+            'success' => false,
+            'message' => 'Unauthorized',
+        ]);
+    }
+
+    $payload = fn_mwl_planfix_get_json_body();
+
+    if (!$payload) {
+        $payload = $_REQUEST;
+    }
+
+    $planfix_task_id = '';
+
+    foreach (['planfix_task_id', 'task_id', 'id'] as $key) {
+        if (!empty($payload[$key])) {
+            $planfix_task_id = (string) $payload[$key];
+            break;
+        }
+    }
+
+    if ($planfix_task_id === '') {
+        fn_mwl_planfix_output_json(400, [
+            'success' => false,
+            'message' => 'planfix_task_id is required',
+        ]);
+    }
+
+    $status_id = isset($payload['status_id']) ? (string) $payload['status_id'] : '';
+    $status_type = isset($payload['status_type']) ? (string) $payload['status_type'] : '';
+    $status_name = isset($payload['status_name']) ? (string) $payload['status_name'] : '';
+
+    $link_repository = fn_mwl_planfix_link_repository();
+    $link = $link_repository->findByPlanfix('task', $planfix_task_id);
+
+    if (!$link) {
+        fn_mwl_planfix_output_json(404, [
+            'success' => false,
+            'message' => 'Link not found',
+        ]);
+    }
+
+    $extra_updates = [
+        'planfix_meta' => [
+            'status_id'   => $status_id,
+            'status_type' => $status_type,
+            'status_name' => $status_name,
+            'updated_at'  => TIME,
+        ],
+        'last_incoming_status' => [
+            'status_id'   => $status_id,
+            'status_type' => $status_type,
+            'status_name' => $status_name,
+            'received_at' => TIME,
+        ],
+        'last_planfix_payload_in' => [
+            'received_at' => TIME,
+            'payload'     => $payload,
+        ],
+    ];
+
+    $target_status = null;
+
+    if ($status_id !== '' && $status_type !== '') {
+        $status_map = fn_mwl_planfix_status_map_repository()->findLocalStatus(
+            (int) $link['company_id'],
+            (string) $link['entity_type'],
+            $status_id,
+            $status_type
+        );
+
+        if ($status_map && !empty($status_map['entity_status'])) {
+            $target_status = (string) $status_map['entity_status'];
+            $extra_updates['planfix_meta']['mapped_status'] = $target_status;
+        }
+    }
+
+    $message = 'Link metadata updated';
+    $success = true;
+
+    if ($target_status && $link['entity_type'] === 'order') {
+        $order_id = (int) $link['entity_id'];
+        if ($order_id) {
+            $current_status = db_get_field('SELECT status FROM ?:orders WHERE order_id = ?i', $order_id);
+
+            if ($current_status !== $target_status) {
+                fn_mwl_planfix_record_status_skip($order_id);
+                $changed = fn_change_order_status($order_id, $target_status, (string) $current_status);
+
+                if ($changed !== false) {
+                    $message = 'Order status updated';
+                } else {
+                    $message = 'Failed to update order status';
+                    $success = false;
+                }
+            } else {
+                $message = 'Order status already up to date';
+            }
+        }
+    }
+
+    fn_mwl_planfix_update_link_extra($link, $extra_updates);
+
+    fn_mwl_planfix_output_json($success ? 200 : 500, [
+        'success' => $success,
+        'message' => $message,
+    ]);
+}
+
+function fn_mwl_planfix_create_task_for_order(int $order_id, array $order_info = []): array
+{
+    if (!$order_info) {
+        $order_info = fn_get_order_info($order_id, false, true, true, false);
+    }
+
+    if (!$order_info) {
+        return [
+            'success' => false,
+            'message' => __('mwl_xlsx.planfix_error_order_not_found'),
+        ];
+    }
+
+    $company_id = isset($order_info['company_id']) ? (int) $order_info['company_id'] : 0;
+    $payload = [
+        'order_id'   => $order_id,
+        'company_id' => $company_id,
+        'status'     => (string) ($order_info['status'] ?? ''),
+        'total'      => isset($order_info['total']) ? (float) $order_info['total'] : 0.0,
+        'direction'  => fn_mwl_planfix_get_direction_default(),
+    ];
+
+    if (!empty($order_info['secondary_currency'])) {
+        $payload['currency'] = (string) $order_info['secondary_currency'];
+    } elseif (!empty($order_info['currency'])) {
+        $payload['currency'] = (string) $order_info['currency'];
+    }
+
+    $customer = [
+        'name'  => trim(((string) ($order_info['firstname'] ?? '')) . ' ' . ((string) ($order_info['lastname'] ?? ''))),
+        'email' => (string) ($order_info['email'] ?? ''),
+        'phone' => (string) ($order_info['phone'] ?? ''),
+    ];
+
+    $customer = array_filter($customer, static function ($value) {
+        return $value !== '';
+    });
+
+    if ($customer) {
+        $payload['customer'] = $customer;
+    }
+
+    $client = fn_mwl_planfix_mcp_client();
+    $response = $client->createTask($payload);
+
+    if (empty($response['success'])) {
+        return [
+            'success' => false,
+            'message' => __('mwl_xlsx.planfix_error_mcp_request'),
+            'response' => $response,
+        ];
+    }
+
+    $data = isset($response['data']) && is_array($response['data']) ? $response['data'] : [];
+    $planfix_task_id = (string) ($data['planfix_task_id'] ?? $data['planfix_object_id'] ?? $data['task_id'] ?? '');
+
+    if ($planfix_task_id === '') {
+        return [
+            'success' => false,
+            'message' => __('mwl_xlsx.planfix_error_task_id_missing'),
+            'response' => $response,
+        ];
+    }
+
+    $planfix_object_type = (string) ($data['planfix_object_type'] ?? 'task');
+
+    $extra = [
+        'planfix_meta' => [
+            'status_id'   => isset($data['status_id']) ? (string) $data['status_id'] : '',
+            'status_type' => isset($data['status_type']) ? (string) $data['status_type'] : '',
+            'status_name' => isset($data['status_name']) ? (string) $data['status_name'] : '',
+            'direction'   => isset($data['direction']) ? (string) $data['direction'] : $payload['direction'],
+        ],
+        'created_via' => 'create_task',
+        'created_at'  => TIME,
+    ];
+
+    $link_repository = fn_mwl_planfix_link_repository();
+    $link_repository->upsert($company_id, 'order', $order_id, $planfix_object_type, $planfix_task_id, $extra);
+
+    $link = $link_repository->findByEntity($company_id, 'order', $order_id);
+
+    if ($link) {
+        fn_mwl_planfix_update_link_extra(
+            $link,
+            [],
+            [
+                'last_push_at'     => TIME,
+                'last_payload_out' => json_encode(['create_task' => $payload], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            ]
+        );
+
+        $link = $link_repository->findByEntity($company_id, 'order', $order_id);
+    }
+
+    return [
+        'success'  => true,
+        'message'  => __('mwl_xlsx.planfix_task_created', ['[id]' => $planfix_task_id]),
+        'link'     => $link,
+        'response' => $response,
+    ];
+}
+
+function fn_mwl_planfix_bind_task_to_order(int $order_id, int $company_id, string $planfix_task_id, string $planfix_object_type = 'task', array $meta = []): array
+{
+    $planfix_task_id = trim($planfix_task_id);
+
+    if ($planfix_task_id === '') {
+        return [
+            'success' => false,
+            'message' => __('mwl_xlsx.planfix_error_task_id_missing'),
+        ];
+    }
+
+    $planfix_object_type = $planfix_object_type !== '' ? $planfix_object_type : 'task';
+
+    $link_repository = fn_mwl_planfix_link_repository();
+    $existing = $link_repository->findByPlanfix($planfix_object_type, $planfix_task_id, $company_id ?: null);
+
+    if ($existing && (int) $existing['entity_id'] !== $order_id) {
+        return [
+            'success' => false,
+            'message' => __('mwl_xlsx.planfix_task_already_bound', ['[order_id]' => (int) $existing['entity_id']]),
+        ];
+    }
+
+    $extra = [
+        'bound_manually' => TIME,
+    ];
+
+    if (isset($meta['planfix_meta']) && is_array($meta['planfix_meta'])) {
+        $extra['planfix_meta'] = $meta['planfix_meta'];
+        unset($meta['planfix_meta']);
+    }
+
+    $extra = array_merge($extra, $meta);
+
+    $link_repository->upsert($company_id, 'order', $order_id, $planfix_object_type, $planfix_task_id, $extra);
+    $link = $link_repository->findByEntity($company_id, 'order', $order_id);
+
+    return [
+        'success' => true,
+        'message' => __('mwl_xlsx.planfix_task_bound', ['[id]' => $planfix_task_id]),
+        'link'    => $link,
+    ];
+}
+
+function fn_mwl_planfix_record_status_skip(int $order_id): void
+{
+    $skip_orders = Registry::get('mwl_xlsx.planfix_status.skip_orders');
+    if (!is_array($skip_orders)) {
+        $skip_orders = [];
+    }
+
+    $skip_orders[$order_id] = TIME;
+    Registry::set('mwl_xlsx.planfix_status.skip_orders', $skip_orders);
+}
+
+function fn_mwl_planfix_should_skip_status_push(int $order_id): bool
+{
+    $skip_orders = Registry::get('mwl_xlsx.planfix_status.skip_orders');
+    if (!is_array($skip_orders)) {
+        return false;
+    }
+
+    if (!isset($skip_orders[$order_id])) {
+        return false;
+    }
+
+    unset($skip_orders[$order_id]);
+    Registry::set('mwl_xlsx.planfix_status.skip_orders', $skip_orders);
+
+    return true;
+}
+
+function fn_mwl_xlsx_change_order_status_post(
+    $order_id,
+    $status_to,
+    $status_from,
+    $force_notification,
+    $order_info,
+    $skip_query_processing,
+    $notify_user,
+    $send_order_notification
+) {
+    $order_id = (int) $order_id;
+
+    if (!$order_id) {
+        return;
+    }
+
+    if (fn_mwl_planfix_should_skip_status_push($order_id)) {
+        return;
+    }
+
+    $company_id = isset($order_info['company_id']) ? (int) $order_info['company_id'] : 0;
+
+    $link_repository = fn_mwl_planfix_link_repository();
+    $link = $link_repository->findByEntity($company_id, 'order', $order_id);
+
+    if (!$link || empty($link['planfix_object_id'])) {
+        return;
+    }
+
+    $planfix_object_id = (string) $link['planfix_object_id'];
+    $planfix_object_type = isset($link['planfix_object_type']) && $link['planfix_object_type'] !== ''
+        ? (string) $link['planfix_object_type']
+        : 'task';
+
+    $client = fn_mwl_planfix_mcp_client();
+    $payloads = [];
+
+    $status_payload = [
+        'order_id'            => $order_id,
+        'company_id'          => $company_id,
+        'status_to'           => (string) $status_to,
+        'status_from'         => (string) $status_from,
+        'planfix_object_id'   => $planfix_object_id,
+        'planfix_object_type' => $planfix_object_type,
+    ];
+
+    if (isset($order_info['total'])) {
+        $status_payload['total'] = (float) $order_info['total'];
+    }
+
+    $payloads['update_sale_status'] = $status_payload;
+    $client->updateSaleStatus($status_payload);
+
+    if (fn_mwl_planfix_should_sync_comments()) {
+        $comment = '';
+
+        if (!empty($order_info['details'])) {
+            $comment = (string) $order_info['details'];
+        } elseif (!empty($order_info['notes'])) {
+            $comment = (string) $order_info['notes'];
+        }
+
+        if ($comment !== '') {
+            $comment_payload = [
+                'order_id'            => $order_id,
+                'company_id'          => $company_id,
+                'planfix_object_id'   => $planfix_object_id,
+                'planfix_object_type' => $planfix_object_type,
+                'comment'             => $comment,
+            ];
+
+            $payloads['append_sale_comment'] = $comment_payload;
+            $client->appendSaleComment($comment_payload);
+        }
+    }
+
+    if (fn_mwl_planfix_should_sync_payments()) {
+        $amount = null;
+
+        if (isset($order_info['total_paid'])) {
+            $amount = (float) $order_info['total_paid'];
+        } elseif (isset($order_info['total'])) {
+            $amount = (float) $order_info['total'];
+        }
+
+        if ($amount !== null) {
+            $payment_payload = [
+                'order_id'            => $order_id,
+                'company_id'          => $company_id,
+                'planfix_object_id'   => $planfix_object_id,
+                'planfix_object_type' => $planfix_object_type,
+                'amount'              => $amount,
+            ];
+
+            if (!empty($order_info['secondary_currency'])) {
+                $payment_payload['currency'] = (string) $order_info['secondary_currency'];
+            } elseif (!empty($order_info['primary_currency'])) {
+                $payment_payload['currency'] = (string) $order_info['primary_currency'];
+            } elseif (!empty($order_info['currency'])) {
+                $payment_payload['currency'] = (string) $order_info['currency'];
+            }
+
+            $payloads['register_sale_payment'] = $payment_payload;
+            $client->registerSalePayment($payment_payload);
+        }
+    }
+
+    $summary_extra = [
+        'last_outgoing_status' => [
+            'status_to'   => (string) $status_to,
+            'status_from' => (string) $status_from,
+            'pushed_at'   => TIME,
+        ],
+    ];
+
+    fn_mwl_planfix_update_link_extra(
+        $link,
+        $summary_extra,
+        [
+            'last_push_at'     => TIME,
+            'last_payload_out' => json_encode($payloads, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        ]
+    );
 }
 
 /**

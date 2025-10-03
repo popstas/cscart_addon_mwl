@@ -25,9 +25,33 @@ class LinkRepository
             'extra'              => $extra ? json_encode($extra, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null,
             'created_at'         => TIME,
             'updated_at'         => TIME,
+            'last_push_at'       => null,
+            'last_payload_out'   => null,
         ];
 
         return (int) $this->db->query('REPLACE INTO ?:mwl_planfix_links ?e', $data);
+    }
+
+    public function update(int $link_id, array $data): void
+    {
+        if (!$data) {
+            return;
+        }
+
+        if (array_key_exists('extra', $data)) {
+            $extra = $data['extra'];
+            if (is_array($extra)) {
+                $data['extra'] = $extra ? json_encode($extra, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null;
+            } elseif ($extra === '') {
+                $data['extra'] = null;
+            }
+        }
+
+        if (!isset($data['updated_at'])) {
+            $data['updated_at'] = TIME;
+        }
+
+        $this->db->query('UPDATE ?:mwl_planfix_links SET ?u WHERE link_id = ?i', $data, $link_id);
     }
 
     public function findByEntity(int $company_id, string $entity_type, int $entity_id): ?array

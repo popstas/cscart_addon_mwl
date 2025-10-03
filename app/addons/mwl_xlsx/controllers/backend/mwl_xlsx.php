@@ -28,6 +28,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'settings') {
     return [CONTROLLER_STATUS_OK, 'mwl_xlsx.settings'];
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'planfix_create_task') {
+    $order_id = isset($_REQUEST['order_id']) ? (int) $_REQUEST['order_id'] : 0;
+    $order_info = $order_id ? fn_get_order_info($order_id, false, true, true, false) : [];
+
+    if (!$order_id || !$order_info) {
+        fn_set_notification('E', __('error'), __('mwl_xlsx.planfix_error_order_not_found'));
+        $return_url = !empty($_REQUEST['return_url']) ? (string) $_REQUEST['return_url'] : 'orders.manage';
+
+        return [CONTROLLER_STATUS_OK, $return_url];
+    }
+
+    $result = fn_mwl_planfix_create_task_for_order($order_id, $order_info);
+
+    if (!empty($result['success'])) {
+        fn_set_notification('N', __('notice'), $result['message']);
+    } else {
+        $message = isset($result['message']) ? (string) $result['message'] : __('mwl_xlsx.planfix_error_unknown');
+        fn_set_notification('E', __('error'), $message);
+    }
+
+    $return_url = !empty($_REQUEST['return_url'])
+        ? (string) $_REQUEST['return_url']
+        : 'orders.details?order_id=' . $order_id;
+
+    return [CONTROLLER_STATUS_OK, $return_url];
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'planfix_bind_task') {
+    $order_id = isset($_REQUEST['order_id']) ? (int) $_REQUEST['order_id'] : 0;
+    $planfix_task_id = isset($_REQUEST['planfix_task_id']) ? (string) $_REQUEST['planfix_task_id'] : '';
+    $planfix_object_type = isset($_REQUEST['planfix_object_type']) ? (string) $_REQUEST['planfix_object_type'] : 'task';
+
+    if (!$order_id) {
+        fn_set_notification('E', __('error'), __('mwl_xlsx.planfix_error_order_not_found'));
+        $return_url = !empty($_REQUEST['return_url']) ? (string) $_REQUEST['return_url'] : 'orders.manage';
+
+        return [CONTROLLER_STATUS_OK, $return_url];
+    }
+
+    $company_id = (int) db_get_field('SELECT company_id FROM ?:orders WHERE order_id = ?i', $order_id);
+
+    $result = fn_mwl_planfix_bind_task_to_order($order_id, $company_id, $planfix_task_id, $planfix_object_type);
+
+    if (!empty($result['success'])) {
+        fn_set_notification('N', __('notice'), $result['message']);
+    } else {
+        $message = isset($result['message']) ? (string) $result['message'] : __('mwl_xlsx.planfix_error_unknown');
+        fn_set_notification('E', __('error'), $message);
+    }
+
+    $return_url = !empty($_REQUEST['return_url'])
+        ? (string) $_REQUEST['return_url']
+        : 'orders.details?order_id=' . $order_id;
+
+    return [CONTROLLER_STATUS_OK, $return_url];
+}
+
 if ($mode === 'settings') {
     $settings = Registry::get('addons.mwl_xlsx');
     foreach (['authorized_usergroups', 'allowed_usergroups'] as $field) {
