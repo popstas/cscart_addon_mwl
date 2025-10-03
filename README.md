@@ -51,6 +51,127 @@
 - `index.php?dispatch=mwl_xlsx.delete_list` – remove a media list (POST).
 - `index.php?dispatch=mwl_xlsx.planfix_changed_status` – Planfix webhook for status updates (POST).
 
+### Planfix integration modes
+
+The add-on exposes three Planfix-facing controller modes. All of them live under the
+standard CS-Cart dispatcher and therefore accept requests at
+`index.php?dispatch=<controller>.<mode>` (or `admin.php` when executed from the
+backend). The table below summarises their purpose.
+
+| Mode | Direction | Purpose |
+| ---- | --------- | ------- |
+| `mwl_xlsx.planfix_changed_status` | Planfix → CS-Cart | Receives status webhooks, updates the linked order, and records payload metadata. |
+| `mwl_xlsx.planfix_create_task` | CS-Cart admin → Planfix MCP | Creates a Planfix task for the current order through MCP and stores the binding. |
+| `mwl_xlsx.planfix_bind_task` | CS-Cart admin → Planfix MCP | Binds an existing Planfix object to an order without creating a new task. |
+
+#### `dispatch=mwl_xlsx.planfix_changed_status`
+
+* **Auth**: Enforces Basic Auth (login/password from add-on settings) and an optional IP
+  allowlist. Requests that fail either check are rejected with `401`/`403`.
+* **Method**: `POST` only. Any other HTTP method produces `405 Method Not Allowed`.
+* **Body**: Accepts JSON (`Content-Type: application/json`) or traditional form data. The
+  handler looks for `planfix_task_id` (preferred), `task_id`, or `id` to resolve the binding.
+  Optional fields `status_id`, `status_type`, and `status_name` populate the metadata and can
+  trigger a status mapping to CS-Cart orders.
+* **Response**: Returns JSON with `success` and `message` fields. CS-Cart responds with
+  `200 OK` when the incoming status is processed, `404` when the Planfix task is not bound,
+  or `500` if the order status update fails.
+
+Example request:
+
+```http
+POST /index.php?dispatch=mwl_xlsx.planfix_changed_status HTTP/1.1
+Host: store.example.com
+Authorization: Basic cGxhbmZpeF9ob29rOnNlY3JldF9wYXNz
+Content-Type: application/json
+X-Forwarded-For: 203.0.113.15
+
+{
+  "planfix_task_id": "PF-1288",
+  "status_id": "done",
+  "status_type": "taskStatus",
+  "status_name": "Completed",
+  "changed_at": "2024-05-01T10:45:00+03:00"
+}
+```
+
+Example response:
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{"success":true,"message":"Order status updated"}
+```
+
+#### `dispatch=mwl_xlsx.planfix_create_task`
+
+* **Auth**: Requires an authenticated administrator session and CSRF token. Intended for
+  usage through the order management UI.
+* **Method**: `POST` with `application/x-www-form-urlencoded` parameters.
+* **Parameters**:
+  * `order_id` (integer, required) – CS-Cart order identifier.
+  * `return_url` (string, optional) – URL to redirect back after processing. Defaults to the
+    order details page.
+* **Behaviour**: Sends the order snapshot to MCP, stores the returned Planfix object binding,
+  and records the outbound payload metadata in `cscart_mwl_planfix_links`.
+* **Response**: Redirects back to `return_url` and shows a notification about the outcome.
+
+Example request (line breaks added for readability):
+
+```http
+POST /admin.php?dispatch=mwl_xlsx.planfix_create_task HTTP/1.1
+Host: store.example.com
+Content-Type: application/x-www-form-urlencoded
+Cookie: sid_admin=d338b9b1d1d2e64f6c0a; admin_csrf_token=0792f...
+X-CSRF-Token: 0792f...
+
+order_id=10571&return_url=orders.details%3Forder_id%3D10571
+```
+
+Example response:
+
+```http
+HTTP/1.1 302 Found
+Location: /admin.php?dispatch=orders.details&order_id=10571
+Set-Cookie: notices[success]=Planfix+task+PF-1288+created
+```
+
+#### `dispatch=mwl_xlsx.planfix_bind_task`
+
+* **Auth**: Same as `planfix_create_task` – requires an authenticated administrator session
+  and CSRF token.
+* **Method**: `POST` with `application/x-www-form-urlencoded` parameters.
+* **Parameters**:
+  * `order_id` (integer, required) – CS-Cart order identifier.
+  * `planfix_task_id` (string, required) – Identifier of the existing Planfix entity.
+  * `planfix_object_type` (string, optional) – Planfix entity type (defaults to `task`).
+  * `return_url` (string, optional) – URL to redirect back after processing.
+* **Behaviour**: Validates that the Planfix object is not bound elsewhere, registers the
+  binding for the order, and optionally seeds metadata.
+* **Response**: Redirects back to `return_url` (or the order page) with a success/error
+  notification.
+
+Example request:
+
+```http
+POST /admin.php?dispatch=mwl_xlsx.planfix_bind_task HTTP/1.1
+Host: store.example.com
+Content-Type: application/x-www-form-urlencoded
+Cookie: sid_admin=d338b9b1d1d2e64f6c0a; admin_csrf_token=0792f...
+X-CSRF-Token: 0792f...
+
+order_id=10571&planfix_task_id=PF-1288&planfix_object_type=task
+```
+
+Example response:
+
+```http
+HTTP/1.1 302 Found
+Location: /admin.php?dispatch=orders.details&order_id=10571
+Set-Cookie: notices[success]=Planfix+task+PF-1288+bound+to+order+10571
+```
+
 ### Manual setup
 
 1. Create SEO rule for `/media-lists`:
