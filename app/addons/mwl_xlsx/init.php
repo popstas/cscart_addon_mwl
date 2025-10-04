@@ -1,5 +1,7 @@
 <?php
 use Tygh\Registry;
+use Tygh\Addons\MwlXlsx\Notifications\Transports\MwlTransport;
+
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
 
 // Подключаем Composer autoloader с подавлением warnings от HTMLPurifier
@@ -30,14 +32,8 @@ fn_register_hooks(
     'change_order_status_post'
 );
 
-/**
- * Регистрируем наш собственный транспорт 'mwl'
- */
-// Подключаем класс транспорта
-require_once __DIR__ . '/src/Notifications/Transports/MwlTransport.php';
-
 Tygh::$app['event.transports.mwl'] = static function ($app) {
-    return new \Tygh\Addons\MwlXlsx\Notifications\Transports\MwlTransport();
+    return new MwlTransport();
 };
 
 function fn_mwl_xlsx_before_dispatch(&$controller, &$mode, &$action, &$dispatch_extra, &$area)

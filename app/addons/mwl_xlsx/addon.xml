@@ -8,10 +8,6 @@
         <dependencies>vendor_communication</dependencies>
     </compatibility>
 
-    <autoload>
-        <psr4 prefix="Tygh\Addons\MwlXlsx\">src</psr4>
-    </autoload>
-
     <!-- Устанавливать во всех редакциях с витриной -->
     <auto_install>MULTIVENDOR,ULTIMATE</auto_install>
     <default_language>en</default_language>
