@@ -223,7 +223,7 @@ if ($mode === 'manage') {
             $is_customer_message = isset($thread['last_message_user_type']) && $thread['last_message_user_type'] === UserTypes::CUSTOMER;
             $is_own_message = $auth_user_id && isset($thread['last_message_user_id']) && (int) $thread['last_message_user_id'] === $auth_user_id;
 
-            if (!$is_customer_message && !$is_own_message) {
+            if ($is_customer_message && !$is_own_message) {
                 $order_messages[$order_id]['has_unread'] = true;
             }
         }
@@ -257,5 +257,16 @@ if ($mode === 'details' || $mode === 'update') {
         }
 
         Tygh::$app['view']->assign('mwl_planfix_order_link', $link);
+
+        $navigation_tabs = Registry::get('navigation.tabs');
+
+        if (!isset($navigation_tabs['mwl_planfix'])) {
+            $navigation_tabs['mwl_planfix'] = [
+                'title' => __('mwl_xlsx.planfix_tab_title'),
+                'js' => true,
+            ];
+
+            Registry::set('navigation.tabs', $navigation_tabs);
+        }
     }
 }

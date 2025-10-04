@@ -5,7 +5,7 @@
     {assign var="last_outgoing" value=$planfix_link.extra.last_outgoing_status|default:[]}
     {assign var="last_payload_in" value=$planfix_link.extra.last_planfix_payload_in|default:[]}
     {assign var="has_link" value=($planfix_link.planfix_object_id|default:'') != ''}
-    <div id="content_tab_mwl_planfix" class="hidden">
+    <div id="content_mwl_planfix" class="{if $selected_section && $selected_section != "mwl_planfix"}hidden cm-hide-save-button{/if}">
         <div class="well well-small">
             <div class="control-group">
                 <label class="control-label">{__("mwl_xlsx.planfix_linked_task")}</label>
