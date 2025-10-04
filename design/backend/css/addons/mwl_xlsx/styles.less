@@ -96,3 +96,16 @@
     text-transform: uppercase;
 }
 
+/* Hide phone column in orders management */
+.table-manage-orders {
+    /* Hide phone column header - targets the 5th th element (phone column) */
+    th:nth-child(6) {
+        display: none !important;
+    }
+
+    /* Hide phone column data cells - targets the 6th td element in each row */
+    tbody tr td:nth-child(6) {
+        display: none !important;
+    }
+}
+
