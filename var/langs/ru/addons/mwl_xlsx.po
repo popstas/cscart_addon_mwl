@@ -79,8 +79,8 @@ msgid "Upload XLSX template"
 msgstr "Загрузить XLSX-шаблон"
 
 msgctxt "Languages::mwl_xlsx.order_messages"
-msgid "Messages"
-msgstr "Сообщения"
+msgid "Msgs"
+msgstr "Msgs"
 
 msgctxt "Languages::mwl_xlsx.order_items"
 msgid "Items"

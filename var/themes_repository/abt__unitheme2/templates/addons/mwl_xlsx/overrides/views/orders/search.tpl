@@ -92,7 +92,7 @@
             {assign var="last_message" value=$last_message|strip_tags|replace:"\r":' '|replace:"\n":' '|trim}
             <td class="ty-orders-search__item">
                 {if $order_messages.thread_id}
-                    <a class="{$messages_class} mwl-xlsx-order-messages-link" href="{"vendor_communication.view?thread_id=`$order_messages.thread_id`"|fn_url}" title="{$last_message|escape}">
+                    <a class="{$messages_class} cm-tooltip mwl-xlsx-order-messages-link" href="{"vendor_communication.view?thread_id=`$order_messages.thread_id`"|fn_url}" title="{$last_message|escape}">
                         <span class="mwl-xlsx-order-messages-link__total">{$messages_total}</span>
                     </a>
                 {else}

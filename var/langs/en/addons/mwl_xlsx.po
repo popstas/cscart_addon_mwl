@@ -81,8 +81,8 @@ msgid "Upload XLSX template"
 msgstr "Upload XLSX template"
 
 msgctxt "Languages::mwl_xlsx.order_messages"
-msgid "Messages"
-msgstr "Messages"
+msgid "Msgs"
+msgstr "Msgs"
 
 msgctxt "Languages::mwl_xlsx.order_items"
 msgid "Items"

@@ -34,12 +34,12 @@
 {/if}
 <td class="center">
     {if $__order_messages.thread_id}
-        <a class="{$__messages_class} mwl-xlsx-order-messages-link" href="{"vendor_communication.view?thread_id=`$__order_messages.thread_id`"|fn_url}" title="{$__last_message|escape}">
+        <a class="{$__messages_class} cm-tooltip mwl-xlsx-order-messages-link" href="{"vendor_communication.view?thread_id=`$__order_messages.thread_id`"|fn_url}" title="{$__last_message|escape}">
             <span class="mwl-xlsx-order-messages-link__total">{$__messages_total}</span>
         </a>
     {else}
         <a href="#"
-           class="{$__messages_class} mwl-create-thread-link"
+           class="{$__messages_class} cm-tooltip mwl-create-thread-link"
            data-ca-order-id="{$__order_id}"
            data-ca-company-id="{$__order.company_id|default:0}"
            onclick="return false;">
