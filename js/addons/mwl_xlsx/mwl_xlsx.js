@@ -232,6 +232,17 @@
     }
   });
 
+  $(_.doc).on('keydown.mwl_xlsx', '[data-ca-vendor-communication="threadMessage"]', function(e) {
+    var key = e.key || e.keyCode;
+    if ((key !== 'Enter' && key !== 13) || !(e.ctrlKey || e.metaKey)) { return; }
+
+    var $form = $(this).closest('form');
+    if ($form.length) {
+      e.preventDefault();
+      $form.trigger('submit');
+    }
+  });
+
   $(_.doc).on('click', '[data-ca-remove-from-mwl_xlsx]', function() {
     var $btn = $(this);
     var list_id = $btn.data('caListId');
