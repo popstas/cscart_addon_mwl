@@ -27,13 +27,15 @@
 {assign var="__order_messages" value=$mwl_xlsx_order_messages[$__order_id]|default:[]}
 {assign var="__messages_total" value=$__order_messages.total|default:0}
 {assign var="__messages_class" value="mwl-xlsx-order-messages-count"}
+{assign var="__last_message" value=$__order_messages.last_message|default:''}
+{assign var="__last_message" value=$__last_message|strip_tags|replace:"\r":' '|replace:"\n":' '|trim}
 {if $__order_messages.has_unread}
     {assign var="__messages_class" value="`$__messages_class` text-warning"}
 {/if}
 <td class="center">
     {if $__order_messages.thread_id}
-        <a class="{$__messages_class}" href="{"vendor_communication.view?thread_id=`$__order_messages.thread_id`"|fn_url}">
-            {$__messages_total}
+        <a class="{$__messages_class} mwl-xlsx-order-messages-link" href="{"vendor_communication.view?thread_id=`$__order_messages.thread_id`"|fn_url}" title="{$__last_message|escape}">
+            <span class="mwl-xlsx-order-messages-link__total">{$__messages_total}</span>
         </a>
     {else}
         <a href="#"
@@ -41,11 +43,8 @@
            data-ca-order-id="{$__order_id}"
            data-ca-company-id="{$__order.company_id|default:0}"
            onclick="return false;">
-            {$__messages_total}
+            <span class="mwl-xlsx-order-messages-link__total">{$__messages_total}</span>
         </a>
-    {/if}
-    {if $__order_messages.has_unread}
-        <span class="mwl-xlsx-order-messages__unread text-warning">{__("mwl_xlsx.order_messages_unread")}</span>
     {/if}
 </td>
 

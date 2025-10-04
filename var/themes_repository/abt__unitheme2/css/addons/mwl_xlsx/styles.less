@@ -27,6 +27,17 @@
     }
 }
 
+.mwl-xlsx-order-messages-link {
+    display: inline-flex;
+    align-items: center;
+}
+
+.mwl-xlsx-order-messages-link__total {
+    font-weight: 600;
+    min-width: 1.5em;
+    text-align: center;
+}
+
 // product page
 .ut2-pb__right-wrapper .mwl_xlsx-control .ty-btn {
     min-width: 320px !important;
@@ -65,6 +76,19 @@
         &.Local { .status-gradient(#a97142, #cd7f32); }
         &.National { .status-gradient(#a9a9a9, #dcdcdc); }
         &.Continental { .status-gradient(#daa520, #ffd700); }
-        &.Global { .status-gradient(#b5b5b5, #e5e4e2); }    
+        &.Global { .status-gradient(#b5b5b5, #e5e4e2); }
+    }
+}
+
+/* Hide phone column in orders management */
+.table-manage-orders {
+    /* Hide phone column header - targets the 5th th element (phone column) */
+    th:nth-child(6) {
+        display: none !important;
+    }
+
+    /* Hide phone column data cells - targets the 6th td element in each row */
+    tbody tr td:nth-child(6) {
+        display: none !important;
     }
 }

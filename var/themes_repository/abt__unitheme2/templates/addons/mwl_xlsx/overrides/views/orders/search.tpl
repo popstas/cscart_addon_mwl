@@ -88,10 +88,12 @@
             {if $order_messages.has_unread}
                 {assign var="messages_class" value="`$messages_class` ty-text-warning"}
             {/if}
+            {assign var="last_message" value=$order_messages.last_message|default:''}
+            {assign var="last_message" value=$last_message|strip_tags|replace:"\r":' '|replace:"\n":' '|trim}
             <td class="ty-orders-search__item">
                 {if $order_messages.thread_id}
-                    <a class="{$messages_class}" href="{"vendor_communication.view?thread_id=`$order_messages.thread_id`"|fn_url}">
-                        {$messages_total}
+                    <a class="{$messages_class} mwl-xlsx-order-messages-link" href="{"vendor_communication.view?thread_id=`$order_messages.thread_id`"|fn_url}" title="{$last_message|escape}">
+                        <span class="mwl-xlsx-order-messages-link__total">{$messages_total}</span>
                     </a>
                 {else}
                     <!--<span class="{$messages_class}">
@@ -118,9 +120,6 @@
                         no_ajax=true
                         product=false
                     }
-                {/if}
-                {if $order_messages.has_unread}
-                    <span class="ty-label ty-label--warning ty-label--inline">{__("mwl_xlsx.order_messages_unread")}</span>
                 {/if}
             </td>
             <td class="ty-orders-search__item ty-orders-search__item--actions">

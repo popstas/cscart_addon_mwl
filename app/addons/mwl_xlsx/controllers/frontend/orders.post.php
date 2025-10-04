@@ -128,18 +128,40 @@ if ($mode === 'search') {
             $order_id = (int) $thread['object_id'];
             $thread_id = (int) $thread['thread_id'];
             $messages_count = isset($message_counts[$thread_id]) ? (int) $message_counts[$thread_id] : 0;
+            $last_message = isset($thread['last_message']) ? trim((string) $thread['last_message']) : '';
+            $last_updated = isset($thread['last_updated']) ? (int) $thread['last_updated'] : 0;
 
             if (!isset($order_messages[$order_id])) {
                 $order_messages[$order_id] = [
                     'total' => 0,
                     'has_unread' => false,
                     'thread_id' => $thread_id,
+                    'last_message' => $last_message,
+                    'last_updated' => $last_updated,
                 ];
             } elseif (empty($order_messages[$order_id]['thread_id'])) {
                 $order_messages[$order_id]['thread_id'] = $thread_id;
+                $order_messages[$order_id]['last_message'] = $last_message;
+                $order_messages[$order_id]['last_updated'] = $last_updated;
             }
 
             $order_messages[$order_id]['total'] += $messages_count;
+
+            $current_last_updated = isset($order_messages[$order_id]['last_updated'])
+                ? (int) $order_messages[$order_id]['last_updated']
+                : 0;
+
+            if ($last_updated > $current_last_updated) {
+                $order_messages[$order_id]['thread_id'] = $thread_id;
+                $order_messages[$order_id]['last_message'] = $last_message;
+                $order_messages[$order_id]['last_updated'] = $last_updated;
+            } elseif ($order_messages[$order_id]['thread_id'] === $thread_id && $last_message !== '') {
+                $order_messages[$order_id]['last_message'] = $last_message;
+
+                if ($last_updated) {
+                    $order_messages[$order_id]['last_updated'] = $last_updated;
+                }
+            }
 
             if ($order_messages[$order_id]['has_unread']) {
                 continue;
