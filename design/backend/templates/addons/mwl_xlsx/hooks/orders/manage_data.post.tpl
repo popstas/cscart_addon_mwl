@@ -36,8 +36,13 @@
             {$__messages_total}
         </a>
     {else}
-        <span class="{$__messages_class}">{$__messages_total}</span>
-        {*<a href="#" class="{$__messages_class} mwl-create-thread-link" data-ca-order-id="{$__order_id}" onclick="return false;">{$__messages_total}</a>*}
+        <a href="#"
+           class="{$__messages_class} mwl-create-thread-link"
+           data-ca-order-id="{$__order_id}"
+           data-ca-company-id="{$__order.company_id|default:0}"
+           onclick="return false;">
+            {$__messages_total}
+        </a>
     {/if}
     {if $__order_messages.has_unread}
         <span class="mwl-xlsx-order-messages__unread text-warning">{__("mwl_xlsx.order_messages_unread")}</span>

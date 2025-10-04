@@ -473,55 +473,52 @@
 
     var $link = $(this);
     var orderId = $link.data('caOrderId');
+    var companyId = $link.data('caCompanyId');
 
-    if (!orderId) {
+    if (!orderId || !companyId) {
       return;
     }
 
     // Disable the link to prevent multiple clicks
     $link.css('pointer-events', 'none');
 
-    // Отправляем POST-запрос для создания треда
-    $.ceAjax('request', fn_url('vendor_communication.create_thread'), {
-      method: 'post',
-      data: {
-        'thread[object_type]': 'O',
-        'thread[object_id]': orderId,
-        'thread[user_id]': _.auth ? _.auth.user_id : 0,
-        'thread[user_type]': _.auth ? _.auth.user_type : '',
-        'thread[message]': _.tr('mwl_xlsx.initial_thread_message') || 'Initial message for order communication',
-        'thread[communication_type]': 'vendor_to_admin',
-        'thread[subject]': ''
-      },
-      callback: function(response) {
-        // Проверяем, был ли создан тред
-        if (response && response.thread_id) {
-          // Обновляем ссылку
-          var threadUrl = fn_url('vendor_communication.view?thread_id=' + response.thread_id);
-          $link.attr('href', threadUrl).removeClass('mwl-create-thread-link');
-          $link.text('1');
+    var dialogId = 'mwl_new_thread_dialog_' + orderId;
+    var $dialog = $('#' + dialogId);
 
-          $.ceNotification('show', {
-            type: 'N',
-            title: _.tr('notice') || 'Notice',
-            message: _.tr('mwl_xlsx.thread_created') || 'Thread created successfully'
-          });
-        } else {
-          // Если не удалось создать тред, показываем ошибку
-          var message = _.tr('mwl_xlsx.cannot_create_thread') || 'Cannot create thread';
-          $.ceNotification('show', {
-            type: 'E',
-            title: _.tr('error') || 'Error',
-            message: message
-          });
-        }
-      }
+    if (!$dialog.length) {
+      $dialog = $('<div/>', {
+        id: dialogId,
+        class: 'hidden'
+      }).appendTo('body');
+    }
+
+    var title = _.tr('mwl_xlsx.thread_dialog_title')
+      || _.tr('vendor_communication.contact_vendor')
+      || 'Contact vendor';
+
+    var returnUrl = typeof _.current_url !== 'undefined' ? _.current_url : '';
+    var requestUrl = fn_url(
+      'vendor_communication.create_thread?' +
+      $.param({
+        object_type: 'O',
+        object_id: orderId,
+        communication_type: 'vendor_to_customer',
+        company_id: companyId,
+        return_url: returnUrl
+      })
+    );
+
+    $dialog.ceDialog('open', {
+      href: requestUrl,
+      title: title,
+      height: 'auto',
+      width: '700px',
+      destroyOnClose: true
     });
 
-    // Восстанавливаем ссылку через некоторое время (если пользователь вернется)
     setTimeout(function() {
       $link.css('pointer-events', '');
-    }, 5000);
+    }, 300);
   });
 
   function populateAddDialogOptions() {
