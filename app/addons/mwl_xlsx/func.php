@@ -1271,6 +1271,111 @@ function fn_mwl_xlsx_normalize_telegram_chat_id(string $chat_id): string
     return '@' . ltrim($chat_id, '@');
 }
 
+function fn_mwl_xlsx_get_chat_id_by_username(string $token, string $username): string
+{
+    $token = trim($token);
+    $username = trim($username);
+
+    if ($token === '' || $username === '') {
+        return '';
+    }
+
+    $normalized_username = ltrim($username, '@');
+
+    if ($normalized_username === '') {
+        return '';
+    }
+
+    $username_with_at = '@' . $normalized_username;
+    $base_url = "https://api.telegram.org/bot{$token}";
+    $options_base = [
+        'timeout'    => 10,
+        'log_result' => true,
+    ];
+
+    $get_chat_response = Http::get(
+        $base_url . '/getChat',
+        ['chat_id' => $username_with_at],
+        array_merge($options_base, ['log_pre' => 'mwl_xlsx.telegram_get_chat'])
+    );
+
+    if ($get_chat_response) {
+        $decoded = json_decode($get_chat_response, true);
+
+        if (!empty($decoded['ok']) && isset($decoded['result']['id'])) {
+            return (string) $decoded['result']['id'];
+        }
+    }
+
+    $updates_response = Http::get(
+        $base_url . '/getUpdates',
+        [],
+        array_merge($options_base, ['log_pre' => 'mwl_xlsx.telegram_get_updates'])
+    );
+
+    if (!$updates_response) {
+        return '';
+    }
+
+    $updates = json_decode($updates_response, true);
+
+    if (empty($updates['ok']) || empty($updates['result']) || !is_array($updates['result'])) {
+        return '';
+    }
+
+    $needle = fn_strtolower($normalized_username);
+
+    foreach ($updates['result'] as $update) {
+        if (!is_array($update)) {
+            continue;
+        }
+
+        $messages = [];
+
+        foreach (['message', 'edited_message', 'channel_post', 'edited_channel_post'] as $key) {
+            if (isset($update[$key]) && is_array($update[$key])) {
+                $messages[] = $update[$key];
+            }
+        }
+
+        if (isset($update['callback_query']) && is_array($update['callback_query'])) {
+            $callback_query = $update['callback_query'];
+
+            if (isset($callback_query['message']) && is_array($callback_query['message'])) {
+                $messages[] = $callback_query['message'];
+            }
+
+            if (isset($callback_query['from']) && is_array($callback_query['from'])) {
+                $messages[] = ['from' => $callback_query['from']];
+            }
+        }
+
+        foreach ($messages as $message) {
+            if (!is_array($message)) {
+                continue;
+            }
+
+            if (isset($message['from']) && is_array($message['from'])) {
+                $from = $message['from'];
+
+                if (isset($from['username']) && fn_strtolower((string) $from['username']) === $needle && isset($from['id'])) {
+                    return (string) $from['id'];
+                }
+            }
+
+            if (isset($message['chat']) && is_array($message['chat'])) {
+                $chat = $message['chat'];
+
+                if (isset($chat['username']) && fn_strtolower((string) $chat['username']) === $needle && isset($chat['id'])) {
+                    return (string) $chat['id'];
+                }
+            }
+        }
+    }
+
+    return '';
+}
+
 function fn_mwl_xlsx_url($list_id)
 {
     $list_id = (int) $list_id;
@@ -1824,10 +1929,13 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
         $details_html[] = 'Telegram: ' . htmlspecialchars($message_author_telegram, ENT_QUOTES, 'UTF-8');
     }
 
+    $token = trim((string) Registry::get('addons.mwl_xlsx.telegram_bot_token'));
+    $chat_id = trim((string) Registry::get('addons.mwl_xlsx.telegram_chat_id'));
+
     $customer_chat_id = '';
 
-    if ($is_admin && $message_author_telegram !== '') {
-        $customer_chat_id = fn_mwl_xlsx_normalize_telegram_chat_id($message_author_telegram);
+    if ($is_admin && $message_author_telegram !== '' && $token !== '') {
+        $customer_chat_id = fn_mwl_xlsx_get_chat_id_by_username($token, $message_author_telegram);
     }
 
     $details_plain = array_values(array_filter($details_plain, static function ($line) {
@@ -1857,10 +1965,6 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
     $planfix_message = implode('<br><br>', $text_parts_html);
 
     // Отправляем в Telegram
-    $token = trim((string) Registry::get('addons.mwl_xlsx.telegram_bot_token'));
-    $chat_id = trim((string) Registry::get('addons.mwl_xlsx.telegram_chat_id'));
-    
-    
     if ($token && $chat_id) {
         // Telegram Bot API
         $url = "https://api.telegram.org/bot{$token}/sendMessage";
