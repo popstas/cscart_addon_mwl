@@ -1,0 +1,33 @@
+---
+alwaysApply: true
+---
+# Repository Guidelines
+- This repository is a CS-Cart addon for the `abt__unitheme2` theme.
+- The addon is called `mwl_xlsx`.
+- The addon is located in the `app/addons/mwl_xlsx` directory.
+
+## Project Structure & Module Organization
+- `app/`: Core PHP, `Tygh/`, `controllers/`, `functions/`, and `addons/` (feature modules). Create new features as `app/addons/<snake_case_addon>` with `func.php`, `init.php`, `schemas/` as needed.
+- `design/`: Themes and templates (Smarty). Frontend templates live under `design/themes/…`; backend templates under `design/backend/`.
+- `js/` and `images/`: Static assets referenced by templates or addons.
+- `var/`: Cache, assets, runtime files. Safe to clear; never commit generated contents.
+- Entry points: `index.php` (storefront), `admin.php` (backend), `api.php` (API).
+
+## Coding Style & Naming Conventions
+- PHP: Follow PSR-12. Indent with 4 spaces; one class per file; namespaces under `Tygh\` or addon-specific.
+- Addon APIs: Prefix functions with `fn_<addon_id>_…` and keep addon ID in `snake_case` (e.g., `fn_my_changes_do_something`).
+- Templates (Smarty): 2-space indent; keep logic minimal; place addon templates under `design/themes/<theme>/templates/addons/<addon_id>/`.
+- Assets: Put addon JS/CSS under the addon’s directory and register via schemas.
+
+## Testing Guidelines
+- This repository has no automated tests. Use manual flows: enable/disable addon, storefront user journey, admin actions, and error conditions.
+- Logs: Check PHP/server logs; if present, inspect `var/logs/` and browser console.
+- Regression checklist: cache cleared, translations loaded, permissions correct, no notices in PHP logs.
+
+## Commit & Pull Request Guidelines
+- Commits: Use imperative mood and Conventional Commits when possible (e.g., `feat(addons/my_addon): add vendor rating sync`). Keep changes scoped.
+- PRs: Include purpose, linked issues, steps to reproduce/verify, and screenshots for UI changes. Note config or DB migrations. Mention cache clear if required.
+
+## Security & Configuration Tips
+- Do not commit secrets. Treat `config.local.php` as sensitive; rotate any exposed credentials.
+- Prefer least-privileged DB users; restrict admin access by IP in web server if possible.
