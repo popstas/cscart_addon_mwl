@@ -610,7 +610,7 @@ function fn_mwl_planfix_build_sell_task_payload(array $order_info): array
         'agency'        => $user_data['company'],
         'email'         => $order_info['email'],
         'employee_name' => trim($user_data['firstname'] . ' ' . $user_data['lastname']),
-        'telegram'      => '', // TODO: (string) $user_data['telegram_id'],
+        'telegram'      => fn_mwl_xlsx_get_user_telegram((int) ($order_info['user_id'] ?? 0), $user_data),
         'description'   => $description,
         'order_id'      => $order_id ? (string) $order_id : '',
         'order_number'  => (string) $order_number,
@@ -1125,6 +1125,150 @@ function fn_mwl_xlsx_transform_price_for_export($price, array $settings)
 
     // return $str;
     return $price;
+}
+
+/**
+ * Returns the Telegram contact for a user based on profile data.
+ */
+function fn_mwl_xlsx_get_user_telegram(int $user_id = 0, array $user_info = null): string
+{
+    if ($user_info === null) {
+        if ($user_id <= 0) {
+            return '';
+        }
+
+        $user_info = fn_get_user_info($user_id);
+    }
+
+    if (!$user_info || !is_array($user_info)) {
+        return '';
+    }
+
+    $value = fn_mwl_xlsx_extract_telegram($user_info);
+    if ($value !== '') {
+        return $value;
+    }
+
+    $fields = isset($user_info['fields']) && is_array($user_info['fields']) ? $user_info['fields'] : [];
+    if ($fields) {
+        $value = fn_mwl_xlsx_extract_telegram($fields);
+        if ($value !== '') {
+            return $value;
+        }
+
+        static $telegram_field_ids;
+
+        if ($telegram_field_ids === null) {
+            $telegram_field_ids = fn_mwl_xlsx_find_telegram_field_ids();
+        }
+
+        foreach ($telegram_field_ids as $field_id) {
+            if (!isset($fields[$field_id])) {
+                continue;
+            }
+
+            $value = $fields[$field_id];
+
+            if (is_array($value)) {
+                $value = reset($value);
+            }
+
+            if ($value === null) {
+                continue;
+            }
+
+            $value = trim((string) $value);
+
+            if ($value !== '') {
+                return $value;
+            }
+        }
+    }
+
+    return '';
+}
+
+/**
+ * Extracts the first meaningful Telegram value from the provided array.
+ */
+function fn_mwl_xlsx_extract_telegram(array $data): string
+{
+    foreach (['telegram', 'telegram_id', 'telegram_handle', 'tg', 'telegram_username'] as $key) {
+        if (!isset($data[$key])) {
+            continue;
+        }
+
+        $value = $data[$key];
+
+        if (is_array($value)) {
+            $value = reset($value);
+        }
+
+        if ($value === null) {
+            continue;
+        }
+
+        $value = trim((string) $value);
+
+        if ($value !== '') {
+            return $value;
+        }
+    }
+
+    return '';
+}
+
+/**
+ * Detects profile field ids that likely store Telegram handles.
+ *
+ * @return int[]
+ */
+function fn_mwl_xlsx_find_telegram_field_ids(): array
+{
+    $profile_fields = fn_get_profile_fields('ALL');
+    $ids = [];
+
+    foreach ($profile_fields as $section_fields) {
+        if (!is_array($section_fields)) {
+            continue;
+        }
+
+        foreach ($section_fields as $field) {
+            if (empty($field['field_id'])) {
+                continue;
+            }
+
+            $field_id = (int) $field['field_id'];
+            $field_name = isset($field['field_name']) ? fn_strtolower(trim((string) $field['field_name'])) : '';
+            $description = isset($field['description']) ? fn_strtolower(trim((string) $field['description'])) : '';
+
+            if (in_array($field_name, ['telegram', 'telegram_id', 'telegram_handle', 'tg', 'telegram_username'], true)) {
+                $ids[] = $field_id;
+                continue;
+            }
+
+            if ($description !== '' && strpos($description, 'telegram') !== false) {
+                $ids[] = $field_id;
+            }
+        }
+    }
+
+    return array_values(array_unique($ids));
+}
+
+function fn_mwl_xlsx_normalize_telegram_chat_id(string $chat_id): string
+{
+    $chat_id = trim($chat_id);
+
+    if ($chat_id === '') {
+        return '';
+    }
+
+    if ($chat_id[0] === '@' || $chat_id[0] === '-' || ctype_digit($chat_id)) {
+        return $chat_id;
+    }
+
+    return '@' . ltrim($chat_id, '@');
 }
 
 function fn_mwl_xlsx_url($list_id)
@@ -1654,36 +1798,75 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
     // error_log(print_r($data, true));
     // Формируем текст сообщения для Telegram
     $message_author_text = htmlspecialchars((string) $message_author, ENT_QUOTES, 'UTF-8');
-    $last_message_text = htmlspecialchars((string) $last_message, ENT_QUOTES, 'UTF-8');
+    $last_message_html = nl2br(htmlspecialchars((string) $last_message, ENT_QUOTES, 'UTF-8'), false);
+    $message_author_plain = htmlspecialchars_decode($message_author_text, ENT_QUOTES);
+    $message_body_plain = str_replace(["\r\n", "\r"], "\n", (string) $last_message);
+    $message_body_plain = str_replace(["\r\n", "\r"], "\n", $message_body_plain);
+
     $http_host = htmlspecialchars(Registry::get('config.http_host'), ENT_QUOTES, 'UTF-8');
-    $details = [
+    $admin_url = fn_url($action_url, 'A', 'current', CART_LANGUAGE, true);
+
+    $details_plain = [
+        'Новое сообщение по заказу ' . (string) $order_id,
+        '- Кто написал: ' . ($is_admin ? 'Администратор' : 'Клиент'),
+        'Для ответа перейдите в админку ' . Registry::get('config.http_host') . ': ' . $admin_url,
+    ];
+    $details_html = [
         'Новое сообщение по заказу ' . htmlspecialchars((string) $order_id, ENT_QUOTES, 'UTF-8'),
-        // '— Thread ID: ' . htmlspecialchars((string) $thread_id, ENT_QUOTES, 'UTF-8'),
-        // '- Компания: ' . htmlspecialchars((string) $company, ENT_QUOTES, 'UTF-8'),
-        // '- Заказ: ' . htmlspecialchars((string) $order_id, ENT_QUOTES, 'UTF-8'),
-        // '- Пользователь: ' . $message_author_text,
-        // '— Email: ' . htmlspecialchars((string) $customer_email, ENT_QUOTES, 'UTF-8'),
         '- Кто написал: ' . htmlspecialchars($is_admin ? 'Администратор' : 'Клиент', ENT_QUOTES, 'UTF-8'),
-        // '- Время: ' . htmlspecialchars(date('Y-m-d H:i:s'), ENT_QUOTES, 'UTF-8'),
-        '',
-        'Для ответа перейдите в админку ' . $http_host . ': <a href="' . htmlspecialchars(fn_url($action_url, 'A'), ENT_QUOTES, 'UTF-8') . '">URL</a>',
+        'Для ответа перейдите в админку ' . $http_host . ': <a href="' . htmlspecialchars($admin_url, ENT_QUOTES, 'UTF-8') . '">URL</a>',
     ];
 
-    $text = $message_author_text . ': ' . nl2br($last_message_text, false)
-          . '<br><br>'
-          . '<span style="color:#888888;font-size:smaller;">'
-          . implode('<br>', $details)
-          . '</span>';
+    $message_author_telegram = fn_mwl_xlsx_get_user_telegram((int) ($last_message_user_id ?? 0));
+
+    if ($message_author_telegram !== '') {
+        $details_plain[] = 'Telegram: ' . $message_author_telegram;
+        $details_html[] = 'Telegram: ' . htmlspecialchars($message_author_telegram, ENT_QUOTES, 'UTF-8');
+    }
+
+    $customer_chat_id = '';
+
+    if ($is_admin && $message_author_telegram !== '') {
+        $customer_chat_id = fn_mwl_xlsx_normalize_telegram_chat_id($message_author_telegram);
+    }
+
+    $details_plain = array_values(array_filter($details_plain, static function ($line) {
+        return $line !== '';
+    }));
+
+    $details_html = array_values(array_filter($details_html, static function ($line) {
+        return $line !== '';
+    }));
+
+    $text_parts_plain = [];
+    $text_parts_plain[] = $message_author_plain . ': ' . $message_body_plain;
+
+    if ($details_plain) {
+        $text_parts_plain[] = implode("\n", $details_plain);
+    }
+
+    $text_telegram = implode("\n\n", $text_parts_plain);
+
+    $text_parts_html = [];
+    $text_parts_html[] = $message_author_text . ': ' . $last_message_html;
+
+    if ($details_html) {
+        $text_parts_html[] = '<span style="color:#888888;font-size:smaller;">' . implode('<br>', $details_html) . '</span>';
+    }
+
+    $planfix_message = implode('<br><br>', $text_parts_html);
 
     // Отправляем в Telegram
     $token = trim((string) Registry::get('addons.mwl_xlsx.telegram_bot_token'));
     $chat_id = trim((string) Registry::get('addons.mwl_xlsx.telegram_chat_id'));
+    
+    
     if ($token && $chat_id) {
         // Telegram Bot API
         $url = "https://api.telegram.org/bot{$token}/sendMessage";
         $resp = Http::post($url, [
             'chat_id'    => $chat_id,
-            'text'       => $text,
+            'text'       => $text_telegram,
             'parse_mode' => 'HTML',
         ], [
             'timeout'    => 10,
@@ -1701,6 +1884,27 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
             error_log($error_message);
             $event_repository->markProcessed($event_id, EventRepository::STATUS_FAILED, $error_message);
         } else {
+            if ($customer_chat_id !== '' && $customer_chat_id !== $chat_id) {
+                $customer_resp_raw = Http::post($url, [
+                    'chat_id'    => $customer_chat_id,
+                    'text'       => $text_telegram,
+                    'parse_mode' => 'HTML',
+                ], [
+                    'timeout'    => 10,
+                    'headers'    => [
+                        'Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8',
+                    ],
+                    'log_pre'    => 'mwl_xlsx.telegram_vc_customer',
+                    'log_result' => true,
+                ]);
+
+                $customer_resp = $customer_resp_raw ? json_decode($customer_resp_raw, true) : null;
+
+                if (empty($customer_resp['ok'])) {
+                    error_log('Failed to send Telegram notification to customer: ' . print_r($customer_resp, true));
+                }
+            }
+
             $event_repository->markProcessed($event_id, EventRepository::STATUS_PROCESSED);
         }
     } else {
@@ -1716,9 +1920,10 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
     $recipients = $is_admin ? ['roles' => []] : ['roles' => ['assignee']]; // notify assignee only about customer messages
     if ($planfix_task_id !== '') {
         $planfix_client = fn_mwl_planfix_mcp_client();
-        $planfix_client->createComment(['taskId' => (int) $planfix_task_id, 'description' => $text, 'recipients' => $recipients]);
+        $planfix_client->createComment(['taskId' => (int) $planfix_task_id, 'description' => $planfix_message, 'recipients' => $recipients]);
     }
 
+    
     return $event_id;
 }
 
