@@ -1653,19 +1653,27 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
 
     // error_log(print_r($data, true));
     // Формируем текст сообщения для Telegram
-    $text = "Новое сообщение по заказу {$order_id}\n"
-          //   . "— Thread ID: {$thread_id}\n"
-          . "- Компания: {$company}\n"
-          . "- Заказ: {$order_id}\n"
-          . "- Пользователь: {$message_author}\n"
-          //   . "— Email: {$customer_email}\n"
-          . "- Кто написал: " . ($is_admin ? 'Администратор' : 'Клиент') . "\n"
-          . "- Время: " . date('Y-m-d H:i:s')
-          . "\n"
-          . "<a href=\"" . fn_url($action_url, 'A') . "\">URL</a>"
-          . "\n\n"
-          . "Сообщение: \n"
-          . $last_message;
+    $message_author_text = htmlspecialchars((string) $message_author, ENT_QUOTES, 'UTF-8');
+    $last_message_text = htmlspecialchars((string) $last_message, ENT_QUOTES, 'UTF-8');
+    $http_host = htmlspecialchars(Registry::get('config.http_host'), ENT_QUOTES, 'UTF-8');
+    $details = [
+        'Новое сообщение по заказу ' . htmlspecialchars((string) $order_id, ENT_QUOTES, 'UTF-8'),
+        // '— Thread ID: ' . htmlspecialchars((string) $thread_id, ENT_QUOTES, 'UTF-8'),
+        // '- Компания: ' . htmlspecialchars((string) $company, ENT_QUOTES, 'UTF-8'),
+        // '- Заказ: ' . htmlspecialchars((string) $order_id, ENT_QUOTES, 'UTF-8'),
+        // '- Пользователь: ' . $message_author_text,
+        // '— Email: ' . htmlspecialchars((string) $customer_email, ENT_QUOTES, 'UTF-8'),
+        '- Кто написал: ' . htmlspecialchars($is_admin ? 'Администратор' : 'Клиент', ENT_QUOTES, 'UTF-8'),
+        // '- Время: ' . htmlspecialchars(date('Y-m-d H:i:s'), ENT_QUOTES, 'UTF-8'),
+        '',
+        'Для ответа перейдите в админку ' . $http_host . ': <a href="' . htmlspecialchars(fn_url($action_url, 'A'), ENT_QUOTES, 'UTF-8') . '">URL</a>',
+    ];
+
+    $text = $message_author_text . ': ' . nl2br($last_message_text, false)
+          . '<br><br>'
+          . '<span style="color:#888888;font-size:smaller;">'
+          . implode('<br>', $details)
+          . '</span>';
 
     // Отправляем в Telegram
     $token = trim((string) Registry::get('addons.mwl_xlsx.telegram_bot_token'));
@@ -1705,9 +1713,10 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
     $link_repository = fn_mwl_planfix_link_repository();
     $link = $link_repository->findByEntity($data['company_id'], 'order', $order_id);
     $planfix_task_id = $link['planfix_object_id'] ?? '';
+    $recipients = $is_admin ? ['roles' => []] : ['roles' => ['assignee']]; // notify assignee only about customer messages
     if ($planfix_task_id !== '') {
         $planfix_client = fn_mwl_planfix_mcp_client();
-        $planfix_client->createComment(['taskId' => (int) $planfix_task_id, 'description' => $text, 'recipients' => ['roles' => ['assignee']]]);
+        $planfix_client->createComment(['taskId' => (int) $planfix_task_id, 'description' => $text, 'recipients' => $recipients]);
     }
 
     return $event_id;
