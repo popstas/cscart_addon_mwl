@@ -1,4 +1,5 @@
 <?php
+use Tygh\Addons\MwlXlsx\Customer\StatusResolver;
 use Tygh\Addons\MwlXlsx\MediaList\ListRepository;
 use Tygh\Addons\MwlXlsx\MediaList\ListService;
 use Tygh\Addons\MwlXlsx\Planfix\EventRepository;
@@ -255,6 +256,19 @@ function fn_mwl_xlsx_list_service(): ListService
     return $service;
 }
 
+function fn_mwl_xlsx_customer_status_resolver(): StatusResolver
+{
+    static $resolver;
+
+    if ($resolver instanceof StatusResolver) {
+        return $resolver;
+    }
+
+    $resolver = StatusResolver::fromContainer();
+
+    return $resolver;
+}
+
 function fn_mwl_xlsx_order_details_has_column(string $column): bool
 {
     static $columns;
@@ -484,46 +498,10 @@ function fn_mwl_xlsx_smarty_media_lists_count($params, \Smarty_Internal_Template
     return $count;
 }
 
-function fn_mwl_xlsx_get_customer_status()
-{
-    $allowed_usergroups = ['Global', 'Continental', 'National', 'Local'];
-
-    $status = '';
-    $auth = Tygh::$app['session']['auth'] ?? [];
-    $user_id = $auth['user_id'] ?? 0;
-
-    $user_data = fn_get_user_info($user_id);
-    $user_fields = $user_data['fields'] ?? [];
-    
-    $user_usergroups = $user_data['usergroups'] ?? [];
-    $user_usergroups = array_filter($user_usergroups, function($usergroup) {
-        return isset($usergroup['status']) && $usergroup['status'] === 'A';
-    });
-    $user_usergroups_ids = array_column($user_usergroups, 'usergroup_id');
-
-    // global usergroups
-    $usergroups = fn_get_usergroups();
-    // map usergroup name => id for quick lookup
-    $usergroup_name_to_id = [];
-    foreach ($usergroups as $usergroup) {
-        $usergroup_name_to_id[$usergroup['usergroup']] = $usergroup['usergroup_id'];
-    }
-
-    // iterate over allowed groups in priority order
-    foreach ($allowed_usergroups as $allowed_group_name) {
-        $allowed_group_id = isset($usergroup_name_to_id[$allowed_group_name]) ? $usergroup_name_to_id[$allowed_group_name] : null;
-        if ($allowed_group_id && in_array($allowed_group_id, $user_usergroups_ids)) {
-            $status = $allowed_group_name;
-            break;
-        }
-    }
-
-    return $status;
-}
-
 function smarty_function_mwl_xlsx_get_customer_status(array $params, \Smarty_Internal_Template $template)
 {
-    $status = fn_mwl_xlsx_get_customer_status();
+    $resolver = fn_mwl_xlsx_customer_status_resolver();
+    $status = $resolver->resolveStatus();
     if (!empty($params['assign'])) {
         $template->assign($params['assign'], $status);
         return '';
@@ -534,25 +512,9 @@ function smarty_function_mwl_xlsx_get_customer_status(array $params, \Smarty_Int
 
 function smarty_function_mwl_xlsx_get_customer_status_text(array $params, \Smarty_Internal_Template $template)
 {
-    $status = fn_mwl_xlsx_get_customer_status();
-    $status_map = [
-        'Local' => 'Local',
-        'National' => 'National',
-        'Continental' => 'Continental',
-        'Global' => 'Global',
-    ];
-    $status_map_en = [
-        'Local' => 'Local',
-        'National' => 'National',
-        'Continental' => 'Continental',
-        'Global' => 'Global',
-    ];
-    $lang_code = Tygh::$app['session']['lang_code'] ?? CART_LANGUAGE;
-    if ($lang_code == 'ru') {
-        $status = $status_map[$status] ?? $status;
-    } else {
-        $status = $status_map_en[$status] ?? $status;
-    }
+    $resolver = fn_mwl_xlsx_customer_status_resolver();
+    $lang_code = isset($params['lang_code']) ? (string) $params['lang_code'] : null;
+    $status = $resolver->resolveStatusLabel($lang_code);
 
     if (!empty($params['assign'])) {
         $template->assign($params['assign'], $status);
