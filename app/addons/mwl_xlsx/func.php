@@ -1,4 +1,6 @@
 <?php
+use Tygh\Addons\MwlXlsx\MediaList\ListRepository;
+use Tygh\Addons\MwlXlsx\MediaList\ListService;
 use Tygh\Addons\MwlXlsx\Planfix\EventRepository;
 use Tygh\Addons\MwlXlsx\Planfix\IntegrationSettings;
 use Tygh\Addons\MwlXlsx\Planfix\LinkRepository;
@@ -205,6 +207,54 @@ function fn_mwl_xlsx_access_service(): AccessService
     return $service;
 }
 
+function fn_mwl_xlsx_list_repository(): ListRepository
+{
+    static $repository;
+
+    if ($repository instanceof ListRepository) {
+        return $repository;
+    }
+
+    $container = Tygh::$app ?? null;
+
+    if ($container instanceof \ArrayAccess && $container->offsetExists('addons.mwl_xlsx.list_repository')) {
+        $repository = $container['addons.mwl_xlsx.list_repository'];
+    } else {
+        $db = null;
+        if ($container instanceof \ArrayAccess && $container->offsetExists('db')) {
+            $db = $container['db'];
+        }
+
+        $repository = new ListRepository($db);
+    }
+
+    return $repository;
+}
+
+function fn_mwl_xlsx_list_service(): ListService
+{
+    static $service;
+
+    if ($service instanceof ListService) {
+        return $service;
+    }
+
+    $container = Tygh::$app ?? null;
+
+    if ($container instanceof \ArrayAccess && $container->offsetExists('addons.mwl_xlsx.list_service')) {
+        $service = $container['addons.mwl_xlsx.list_service'];
+    } else {
+        $session = null;
+        if ($container instanceof \ArrayAccess && $container->offsetExists('session')) {
+            $session = $container['session'];
+        }
+
+        $service = new ListService(fn_mwl_xlsx_list_repository(), $session);
+    }
+
+    return $service;
+}
+
 function fn_mwl_xlsx_order_details_has_column(string $column): bool
 {
     static $columns;
@@ -378,100 +428,6 @@ function fn_mwl_xlsx_can_view_price(array $auth)
 /**
  * Ensures settings table exists.
  */
-function fn_mwl_xlsx_ensure_settings_table()
-{
-    db_query("CREATE TABLE IF NOT EXISTS `?:mwl_xlsx_user_settings` (
-        `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-        `user_id` INT UNSIGNED NOT NULL DEFAULT 0,
-        `session_id` VARCHAR(64) NOT NULL DEFAULT '',
-        `price_multiplier` DECIMAL(12,4) NOT NULL DEFAULT '1.0000',
-        `price_append` INT NOT NULL DEFAULT '0',
-        `round_to` INT NOT NULL DEFAULT '10',
-        `updated_at` DATETIME NOT NULL,
-        PRIMARY KEY (`id`),
-        KEY `user_id` (`user_id`),
-        KEY `session_id` (`session_id`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8");
-
-    // Ensure new columns exist for backward compatibility
-    $prefix = Registry::get('config.table_prefix');
-    $table = $prefix . 'mwl_xlsx_user_settings';
-    $has_round_to = (int) db_get_field(
-        "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?s AND COLUMN_NAME = 'round_to'",
-        $table
-    );
-    if (!$has_round_to) {
-        db_query("ALTER TABLE ?:mwl_xlsx_user_settings ADD COLUMN `round_to` DECIMAL(12,4) NOT NULL DEFAULT 10");
-    }
-}
-
-/**
- * Get user (or session) settings for Media Lists.
- *
- * @param array $auth
- * @return array{price_multiplier:float, price_append:string, round_to:float}
- */
-function fn_mwl_xlsx_get_user_settings(array $auth)
-{
-    fn_mwl_xlsx_ensure_settings_table();
-
-    if (!empty($auth['user_id'])) {
-        $row = db_get_row('SELECT price_multiplier, price_append, round_to FROM ?:mwl_xlsx_user_settings WHERE user_id = ?i ORDER BY id DESC LIMIT 1', (int) $auth['user_id']);
-    } else {
-        $session_id = Tygh::$app['session']->getID();
-        $row = db_get_row('SELECT price_multiplier, price_append, round_to FROM ?:mwl_xlsx_user_settings WHERE session_id = ?s ORDER BY id DESC LIMIT 1', $session_id);
-    }
-
-    return [
-        'price_multiplier' => isset($row['price_multiplier']) ? (float) $row['price_multiplier'] : 1,
-        'price_append'     => isset($row['price_append']) ? (int) $row['price_append'] : 0,
-        'round_to'         => isset($row['round_to']) ? (int) $row['round_to'] : 10,
-    ];
-}
-
-/**
- * Save user (or session) settings for Media Lists.
- *
- * @param array $auth
- * @param array $data ['price_multiplier','price_append','round_to']
- * @return void
- */
-function fn_mwl_xlsx_save_user_settings(array $auth, array $data)
-{
-    fn_mwl_xlsx_ensure_settings_table();
-
-    $price_multiplier = isset($data['price_multiplier']) ? (float) $data['price_multiplier'] : 1;
-    $price_append = isset($data['price_append']) ? (int) $data['price_append'] : 0;
-    $round_to = isset($data['round_to']) ? (int) $data['round_to'] : 10;
-
-    $row = [
-        'user_id'         => !empty($auth['user_id']) ? (int) $auth['user_id'] : 0,
-        'session_id'      => !empty($auth['user_id']) ? '' : Tygh::$app['session']->getID(),
-        'price_multiplier'=> $price_multiplier,
-        'price_append'    => $price_append,
-        'round_to'        => $round_to,
-        'updated_at'      => date('Y-m-d H:i:s'),
-    ];
-
-    // Upsert by user or session
-    if (!empty($auth['user_id'])) {
-        $exists = db_get_field('SELECT id FROM ?:mwl_xlsx_user_settings WHERE user_id = ?i ORDER BY id DESC LIMIT 1', (int) $auth['user_id']);
-        if ($exists) {
-            db_query('UPDATE ?:mwl_xlsx_user_settings SET ?u WHERE id = ?i', $row, (int) $exists);
-        } else {
-            db_query('INSERT INTO ?:mwl_xlsx_user_settings ?e', $row);
-        }
-    } else {
-        $sid = $row['session_id'];
-        $exists = db_get_field('SELECT id FROM ?:mwl_xlsx_user_settings WHERE session_id = ?s ORDER BY id DESC LIMIT 1', $sid);
-        if ($exists) {
-            db_query('UPDATE ?:mwl_xlsx_user_settings SET ?u WHERE id = ?i', $row, (int) $exists);
-        } else {
-            db_query('INSERT INTO ?:mwl_xlsx_user_settings ?e', $row);
-        }
-    }
-}
-
 /**
  * Apply price transformation according to settings.
  *
@@ -514,72 +470,11 @@ function fn_mwl_xlsx_url($list_id)
     return "media-lists/{$list_id}";
 }
 
-/**
- * Get a media list record by ID for the current user or session.
- *
- * @param int   $list_id
- * @param array $auth
- *
- * @return array|null
- */
-function fn_mwl_xlsx_get_list($list_id, array $auth)
-{
-    $list_id = (int) $list_id;
-    if (!empty($auth['user_id'])) {
-        return db_get_row("SELECT * FROM ?:mwl_xlsx_lists WHERE list_id = ?i AND user_id = ?i", $list_id, (int) $auth['user_id']);
-    }
-
-    $session_id = Tygh::$app['session']->getID();
-    return db_get_row("SELECT * FROM ?:mwl_xlsx_lists WHERE list_id = ?i AND session_id = ?s", $list_id, $session_id);
-}
-
-function fn_mwl_xlsx_get_lists($user_id = null, $session_id = null)
-{
-    // If user is not authorized and session_id wasn't provided, use current session id
-    if (!$user_id && !$session_id) {
-        $session_id = Tygh::$app['session']->getID();
-    }
-
-    $condition = $user_id ? ['user_id' => $user_id] : ['session_id' => $session_id];
-
-    return db_get_array(
-        "SELECT l.*, COUNT(lp.product_id) as products_count"
-        . " FROM ?:mwl_xlsx_lists as l"
-        . " LEFT JOIN ?:mwl_xlsx_list_products as lp ON lp.list_id = l.list_id"
-        . " WHERE ?w GROUP BY l.list_id ORDER BY l.created_at ASC",
-        $condition
-    );
-}
-
-/**
- * Returns the number of media lists of the current user or session.
- *
- * @param array $auth Authentication data
- *
- * @return int
- */
-function fn_mwl_xlsx_get_media_lists_count(array $auth)
-{
-    if (!empty($auth['user_id'])) {
-        $condition = db_quote('l.user_id = ?i', $auth['user_id']);
-    } else {
-        $session_id = Tygh::$app['session']->getID();
-        $condition = db_quote('l.session_id = ?s', $session_id);
-    }
-
-    $count = (int) db_get_field(
-        'SELECT COUNT(*) FROM ?:mwl_xlsx_lists AS l WHERE ?p',
-        $condition
-    );
-
-    return $count;
-}
-
 /** Смarty-плагин: {mwl_media_lists_count assign=\"count\"} */
 function fn_mwl_xlsx_smarty_media_lists_count($params, \Smarty_Internal_Template $tpl)
 {
     $auth = Tygh::$app['session']['auth'] ?? [];
-    $count = fn_mwl_xlsx_get_media_lists_count($auth);
+    $count = fn_mwl_xlsx_list_service()->getMediaListsCount($auth);
 
     if (!empty($params['assign'])) {
         $tpl->assign($params['assign'], $count);
@@ -666,85 +561,6 @@ function smarty_function_mwl_xlsx_get_customer_status_text(array $params, \Smart
 
     return $status;
 }
-function fn_mwl_xlsx_add($list_id, $product_id, $options = [], $amount = 1)
-{
-    $limit = (int) Registry::get('addons.mwl_xlsx.max_list_items');
-    if ($limit > 0) {
-        $count = (int) db_get_field('SELECT COUNT(*) FROM ?:mwl_xlsx_list_products WHERE list_id = ?i', $list_id);
-        if ($count >= $limit) {
-            return 'limit';
-        }
-    }
-
-    $serialized = serialize($options);
-    $exists = db_get_field(
-        "SELECT 1 FROM ?:mwl_xlsx_list_products WHERE list_id = ?i AND product_id = ?i AND product_options = ?s",
-        $list_id,
-        $product_id,
-        $serialized
-    );
-
-    if ($exists) {
-        return 'exists';
-    }
-
-    db_query("INSERT INTO ?:mwl_xlsx_list_products ?e", [
-        'list_id'        => $list_id,
-        'product_id'     => $product_id,
-        'product_options'=> $serialized,
-        'amount'         => $amount,
-        'timestamp'      => TIME
-    ]);
-
-    db_query('UPDATE ?:mwl_xlsx_lists SET updated_at = ?s WHERE list_id = ?i', date('Y-m-d H:i:s'), $list_id);
-
-    return 'added';
-}
-
-function fn_mwl_xlsx_remove($list_id, $product_id)
-{
-    $deleted = db_query(
-        "DELETE FROM ?:mwl_xlsx_list_products WHERE list_id = ?i AND product_id = ?i",
-        $list_id,
-        $product_id
-    );
-
-    if ($deleted) {
-        db_query('UPDATE ?:mwl_xlsx_lists SET updated_at = ?s WHERE list_id = ?i', date('Y-m-d H:i:s'), $list_id);
-    }
-
-    return (bool) $deleted;
-}
-
-function fn_mwl_xlsx_update_list_name($list_id, $name, $user_id = null, $session_id = null)
-{
-    if (!$user_id && !$session_id) {
-        $session_id = Tygh::$app['session']->getID();
-    }
-    $condition = $user_id ? ['list_id' => $list_id, 'user_id' => $user_id] : ['list_id' => $list_id, 'session_id' => $session_id];
-    $exists = db_get_field('SELECT list_id FROM ?:mwl_xlsx_lists WHERE ?w', $condition);
-    if ($exists) {
-        db_query('UPDATE ?:mwl_xlsx_lists SET name = ?s, updated_at = ?s WHERE list_id = ?i', $name, date('Y-m-d H:i:s'), $list_id);
-        return true;
-    }
-    return false;
-}
-
-function fn_mwl_xlsx_delete_list($list_id, $user_id = null, $session_id = null)
-{
-    if (!$user_id && !$session_id) {
-        $session_id = Tygh::$app['session']->getID();
-    }
-    $condition = $user_id ? ['list_id' => $list_id, 'user_id' => $user_id] : ['list_id' => $list_id, 'session_id' => $session_id];
-    $exists = db_get_field('SELECT list_id FROM ?:mwl_xlsx_lists WHERE ?w', $condition);
-    if ($exists) {
-        db_query('DELETE FROM ?:mwl_xlsx_lists WHERE list_id = ?i', $list_id);
-        db_query('DELETE FROM ?:mwl_xlsx_list_products WHERE list_id = ?i', $list_id);
-        return true;
-    }
-    return false;
-}
-
 function fn_mwl_xlsx_install()
 {
     SettingsBackup::restore();

@@ -15,7 +15,10 @@ class ListExporter
     /** @var callable */
     private $vendorAutoloader;
 
-    public function __construct(?Sheets $sheets = null, ?callable $vendor_autoloader = null)
+    /** @var ListService|null */
+    private $listService;
+
+    public function __construct(?Sheets $sheets = null, ?callable $vendor_autoloader = null, ?ListService $list_service = null)
     {
         $this->sheets = $sheets;
         $this->vendorAutoloader = $vendor_autoloader ?: static function (): void {
@@ -31,6 +34,7 @@ class ListExporter
                 fn_mwl_xlsx_load_vendor_autoloader();
             }
         };
+        $this->listService = $list_service;
     }
 
     /**
@@ -144,7 +148,7 @@ class ListExporter
         $header = array_merge([__('name'), __('price')], array_values($feature_names));
         $data = [$header];
 
-        $settings = fn_mwl_xlsx_get_user_settings($auth);
+        $settings = $this->getListService()->getUserSettings($auth);
         foreach ($products as $product) {
             $price_str = fn_mwl_xlsx_transform_price_for_export($product['price'], $settings);
             $row = [$product['product'], $price_str];
@@ -156,6 +160,30 @@ class ListExporter
         }
 
         return ['data' => $data];
+    }
+
+    private function getListService(): ListService
+    {
+        if ($this->listService instanceof ListService) {
+            return $this->listService;
+        }
+
+        $service = null;
+        $namespaced = __NAMESPACE__ . '\\fn_mwl_xlsx_list_service';
+
+        if (function_exists($namespaced)) {
+            $service = $namespaced();
+        } elseif (function_exists('fn_mwl_xlsx_list_service')) {
+            $service = \fn_mwl_xlsx_list_service();
+        }
+
+        if (!$service instanceof ListService) {
+            throw new \RuntimeException('List service is not available');
+        }
+
+        $this->listService = $service;
+
+        return $this->listService;
     }
 
     public function fillGoogleSheet(string $spreadsheet_id, array $data, bool $debug = false): bool
