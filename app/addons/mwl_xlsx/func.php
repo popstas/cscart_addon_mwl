@@ -199,6 +199,23 @@ function fn_mwl_planfix_get_webhook_allowlist_ips(): array
     return fn_mwl_planfix_integration_settings()->getWebhookAllowlistIps();
 }
 
+function fn_mwl_xlsx_order_details_has_column(string $column): bool
+{
+    static $columns;
+
+    if ($columns === null) {
+        $fields = db_get_fields('SHOW COLUMNS FROM ?:order_details');
+
+        if (!is_array($fields)) {
+            $fields = [];
+        }
+
+        $columns = array_fill_keys($fields, true);
+    }
+
+    return isset($columns[$column]);
+}
+
 function fn_mwl_planfix_mcp_client(bool $force_reload = false): McpClient
 {
     static $client;
@@ -1921,10 +1938,32 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
 
     if ($order_id !== null) {
         $order_id_int = (int) $order_id;
-        $first_product_name = (string) db_get_field(
-            'SELECT product FROM ?:order_details WHERE order_id = ?i ORDER BY item_id ASC LIMIT 1',
+        $first_product_name = '';
+
+        $select_fields = ['od.product_id'];
+
+        if (fn_mwl_xlsx_order_details_has_column('product')) {
+            $select_fields[] = 'od.product';
+        }
+
+        $first_product = db_get_row(
+            'SELECT ' . implode(', ', $select_fields) . ' FROM ?:order_details AS od WHERE od.order_id = ?i ORDER BY od.item_id ASC LIMIT 1',
             $order_id_int
         );
+
+        if ($first_product) {
+            if (!empty($first_product['product'])) {
+                $first_product_name = (string) $first_product['product'];
+            }
+
+            if ($first_product_name === '' && !empty($first_product['product_id'])) {
+                $first_product_name = (string) db_get_field(
+                    'SELECT product FROM ?:product_descriptions WHERE product_id = ?i AND lang_code = ?s',
+                    (int) $first_product['product_id'],
+                    CART_LANGUAGE
+                );
+            }
+        }
 
         $company_name = '';
 
