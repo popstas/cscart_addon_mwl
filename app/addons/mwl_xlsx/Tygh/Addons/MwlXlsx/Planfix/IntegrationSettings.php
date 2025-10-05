@@ -32,6 +32,23 @@ class IntegrationSettings
     /** @var array */
     protected $webhook_allowlist_ips = [];
 
+    public static function fromArray(array $data): self
+    {
+        $instance = new self();
+
+        $instance->mcp_endpoint = self::normalizeString($data['mcp_endpoint'] ?? '');
+        $instance->mcp_auth_token = self::normalizeString($data['mcp_auth_token'] ?? '');
+        $instance->webhook_basic_login = self::normalizeString($data['webhook_basic_login'] ?? '');
+        $instance->webhook_basic_password = self::normalizeString($data['webhook_basic_password'] ?? '');
+        $instance->direction_default = self::normalizeString($data['direction_default'] ?? '');
+        $instance->auto_task_statuses = self::normalizeList($data['auto_task_statuses'] ?? []);
+        $instance->sync_comments = self::normalizeFlag($data['sync_comments'] ?? '');
+        $instance->sync_payments = self::normalizeFlag($data['sync_payments'] ?? '');
+        $instance->webhook_allowlist_ips = self::normalizeList($data['webhook_allowlist_ips'] ?? []);
+
+        return $instance;
+    }
+
     public static function fromRegistry(): self
     {
         $instance = new self();

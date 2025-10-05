@@ -4,6 +4,8 @@ use Tygh\Addons\MwlXlsx\Planfix\IntegrationSettings;
 use Tygh\Addons\MwlXlsx\Planfix\LinkRepository;
 use Tygh\Addons\MwlXlsx\Planfix\StatusMapRepository;
 use Tygh\Addons\MwlXlsx\Planfix\McpClient;
+use Tygh\Addons\MwlXlsx\Planfix\PlanfixService;
+use Tygh\Addons\MwlXlsx\Planfix\WebhookHandler;
 use Tygh\Addons\MwlXlsx\Service\SettingsBackup;
 use Tygh\Addons\MwlXlsx\Telegram\TelegramService;
 use Tygh\Registry;
@@ -94,34 +96,7 @@ function fn_mwl_planfix_status_map_repository(): StatusMapRepository
 
 function fn_mwl_planfix_build_object_url(array $link, ?string $origin = null): string
 {
-    $planfix_object_id = isset($link['planfix_object_id']) ? (string) $link['planfix_object_id'] : '';
-
-    if ($planfix_object_id === '') {
-        return '';
-    }
-
-    if ($origin === null) {
-        $origin = (string) Registry::get('addons.mwl_xlsx.planfix_origin');
-    }
-
-    $origin = trim($origin);
-
-    if ($origin === '') {
-        return '';
-    }
-
-    $origin = rtrim($origin, '/');
-    $type = '';
-
-    if (!empty($link['planfix_object_type'])) {
-        $type = trim((string) $link['planfix_object_type']);
-    }
-
-    if ($type !== '') {
-        $origin .= '/' . ltrim($type, '/');
-    }
-
-    return $origin . '/' . rawurlencode($planfix_object_id);
+    return fn_mwl_planfix_service()->buildObjectUrl($link, $origin);
 }
 
 function fn_mwl_planfix_integration_settings(bool $force_reload = false): IntegrationSettings
@@ -135,44 +110,51 @@ function fn_mwl_planfix_integration_settings(bool $force_reload = false): Integr
     return $settings;
 }
 
-function fn_mwl_planfix_get_integration_settings(bool $force_reload = false): array
+function fn_mwl_planfix_service(bool $force_reload = false): PlanfixService
 {
-    return fn_mwl_planfix_integration_settings($force_reload)->toArray();
+    static $service;
+    static $signature;
+
+    $settings = fn_mwl_planfix_integration_settings($force_reload);
+    $settings_signature = md5(json_encode($settings->toArray()));
+
+    if ($force_reload || $service === null || $signature !== $settings_signature) {
+        $link_repository = fn_mwl_planfix_link_repository();
+        $client = new McpClient($settings->getMcpEndpoint(), $settings->getMcpAuthToken());
+        $service = new PlanfixService(
+            $link_repository,
+            $client,
+            $settings,
+            fn_mwl_xlsx_get_telegram_service()
+        );
+
+        $signature = $settings_signature;
+    }
+
+    return $service;
 }
 
-function fn_mwl_planfix_get_mcp_endpoint(): string
+function fn_mwl_planfix_webhook_handler(bool $force_reload = false): WebhookHandler
 {
-    return fn_mwl_planfix_integration_settings()->getMcpEndpoint();
-}
+    static $handler;
+    static $signature;
 
-function fn_mwl_planfix_get_mcp_auth_token(): string
-{
-    return fn_mwl_planfix_integration_settings()->getMcpAuthToken();
-}
+    $service = fn_mwl_planfix_service($force_reload);
+    $settings = $service->getSettings();
+    $settings_signature = md5(json_encode($settings->toArray()));
 
-function fn_mwl_planfix_get_webhook_basic_login(): string
-{
-    return fn_mwl_planfix_integration_settings()->getWebhookBasicLogin();
-}
+    if ($force_reload || $handler === null || $signature !== $settings_signature) {
+        $handler = new WebhookHandler(
+            $settings,
+            fn_mwl_planfix_link_repository(),
+            fn_mwl_planfix_status_map_repository(),
+            $service
+        );
 
-function fn_mwl_planfix_get_webhook_basic_password(): string
-{
-    return fn_mwl_planfix_integration_settings()->getWebhookBasicPassword();
-}
+        $signature = $settings_signature;
+    }
 
-function fn_mwl_planfix_get_webhook_basic_auth_credentials(): array
-{
-    return fn_mwl_planfix_integration_settings()->getWebhookBasicAuthCredentials();
-}
-
-function fn_mwl_planfix_get_direction_default(): string
-{
-    return fn_mwl_planfix_integration_settings()->getDirectionDefault();
-}
-
-function fn_mwl_planfix_get_auto_task_statuses(): array
-{
-    return fn_mwl_planfix_integration_settings()->getAutoTaskStatuses();
+    return $handler;
 }
 
 function fn_mwl_planfix_format_order_id($order_id): string
@@ -182,21 +164,6 @@ function fn_mwl_planfix_format_order_id($order_id): string
     }
 
     return (string) $order_id;
-}
-
-function fn_mwl_planfix_should_sync_comments(): bool
-{
-    return fn_mwl_planfix_integration_settings()->shouldSyncComments();
-}
-
-function fn_mwl_planfix_should_sync_payments(): bool
-{
-    return fn_mwl_planfix_integration_settings()->shouldSyncPayments();
-}
-
-function fn_mwl_planfix_get_webhook_allowlist_ips(): array
-{
-    return fn_mwl_planfix_integration_settings()->getWebhookAllowlistIps();
 }
 
 function fn_mwl_xlsx_get_telegram_service(): TelegramService
@@ -275,155 +242,21 @@ function fn_mwl_xlsx_get_order_lang_code(?int $order_id): string
 
 function fn_mwl_planfix_mcp_client(bool $force_reload = false): McpClient
 {
-    static $client;
-    static $cache_key;
-
-    $endpoint = fn_mwl_planfix_get_mcp_endpoint();
-    $token = fn_mwl_planfix_get_mcp_auth_token();
-    $key = md5($endpoint . '|' . $token);
-
-    if ($force_reload || $client === null || $cache_key !== $key) {
-        $client = new McpClient($endpoint, $token);
-        $cache_key = $key;
+    if ($force_reload) {
+        return fn_mwl_planfix_service(true)->getMcpClient();
     }
 
-    return $client;
+    return fn_mwl_planfix_service()->getMcpClient();
 }
 
 function fn_mwl_planfix_decode_link_extra($extra): array
 {
-    if (is_array($extra)) {
-        return $extra;
-    }
-
-    if (is_string($extra) && $extra !== '') {
-        $decoded = json_decode($extra, true);
-        if (is_array($decoded)) {
-            return $decoded;
-        }
-    }
-
-    return [];
+    return fn_mwl_planfix_service()->decodeLinkExtra($extra);
 }
 
 function fn_mwl_planfix_update_link_extra(array $link, array $extra_updates, array $additional_fields = []): void
 {
-    if (empty($link['link_id'])) {
-        return;
-    }
-
-    $extra = fn_mwl_planfix_decode_link_extra($link['extra'] ?? null);
-
-    foreach ($extra_updates as $key => $value) {
-        if ($value === null) {
-            unset($extra[$key]);
-        } else {
-            $extra[$key] = $value;
-        }
-    }
-
-    $data = ['extra' => $extra];
-
-    if ($additional_fields) {
-        $data = array_merge($data, $additional_fields);
-    }
-
-    fn_mwl_planfix_link_repository()->update((int) $link['link_id'], $data);
-}
-
-function fn_mwl_planfix_validate_basic_auth(): bool
-{
-    [$expected_login, $expected_password] = fn_mwl_planfix_get_webhook_basic_auth_credentials();
-
-    $expected_login = (string) $expected_login;
-    $expected_password = (string) $expected_password;
-
-    if ($expected_login === '' && $expected_password === '') {
-        return true;
-    }
-
-    $login = null;
-    $password = null;
-
-    if (isset($_SERVER['PHP_AUTH_USER'])) {
-        $login = (string) $_SERVER['PHP_AUTH_USER'];
-        $password = isset($_SERVER['PHP_AUTH_PW']) ? (string) $_SERVER['PHP_AUTH_PW'] : '';
-    } else {
-        $headers = [];
-
-        foreach (['HTTP_AUTHORIZATION', 'REDIRECT_HTTP_AUTHORIZATION'] as $header) {
-            if (!empty($_SERVER[$header])) {
-                $headers[] = (string) $_SERVER[$header];
-            }
-        }
-
-        foreach ($headers as $header) {
-            if (stripos($header, 'Basic ') === 0) {
-                $decoded = base64_decode(substr($header, 6), true);
-                if ($decoded !== false) {
-                    $parts = explode(':', $decoded, 2);
-                    if (count($parts) === 2) {
-                        $login = (string) $parts[0];
-                        $password = (string) $parts[1];
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    if ($login === null) {
-        return false;
-    }
-
-    if (!function_exists('hash_equals')) {
-        return $expected_login === $login && $expected_password === $password;
-    }
-
-    return hash_equals($expected_login, $login) && hash_equals($expected_password, $password);
-}
-
-function fn_mwl_planfix_is_ip_allowlisted(): bool
-{
-    $allowlist = fn_mwl_planfix_get_webhook_allowlist_ips();
-    if (!$allowlist) {
-        return true;
-    }
-
-    $remote_ip = isset($_SERVER['REMOTE_ADDR']) ? trim((string) $_SERVER['REMOTE_ADDR']) : '';
-    if ($remote_ip === '') {
-        return false;
-    }
-
-    $allowlist = array_map(static function ($ip) {
-        return trim((string) $ip);
-    }, $allowlist);
-
-    return in_array($remote_ip, $allowlist, true);
-}
-
-function fn_mwl_planfix_get_raw_body(): string
-{
-    static $body;
-
-    if ($body === null) {
-        $body = file_get_contents('php://input');
-    }
-
-    return is_string($body) ? $body : '';
-}
-
-function fn_mwl_planfix_get_json_body(): array
-{
-    $raw = fn_mwl_planfix_get_raw_body();
-
-    if ($raw === '') {
-        return [];
-    }
-
-    $decoded = json_decode($raw, true);
-
-    return is_array($decoded) ? $decoded : [];
+    fn_mwl_planfix_service()->updateLinkExtra($link, $extra_updates, $additional_fields);
 }
 
 function fn_mwl_planfix_output_json(int $status_code, array $data): void
@@ -434,427 +267,6 @@ function fn_mwl_planfix_output_json(int $status_code, array $data): void
 
     echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
-}
-
-function fn_mwl_planfix_handle_planfix_status_webhook(): void
-{
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        fn_mwl_planfix_output_json(405, [
-            'success' => false,
-            'message' => 'Method Not Allowed',
-        ]);
-    }
-
-    if (!fn_mwl_planfix_is_ip_allowlisted()) {
-        fn_mwl_planfix_output_json(403, [
-            'success' => false,
-            'message' => 'IP is not allowed',
-        ]);
-    }
-
-    if (!fn_mwl_planfix_validate_basic_auth()) {
-        header('WWW-Authenticate: Basic realm="Planfix webhook"');
-        fn_mwl_planfix_output_json(401, [
-            'success' => false,
-            'message' => 'Unauthorized',
-        ]);
-    }
-
-    $payload = fn_mwl_planfix_get_json_body();
-
-    if (!$payload) {
-        $payload = $_REQUEST;
-    }
-
-    $planfix_task_id = '';
-
-    foreach (['planfix_task_id', 'task_id', 'id'] as $key) {
-        if (!empty($payload[$key])) {
-            $planfix_task_id = (string) $payload[$key];
-            break;
-        }
-    }
-
-    if ($planfix_task_id === '') {
-        fn_mwl_planfix_output_json(400, [
-            'success' => false,
-            'message' => 'planfix_task_id is required',
-        ]);
-    }
-
-    $status_id = isset($payload['status_id']) ? (string) $payload['status_id'] : '';
-
-    $link_repository = fn_mwl_planfix_link_repository();
-    $link = $link_repository->findByPlanfix('task', $planfix_task_id);
-
-    if (!$link) {
-        fn_mwl_planfix_output_json(404, [
-            'success' => false,
-            'message' => 'Link not found',
-        ]);
-    }
-
-    $extra_updates = [
-        'planfix_meta' => [
-            'status_id'   => $status_id,
-            'updated_at'  => TIME,
-        ],
-        'last_incoming_status' => [
-            'status_id'   => $status_id,
-            'received_at' => TIME,
-        ],
-        'last_planfix_payload_in' => [
-            'received_at' => TIME,
-            'payload'     => $payload,
-        ],
-    ];
-
-    $target_status = null;
-
-    if ($status_id !== '') {
-        $status_map = fn_mwl_planfix_status_map_repository()->findLocalStatus(
-            (int) $link['company_id'],
-            (string) $link['entity_type'],
-            $status_id
-        );
-
-        if ($status_map && !empty($status_map['entity_status'])) {
-            $target_status = (string) $status_map['entity_status'];
-            $extra_updates['planfix_meta']['mapped_status'] = $target_status;
-        }
-    }
-
-    $message_details = [];
-
-    if ($status_id !== '') {
-        $planfix_status_details = [];
-
-        if ($status_id !== '') {
-            $planfix_status_details[] = "id {$status_id}";
-        }
-
-        $planfix_status_message = 'Planfix status ' . implode(', ', $planfix_status_details);
-
-        if ($target_status !== null && $status_id !== '') {
-            $planfix_status_message .= " -> entity status {$target_status}";
-        }
-
-        $message_details[] = $planfix_status_message;
-    }
-
-    if ($target_status !== null && $status_id === '') {
-        $message_details[] = "Mapped entity status {$target_status}";
-    }
-
-    $message_details[] = "status_id: " . $status_id;
-    $message_details[] = "target_status: " . $target_status;
-
-    $message = 'Link metadata updated';
-    $success = true;
-
-    if ($target_status && $link['entity_type'] === 'order') {
-        $order_id = (int) $link['entity_id'];
-        if ($order_id) {
-            $current_status = db_get_field('SELECT status FROM ?:orders WHERE order_id = ?i', $order_id);
-
-            if ($current_status !== $target_status) {
-                fn_mwl_planfix_record_status_skip($order_id);
-                $changed = fn_change_order_status($order_id, $target_status, (string) $current_status);
-
-                if ($changed !== false) {
-                    $message = 'Order status updated';
-                } else {
-                    $message = 'Failed to update order status';
-                    $success = false;
-                }
-            } else {
-                $message = 'Order status already up to date';
-            }
-        }
-    }
-
-    if ($message_details) {
-        $message .= ': ' . implode('; ', $message_details);
-    }
-
-    fn_mwl_planfix_update_link_extra($link, $extra_updates);
-
-    fn_mwl_planfix_output_json($success ? 200 : 500, [
-        'success' => $success,
-        'message' => $message,
-    ]);
-}
-
-function fn_mwl_planfix_build_sell_task_payload(array $order_info): array
-{
-    $order_id = isset($order_info['order_id']) ? (int) $order_info['order_id'] : 0;
-    $company_id = isset($order_info['company_id']) ? (int) $order_info['company_id'] : 0;
-    $primary_currency = isset($order_info['primary_currency'])
-        ? (string) $order_info['primary_currency']
-        : (defined('CART_PRIMARY_CURRENCY') ? CART_PRIMARY_CURRENCY : 'RUB');
-    $secondary_currency = isset($order_info['secondary_currency']) ? (string) $order_info['secondary_currency'] : '';
-    $currency_code = $secondary_currency !== '' ? $secondary_currency : ((string) ($order_info['currency'] ?? $primary_currency));
-
-    $products = isset($order_info['products']) && is_array($order_info['products'])
-        ? $order_info['products']
-        : [];
-
-    $first_product_name = '';
-    foreach ($products as $item) {
-        if (!empty($item['product'])) {
-            $first_product_name = (string) $item['product'];
-            break;
-        }
-    }
-
-    if ($first_product_name === '') {
-        $first_product_name = $order_id
-            ? sprintf('#%s', fn_mwl_planfix_format_order_id($order_id))
-            : __('order');
-    }
-
-    $task_name = sprintf('Продажа %s на pressfinity.com', $first_product_name);
-
-    $lines = [];
-    foreach ($products as $item) {
-        $product_name = (string) ($item['product'] ?? '');
-        if ($product_name === '' && !empty($item['product_id'])) {
-            $product_name = sprintf('#%d', (int) $item['product_id']);
-        }
-
-        $amount = isset($item['amount']) ? (int) $item['amount'] : 0;
-        if ($amount <= 0) {
-            $amount = 1;
-        }
-
-        $subtotal = isset($item['subtotal']) ? (float) $item['subtotal'] : 0.0;
-        $price = number_format($subtotal, 2, '.', ' ');
-        $price = rtrim(rtrim($price, '0'), '.');
-        if ($price === '') {
-            $price = '0';
-        }
-
-        $line = sprintf('- %s ×%d, %s', $product_name, $amount, $price);
-
-        if ($currency_code !== '') {
-            $line .= ' ' . $currency_code;
-        }
-
-        $lines[] = $line;
-    }
-
-    $description = implode("\n", $lines);
-
-    $order_url = $order_id
-        ? fn_url('orders.details?order_id=' . $order_id, 'A', 'current', CART_LANGUAGE, true)
-        : '';
-
-    if ($order_url !== '') {
-        if ($description !== '') {
-            $description .= "\n\n";
-        }
-
-        $description .= sprintf('Ссылка на заказ: %s', $order_url);
-    }
-
-    if ($description === '' && $order_id) {
-        $description = sprintf('Заказ #%s', fn_mwl_planfix_format_order_id($order_id));
-    }
-
-    $customer = [
-        'name'  => trim(((string) ($order_info['firstname'] ?? '')) . ' ' . ((string) ($order_info['lastname'] ?? ''))),
-        'email' => (string) ($order_info['email'] ?? ''),
-        'phone' => (string) ($order_info['phone'] ?? ''),
-    ];
-
-    $customer = array_filter($customer, static function ($value) {
-        return $value !== '';
-    });
-
-    $order_number = $order_id ? fn_mwl_planfix_format_order_id($order_id) : '';
-    $order_url = $order_id
-        ? fn_url('orders.details?order_id=' . $order_id, 'A', 'current', CART_LANGUAGE, true)
-        : '';
-
-    $user_data = fn_get_user_info($order_info['user_id']);
-    $telegram_service = fn_mwl_xlsx_get_telegram_service();
-
-
-    $payload = [
-        'name'          => $task_name,
-        'agency'        => $user_data['company'],
-        'email'         => $order_info['email'],
-        'employee_name' => trim($user_data['firstname'] . ' ' . $user_data['lastname']),
-        'telegram'      => $telegram_service->resolveUserTelegram((int) ($order_info['user_id'] ?? 0), $user_data),
-        'description'   => $description,
-        'order_id'      => $order_id ? (string) $order_id : '',
-        'order_number'  => (string) $order_number,
-        'order_url'     => $order_url,
-        'company_id'    => $company_id,
-        'direction'     => fn_mwl_planfix_get_direction_default(),
-        'status'        => (string) ($order_info['status'] ?? ''),
-        'total'         => isset($order_info['total']) ? (float) $order_info['total'] : 0.0,
-        'currency'      => $currency_code,
-    ];
-
-    if ($customer) {
-        $payload['customer'] = $customer;
-    }
-
-    return $payload;
-}
-
-function fn_mwl_planfix_create_task_for_order(int $order_id, array $order_info = []): array
-{
-    if (!$order_info) {
-        $order_info = fn_get_order_info($order_id, false, true, true, false);
-    }
-
-    if (!$order_info) {
-        return [
-            'success' => false,
-            'message' => __('mwl_xlsx.planfix_error_order_not_found'),
-        ];
-    }
-
-    $company_id = isset($order_info['company_id']) ? (int) $order_info['company_id'] : 0;
-    $payload = fn_mwl_planfix_build_sell_task_payload($order_info);
-
-    $client = fn_mwl_planfix_mcp_client();
-    $response = $client->createTask($payload);
-
-    if (empty($response['success'])) {
-        return [
-            'success' => false,
-            'message' => __('mwl_xlsx.planfix_error_mcp_request'),
-            'response' => $response,
-        ];
-    }
-
-    $data = isset($response['data']) && is_array($response['data']) ? $response['data'] : [];
-    $planfix_task_id = (string) ($data['taskId'] ?? '');
-    $planfix_task_url = (string) ($data['url'] ?? '');
-
-    if ($planfix_task_id === '') {
-        return [
-            'success' => false,
-            'message' => __('mwl_xlsx.planfix_error_task_id_missing'),
-            'response' => $response,
-        ];
-    }
-
-    $planfix_object_type = (string) ($data['planfix_object_type'] ?? 'task');
-
-    $extra = [
-        'planfix_meta' => [
-            'status_id'   => isset($data['status_id']) ? (string) $data['status_id'] : '',
-            'direction'   => isset($data['direction']) ? (string) $data['direction'] : $payload['direction'],
-        ],
-        'created_via' => 'planfix_create_sell_task',
-        'created_at'  => TIME,
-    ];
-
-    $link_repository = fn_mwl_planfix_link_repository();
-    $link_repository->upsert($company_id, 'order', $order_id, $planfix_object_type, $planfix_task_id, $extra);
-
-    $link = $link_repository->findByEntity($company_id, 'order', $order_id);
-
-    if ($link) {
-        fn_mwl_planfix_update_link_extra(
-            $link,
-            [],
-            [
-                'last_push_at'     => TIME,
-                'last_payload_out' => json_encode(['planfix_create_sell_task' => $payload], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-            ]
-        );
-
-        $link = $link_repository->findByEntity($company_id, 'order', $order_id);
-
-        if (is_array($link)) {
-            $planfix_origin = (string) Registry::get('addons.mwl_xlsx.planfix_origin');
-            $link['planfix_url'] = fn_mwl_planfix_build_object_url($link, $planfix_origin);
-        }
-    }
-
-    return [
-        'success'  => true,
-        'message'  => __('mwl_xlsx.planfix_task_created', ['[id]' => $planfix_task_id]),
-        'link'     => $link,
-        'response' => $response,
-    ];
-}
-
-function fn_mwl_planfix_bind_task_to_order(int $order_id, int $company_id, string $planfix_task_id, string $planfix_object_type = 'task', array $meta = []): array
-{
-    $planfix_task_id = trim($planfix_task_id);
-
-    if ($planfix_task_id === '') {
-        return [
-            'success' => false,
-            'message' => __('mwl_xlsx.planfix_error_task_id_missing'),
-        ];
-    }
-
-    $planfix_object_type = $planfix_object_type !== '' ? $planfix_object_type : 'task';
-
-    $link_repository = fn_mwl_planfix_link_repository();
-    $existing = $link_repository->findByPlanfix($planfix_object_type, $planfix_task_id, $company_id ?: null);
-
-    if ($existing && (int) $existing['entity_id'] !== $order_id) {
-        return [
-            'success' => false,
-            'message' => __('mwl_xlsx.planfix_task_already_bound', ['[order_id]' => (int) $existing['entity_id']]),
-        ];
-    }
-
-    $extra = [
-        'bound_manually' => TIME,
-    ];
-
-    if (isset($meta['planfix_meta']) && is_array($meta['planfix_meta'])) {
-        $extra['planfix_meta'] = $meta['planfix_meta'];
-        unset($meta['planfix_meta']);
-    }
-
-    $extra = array_merge($extra, $meta);
-
-    $link_repository->upsert($company_id, 'order', $order_id, $planfix_object_type, $planfix_task_id, $extra);
-    $link = $link_repository->findByEntity($company_id, 'order', $order_id);
-
-    return [
-        'success' => true,
-        'message' => __('mwl_xlsx.planfix_task_bound', ['[id]' => $planfix_task_id]),
-        'link'    => $link,
-    ];
-}
-
-function fn_mwl_planfix_record_status_skip(int $order_id): void
-{
-    $skip_orders = Registry::get('mwl_xlsx.planfix_status.skip_orders');
-    if (!is_array($skip_orders)) {
-        $skip_orders = [];
-    }
-
-    $skip_orders[$order_id] = TIME;
-    Registry::set('mwl_xlsx.planfix_status.skip_orders', $skip_orders);
-}
-
-function fn_mwl_planfix_should_skip_status_push(int $order_id): bool
-{
-    $skip_orders = Registry::get('mwl_xlsx.planfix_status.skip_orders');
-    if (!is_array($skip_orders)) {
-        return false;
-    }
-
-    if (!isset($skip_orders[$order_id])) {
-        return false;
-    }
-
-    unset($skip_orders[$order_id]);
-    Registry::set('mwl_xlsx.planfix_status.skip_orders', $skip_orders);
-
-    return true;
 }
 
 function fn_mwl_xlsx_change_order_status_post(
@@ -873,122 +285,17 @@ function fn_mwl_xlsx_change_order_status_post(
         return;
     }
 
-    if (fn_mwl_planfix_should_skip_status_push($order_id)) {
+    $service = fn_mwl_planfix_service();
+
+    if ($service->consumeStatusSkip($order_id)) {
         return;
     }
 
-    $company_id = isset($order_info['company_id']) ? (int) $order_info['company_id'] : 0;
-
-    $link_repository = fn_mwl_planfix_link_repository();
-    $link = $link_repository->findByEntity($company_id, 'order', $order_id);
-
-    if (!$link || empty($link['planfix_object_id'])) {
-        $creation_result = fn_mwl_planfix_create_task_for_order($order_id);
-
-        if (empty($creation_result['success'])) {
-            return;
-        }
-
-        $link = $creation_result['link'] ?? $link_repository->findByEntity($company_id, 'order', $order_id);
-
-        if (!$link || empty($link['planfix_object_id'])) {
-            return;
-        }
-    }
-
-    $planfix_object_id = (string) $link['planfix_object_id'];
-    $planfix_object_type = isset($link['planfix_object_type']) && $link['planfix_object_type'] !== ''
-        ? (string) $link['planfix_object_type']
-        : 'task';
-
-    $client = fn_mwl_planfix_mcp_client();
-    $payloads = [];
-
-    $status_payload = [
-        'order_id'            => $order_id,
-        'company_id'          => $company_id,
-        'status_to'           => (string) $status_to,
-        'status_from'         => (string) $status_from,
-        'planfix_object_id'   => $planfix_object_id,
-        'planfix_object_type' => $planfix_object_type,
-    ];
-
-    if (isset($order_info['total'])) {
-        $status_payload['total'] = (float) $order_info['total'];
-    }
-
-    $payloads['update_sale_status'] = $status_payload;
-    $client->updateSaleStatus($status_payload);
-
-    if (fn_mwl_planfix_should_sync_comments()) {
-        $comment = '';
-
-        if (!empty($order_info['details'])) {
-            $comment = (string) $order_info['details'];
-        } elseif (!empty($order_info['notes'])) {
-            $comment = (string) $order_info['notes'];
-        }
-
-        if ($comment !== '') {
-            $comment_payload = [
-                'order_id'            => $order_id,
-                'company_id'          => $company_id,
-                'planfix_object_id'   => $planfix_object_id,
-                'planfix_object_type' => $planfix_object_type,
-                'comment'             => $comment,
-            ];
-
-            $payloads['append_sale_comment'] = $comment_payload;
-            $client->appendSaleComment($comment_payload);
-        }
-    }
-
-    if (fn_mwl_planfix_should_sync_payments()) {
-        $amount = null;
-
-        if (isset($order_info['total_paid'])) {
-            $amount = (float) $order_info['total_paid'];
-        } elseif (isset($order_info['total'])) {
-            $amount = (float) $order_info['total'];
-        }
-
-        if ($amount !== null) {
-            $payment_payload = [
-                'order_id'            => $order_id,
-                'company_id'          => $company_id,
-                'planfix_object_id'   => $planfix_object_id,
-                'planfix_object_type' => $planfix_object_type,
-                'amount'              => $amount,
-            ];
-
-            if (!empty($order_info['secondary_currency'])) {
-                $payment_payload['currency'] = (string) $order_info['secondary_currency'];
-            } elseif (!empty($order_info['primary_currency'])) {
-                $payment_payload['currency'] = (string) $order_info['primary_currency'];
-            } elseif (!empty($order_info['currency'])) {
-                $payment_payload['currency'] = (string) $order_info['currency'];
-            }
-
-            $payloads['register_sale_payment'] = $payment_payload;
-            $client->registerSalePayment($payment_payload);
-        }
-    }
-
-    $summary_extra = [
-        'last_outgoing_status' => [
-            'status_to'   => (string) $status_to,
-            'status_from' => (string) $status_from,
-            'pushed_at'   => TIME,
-        ],
-    ];
-
-    fn_mwl_planfix_update_link_extra(
-        $link,
-        $summary_extra,
-        [
-            'last_push_at'     => TIME,
-            'last_payload_out' => json_encode($payloads, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-        ]
+    $service->syncOrderStatus(
+        $order_id,
+        (string) $status_to,
+        (string) $status_from,
+        is_array($order_info) ? $order_info : []
     );
 }
 
