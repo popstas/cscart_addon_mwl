@@ -169,6 +169,62 @@ msgctxt "Languages::mwl_xlsx.settings_backup"
 msgid "Backup settings"
 msgstr "Backup settings"
 
+msgctxt "Languages::mwl_xlsx_vc_new_message_order"
+msgid "New message for order [order_id]"
+msgstr "New message for order [order_id]"
+
+msgctxt "Languages::mwl_xlsx_vc_author_admin"
+msgid "Admin"
+msgstr "Admin"
+
+msgctxt "Languages::mwl_xlsx_vc_author_customer"
+msgid "Customer"
+msgstr "Customer"
+
+msgctxt "Languages::mwl_xlsx_vc_planfix_author_line"
+msgid "- Author: [author]"
+msgstr "- Author: [author]"
+
+msgctxt "Languages::mwl_xlsx_vc_planfix_admin_link"
+msgid "To reply, go to the admin area [host]: <a href=\"[url]\">URL</a>"
+msgstr "To reply, go to the admin area [host]: <a href=\"[url]\">URL</a>"
+
+msgctxt "Languages::mwl_xlsx_vc_planfix_telegram"
+msgid "Telegram: [handle]"
+msgstr "Telegram: [handle]"
+
+msgctxt "Languages::mwl_xlsx_vc_planfix_email"
+msgid "Email: [email]"
+msgstr "Email: [email]"
+
+msgctxt "Languages::mwl_xlsx_vc_planfix_company"
+msgid "Company: [company]"
+msgstr "Company: [company]"
+
+msgctxt "Languages::mwl_xlsx_vc_planfix_company_email"
+msgid "Company email: [email]"
+msgstr "Company email: [email]"
+
+msgctxt "Languages::mwl_xlsx_vc_planfix_company_phone"
+msgid "Company phone: [phone]"
+msgstr "Company phone: [phone]"
+
+msgctxt "Languages::mwl_xlsx_vc_admin_reply_link"
+msgid "To reply, go to the <a href=\"[url]\">order page on [host]</a>"
+msgstr "To reply, go to the <a href=\"[url]\">order page on [host]</a>"
+
+msgctxt "Languages::mwl_xlsx_vc_customer_reply_link"
+msgid "To reply, go to the <a href=\"[url]\">order page on [host]</a>"
+msgstr "To reply, go to the <a href=\"[url]\">order page on [host]</a>"
+
+msgctxt "Languages::mwl_xlsx_vc_customer_telegram_label"
+msgid "Customer Telegram: [handle]"
+msgstr "Customer Telegram: [handle]"
+
+msgctxt "Languages::mwl_xlsx_vc_button_reply"
+msgid "Reply"
+msgstr "Reply"
+
 msgctxt "Languages::mwl_xlsx.settings_backup_done"
 msgid "Settings backup updated"
 msgstr "Settings backup updated"

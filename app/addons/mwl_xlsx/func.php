@@ -216,6 +216,44 @@ function fn_mwl_xlsx_order_details_has_column(string $column): bool
     return isset($columns[$column]);
 }
 
+function fn_mwl_xlsx_resolve_lang_code(?string $lang_code): string
+{
+    static $available_langs = null;
+
+    if ($available_langs === null) {
+        $available_langs = [];
+        $languages = fn_get_languages(['include_hidden' => true]);
+
+        foreach ($languages as $code => $language) {
+            $available_langs[strtolower((string) $code)] = (string) $code;
+        }
+    }
+
+    $lang_code_normalized = strtolower((string) $lang_code);
+
+    if ($lang_code_normalized === '' || !isset($available_langs[$lang_code_normalized])) {
+        $lang_code_normalized = strtolower((string) CART_LANGUAGE);
+    }
+
+    return $available_langs[$lang_code_normalized] ?? (string) CART_LANGUAGE;
+}
+
+function fn_mwl_xlsx_get_order_lang_code(?int $order_id): string
+{
+    if ($order_id === null) {
+        return fn_mwl_xlsx_resolve_lang_code(null);
+    }
+
+    static $lang_cache = [];
+
+    if (!isset($lang_cache[$order_id])) {
+        $order_lang_code = db_get_field('SELECT lang_code FROM ?:orders WHERE order_id = ?i', $order_id);
+        $lang_cache[$order_id] = fn_mwl_xlsx_resolve_lang_code($order_lang_code);
+    }
+
+    return $lang_cache[$order_id];
+}
+
 function fn_mwl_planfix_mcp_client(bool $force_reload = false): McpClient
 {
     static $client;
@@ -1925,12 +1963,16 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
     $message_body_plain = str_replace(["\r\n", "\r"], "\n", (string) $last_message);
     $message_body_plain = str_replace(["\r\n", "\r"], "\n", $message_body_plain);
 
-    $http_host = htmlspecialchars((string) Registry::get('config.http_host'), ENT_QUOTES, 'UTF-8');
-    $admin_url = fn_url($action_url, 'A', 'current', CART_LANGUAGE, true);
+    $order_lang_code = fn_mwl_xlsx_get_order_lang_code($order_id !== null ? (int) $order_id : null);
+
+    $http_host_raw = (string) Registry::get('config.http_host');
+    $http_host = htmlspecialchars($http_host_raw, ENT_QUOTES, 'UTF-8');
+    $admin_url = fn_url($action_url, 'A', 'current', $order_lang_code, true);
     $admin_url_html = htmlspecialchars($admin_url, ENT_QUOTES, 'UTF-8');
 
-    $order_line_plain = 'Новое сообщение по заказу ' . (string) $order_id;
-    $order_line_html = 'Новое сообщение по заказу ' . htmlspecialchars((string) $order_id, ENT_QUOTES, 'UTF-8');
+    $order_id_display = $order_id !== null ? (string) $order_id : '';
+    $order_line_plain = __('mwl_xlsx_vc_new_message_order', ['[order_id]' => $order_id_display], $order_lang_code);
+    $order_line_html = htmlspecialchars($order_line_plain, ENT_QUOTES, 'UTF-8');
     $order_context_text = '';
     $order_url = '';
     $order_url_html = '';
@@ -1959,7 +2001,7 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
                 $first_product_name = (string) db_get_field(
                     'SELECT product FROM ?:product_descriptions WHERE product_id = ?i AND lang_code = ?s',
                     (int) $first_product['product_id'],
-                    CART_LANGUAGE
+                    $order_lang_code
                 );
             }
         }
@@ -1983,14 +2025,18 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
             $order_line_html .= ', ' . htmlspecialchars($order_context_text, ENT_QUOTES, 'UTF-8');
         }
 
-        $order_url = fn_url('orders.details?order_id=' . $order_id_int, 'C', 'current', CART_LANGUAGE, true);
+        $order_url = fn_url('orders.details?order_id=' . $order_id_int, 'C', 'current', $order_lang_code, true);
         $order_url_html = htmlspecialchars($order_url, ENT_QUOTES, 'UTF-8');
     }
 
+    $author_lang_var = $is_admin ? 'mwl_xlsx_vc_author_admin' : 'mwl_xlsx_vc_author_customer';
+    $author_label = __($author_lang_var, [], $order_lang_code);
+    $author_label_html = htmlspecialchars($author_label, ENT_QUOTES, 'UTF-8');
+
     $planfix_details = [
         $order_line_html,
-        '- Кто написал: ' . htmlspecialchars($is_admin ? 'Администратор' : 'Клиент', ENT_QUOTES, 'UTF-8'),
-        'Для ответа перейдите в админку ' . $http_host . ': <a href="' . $admin_url_html . '">URL</a>',
+        __('mwl_xlsx_vc_planfix_author_line', ['[author]' => $author_label_html], $order_lang_code),
+        __('mwl_xlsx_vc_planfix_admin_link', ['[host]' => $http_host, '[url]' => $admin_url_html], $order_lang_code),
     ];
 
     $token = trim((string) Registry::get('addons.mwl_xlsx.telegram_bot_token'));
@@ -1998,30 +2044,32 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
 
     $message_author_telegram = fn_mwl_xlsx_get_user_telegram((int) ($last_message_user_id ?? 0));
     $customer_telegram_display = '';
+    $customer_telegram_display_html = '';
 
     if ($message_author_telegram !== '') {
         $normalized_handle = ltrim($message_author_telegram, '@');
         $customer_telegram_display = '@' . $normalized_handle;
-        $planfix_details[] = 'Telegram: ' . htmlspecialchars($customer_telegram_display, ENT_QUOTES, 'UTF-8');
+        $customer_telegram_display_html = htmlspecialchars($customer_telegram_display, ENT_QUOTES, 'UTF-8');
+        $planfix_details[] = __('mwl_xlsx_vc_planfix_telegram', ['[handle]' => $customer_telegram_display_html], $order_lang_code);
     }
 
     if ($customer_email !== null && $customer_email !== '') {
-        $planfix_details[] = 'Email: ' . htmlspecialchars((string) $customer_email, ENT_QUOTES, 'UTF-8');
+        $planfix_details[] = __('mwl_xlsx_vc_planfix_email', ['[email]' => htmlspecialchars((string) $customer_email, ENT_QUOTES, 'UTF-8')], $order_lang_code);
     }
 
     if ($company !== null) {
         if (is_array($company)) {
             if (!empty($company['company'])) {
-                $planfix_details[] = 'Компания: ' . htmlspecialchars((string) $company['company'], ENT_QUOTES, 'UTF-8');
+                $planfix_details[] = __('mwl_xlsx_vc_planfix_company', ['[company]' => htmlspecialchars((string) $company['company'], ENT_QUOTES, 'UTF-8')], $order_lang_code);
             }
             if (!empty($company['email'])) {
-                $planfix_details[] = 'Email компании: ' . htmlspecialchars((string) $company['email'], ENT_QUOTES, 'UTF-8');
+                $planfix_details[] = __('mwl_xlsx_vc_planfix_company_email', ['[email]' => htmlspecialchars((string) $company['email'], ENT_QUOTES, 'UTF-8')], $order_lang_code);
             }
             if (!empty($company['phone'])) {
-                $planfix_details[] = 'Телефон компании: ' . htmlspecialchars((string) $company['phone'], ENT_QUOTES, 'UTF-8');
+                $planfix_details[] = __('mwl_xlsx_vc_planfix_company_phone', ['[phone]' => htmlspecialchars((string) $company['phone'], ENT_QUOTES, 'UTF-8')], $order_lang_code);
             }
         } elseif (is_string($company) && $company !== '') {
-            $planfix_details[] = 'Компания: ' . htmlspecialchars($company, ENT_QUOTES, 'UTF-8');
+            $planfix_details[] = __('mwl_xlsx_vc_planfix_company', ['[company]' => htmlspecialchars($company, ENT_QUOTES, 'UTF-8')], $order_lang_code);
         }
     }
 
@@ -2040,10 +2088,10 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
         $admin_details_html[] = $order_line_html;
     }
 
-    $admin_details_html[] = 'Для ответа перейдите на <a href="' . $admin_url_html . '">страницу заказа ' . $http_host . '</a>';
+    $admin_details_html[] = __('mwl_xlsx_vc_admin_reply_link', ['[url]' => $admin_url_html, '[host]' => $http_host], $order_lang_code);
 
-    if ($customer_telegram_display !== '') {
-        $admin_details_html[] = 'Telegram покупателя: ' . htmlspecialchars($customer_telegram_display, ENT_QUOTES, 'UTF-8');
+    if ($customer_telegram_display_html !== '') {
+        $admin_details_html[] = __('mwl_xlsx_vc_customer_telegram_label', ['[handle]' => $customer_telegram_display_html], $order_lang_code);
     }
 
     $admin_message_parts_html = [$admin_message_intro_html];
@@ -2058,7 +2106,7 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
 
     if ($order_url !== '') {
         $customer_details_lines[] = $order_line_html;
-        $customer_details_lines[] = 'Для ответа перейдите на <a href="' . $order_url_html . '">страницу заказа ' . $http_host . '</a>';
+        $customer_details_lines[] = __('mwl_xlsx_vc_customer_reply_link', ['[url]' => $order_url_html, '[host]' => $http_host], $order_lang_code);
     }
 
     if ($customer_details_lines) {
@@ -2100,7 +2148,7 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
                     'inline_keyboard' => [
                         [
                             [
-                                'text' => 'Ответить',
+                                'text' => __('mwl_xlsx_vc_button_reply', [], $order_lang_code),
                                 'url'  => $admin_url,
                             ],
                         ],
@@ -2142,7 +2190,7 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
                 'inline_keyboard' => [
                     [
                         [
-                            'text' => 'Ответить',
+                            'text' => __('mwl_xlsx_vc_button_reply', [], $order_lang_code),
                             'url'  => $order_url,
                         ],
                     ],
