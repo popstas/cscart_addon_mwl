@@ -6,6 +6,7 @@ use Tygh\Addons\MwlXlsx\Planfix\StatusMapRepository;
 use Tygh\Addons\MwlXlsx\Planfix\McpClient;
 use Tygh\Addons\MwlXlsx\Planfix\PlanfixService;
 use Tygh\Addons\MwlXlsx\Planfix\WebhookHandler;
+use Tygh\Addons\MwlXlsx\Security\AccessService;
 use Tygh\Addons\MwlXlsx\Service\SettingsBackup;
 use Tygh\Addons\MwlXlsx\Telegram\TelegramService;
 use Tygh\Registry;
@@ -185,6 +186,25 @@ function fn_mwl_xlsx_get_telegram_service(): TelegramService
     return $service;
 }
 
+function fn_mwl_xlsx_access_service(): AccessService
+{
+    static $service;
+
+    if ($service instanceof AccessService) {
+        return $service;
+    }
+
+    $container = Tygh::$app ?? null;
+
+    if ($container instanceof \ArrayAccess && $container->offsetExists('addons.mwl_xlsx.access_service')) {
+        $service = $container['addons.mwl_xlsx.access_service'];
+    } else {
+        $service = new AccessService();
+    }
+
+    return $service;
+}
+
 function fn_mwl_xlsx_order_details_has_column(string $column): bool
 {
     static $columns;
@@ -311,23 +331,7 @@ function fn_mwl_xlsx_change_order_status_post(
  */
 function fn_mwl_xlsx_check_usergroup_access(array $auth, $setting_key)
 {
-    if (($auth['user_type'] ?? '') === 'A') {
-        return true;
-    }
-
-    $allowed = Registry::get("addons.mwl_xlsx.$setting_key");
-    // allow all if setting is empty
-    if ($allowed === '') {
-        return true;
-    }
-
-    $allowed = array_map('intval', explode(',', $allowed));
-    if (!$allowed) {
-        return true;
-    }
-
-    $usergroups = array_map('intval', $auth['usergroup_ids'] ?? []);
-    return (bool) array_intersect($allowed, $usergroups);
+    return fn_mwl_xlsx_access_service()->checkUsergroupAccess($auth, (string) $setting_key);
 }
 
 /**
@@ -339,7 +343,7 @@ function fn_mwl_xlsx_check_usergroup_access(array $auth, $setting_key)
  */
 function fn_mwl_xlsx_user_can_access_lists(array $auth)
 {
-    return fn_mwl_xlsx_check_usergroup_access($auth, 'allowed_usergroups');
+    return fn_mwl_xlsx_access_service()->canAccessLists($auth);
 }
 
 /**
@@ -349,7 +353,7 @@ function fn_mwl_xlsx_user_can_access_lists(array $auth)
 function smarty_function_mwl_user_can_access_lists(array $params, \Smarty_Internal_Template $template)
 {
     $auth = $params['auth'] ?? (Tygh::$app['session']['auth'] ?? []);
-    $result = fn_mwl_xlsx_user_can_access_lists($auth);
+    $result = fn_mwl_xlsx_access_service()->canAccessLists($auth);
 
     if (!empty($params['assign'])) {
         $template->assign($params['assign'], (bool) $result);
@@ -368,12 +372,7 @@ function smarty_function_mwl_user_can_access_lists(array $params, \Smarty_Intern
  */
 function fn_mwl_xlsx_can_view_price(array $auth)
 {
-
-    if (Registry::get('addons.mwl_xlsx.hide_price_for_guests') === 'Y' && empty($auth['user_id'])) {
-        return false;
-    }
-
-    return fn_mwl_xlsx_check_usergroup_access($auth, 'authorized_usergroups');
+    return fn_mwl_xlsx_access_service()->canViewPrice($auth);
 }
 
 /**

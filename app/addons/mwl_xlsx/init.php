@@ -57,7 +57,7 @@ function fn_mwl_xlsx_get_product_filter_fields(&$filters)
 {
     // return if user can access prices
     $auth = Tygh::$app['session']['auth'] ?? [];
-    if (fn_mwl_xlsx_can_view_price($auth)) {
+    if (fn_mwl_xlsx_access_service()->canViewPrice($auth)) {
         return;
     }
 
