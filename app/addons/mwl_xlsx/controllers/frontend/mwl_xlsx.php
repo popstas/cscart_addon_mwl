@@ -25,7 +25,7 @@ if ($mode === 'planfix_changed_status') {
     return [CONTROLLER_STATUS_NO_CONTENT];
 }
 
-if (!fn_mwl_xlsx_user_can_access_lists($auth)) {
+if (!fn_mwl_xlsx_access_service()->canAccessLists($auth)) {
     return [CONTROLLER_STATUS_DENIED];
 }
 
