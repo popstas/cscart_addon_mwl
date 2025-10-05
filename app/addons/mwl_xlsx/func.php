@@ -1955,6 +1955,40 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
 
     $text_telegram = implode("\n\n", $text_parts_plain);
 
+    $customer_message_lines = [];
+    $customer_message_lines[] = $text_parts_plain[0];
+
+    $customer_details_lines = [];
+
+    if ($order_id !== null) {
+        $company_name = '';
+
+        if (is_array($company)) {
+            $company_name = trim((string) ($company['company'] ?? ''));
+        } elseif (is_string($company)) {
+            $company_name = trim($company);
+        }
+
+        $order_line = 'Новое сообщение по заказу ' . (string) $order_id;
+
+        if ($company_name !== '') {
+            $order_line .= ', ' . $company_name;
+        }
+
+        $customer_details_lines[] = $order_line;
+
+        $order_url = fn_url('orders.details?order_id=' . (int) $order_id, 'C', 'current', CART_LANGUAGE, true);
+        $customer_details_lines[] = 'Для ответа перейдите на страницу заказа ' . Registry::get('config.http_host') . ': ' . $order_url;
+    }
+
+    if ($customer_details_lines) {
+        $customer_message_lines[] = implode("\n", $customer_details_lines);
+    }
+
+    $customer_text_telegram = implode("\n\n", array_values(array_filter($customer_message_lines, static function ($line) {
+        return $line !== '';
+    })));
+
     $text_parts_html = [];
     $text_parts_html[] = $message_author_text . ': ' . $last_message_html;
 
@@ -1991,7 +2025,7 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
             if ($customer_chat_id !== '' && $customer_chat_id !== $chat_id) {
                 $customer_resp_raw = Http::post($url, [
                     'chat_id'    => $customer_chat_id,
-                    'text'       => $text_telegram,
+                    'text'       => $customer_text_telegram !== '' ? $customer_text_telegram : $text_telegram,
                     'parse_mode' => 'HTML',
                 ], [
                     'timeout'    => 10,
