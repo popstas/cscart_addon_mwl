@@ -1908,18 +1908,56 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
     $message_body_plain = str_replace(["\r\n", "\r"], "\n", (string) $last_message);
     $message_body_plain = str_replace(["\r\n", "\r"], "\n", $message_body_plain);
 
-    $http_host = htmlspecialchars(Registry::get('config.http_host'), ENT_QUOTES, 'UTF-8');
+    $http_host_plain = (string) Registry::get('config.http_host');
+    $http_host = htmlspecialchars($http_host_plain, ENT_QUOTES, 'UTF-8');
     $admin_url = fn_url($action_url, 'A', 'current', CART_LANGUAGE, true);
+    $admin_url_html = htmlspecialchars($admin_url, ENT_QUOTES, 'UTF-8');
+
+    $order_line_plain = 'Новое сообщение по заказу ' . (string) $order_id;
+    $order_line_html = 'Новое сообщение по заказу ' . htmlspecialchars((string) $order_id, ENT_QUOTES, 'UTF-8');
+    $order_context_text = '';
+    $order_url = '';
+    $order_url_html = '';
+
+    if ($order_id !== null) {
+        $order_id_int = (int) $order_id;
+        $first_product_name = (string) db_get_field(
+            'SELECT product FROM ?:order_details WHERE order_id = ?i ORDER BY item_id ASC LIMIT 1',
+            $order_id_int
+        );
+
+        $company_name = '';
+
+        if (is_array($company)) {
+            $company_name = trim((string) ($company['company'] ?? ''));
+        } elseif (is_string($company)) {
+            $company_name = trim($company);
+        }
+
+        if ($first_product_name !== '') {
+            $order_context_text = $first_product_name;
+        } elseif ($company_name !== '') {
+            $order_context_text = $company_name;
+        }
+
+        if ($order_context_text !== '') {
+            $order_line_plain .= ', ' . $order_context_text;
+            $order_line_html .= ', ' . htmlspecialchars($order_context_text, ENT_QUOTES, 'UTF-8');
+        }
+
+        $order_url = fn_url('orders.details?order_id=' . $order_id_int, 'C', 'current', CART_LANGUAGE, true);
+        $order_url_html = htmlspecialchars($order_url, ENT_QUOTES, 'UTF-8');
+    }
 
     $details_plain = [
-        'Новое сообщение по заказу ' . (string) $order_id,
+        $order_line_plain,
         '- Кто написал: ' . ($is_admin ? 'Администратор' : 'Клиент'),
-        'Для ответа перейдите в админку ' . Registry::get('config.http_host') . ': ' . $admin_url,
+        'Для ответа перейдите в админку ' . $http_host_plain . ': ' . $admin_url,
     ];
     $details_html = [
-        'Новое сообщение по заказу ' . htmlspecialchars((string) $order_id, ENT_QUOTES, 'UTF-8'),
+        $order_line_html,
         '- Кто написал: ' . htmlspecialchars($is_admin ? 'Администратор' : 'Клиент', ENT_QUOTES, 'UTF-8'),
-        'Для ответа перейдите в админку ' . $http_host . ': <a href="' . htmlspecialchars($admin_url, ENT_QUOTES, 'UTF-8') . '">URL</a>',
+        'Для ответа перейдите в админку ' . $http_host . ': <a href="' . $admin_url_html . '">URL</a>',
     ];
 
     $message_author_telegram = fn_mwl_xlsx_get_user_telegram((int) ($last_message_user_id ?? 0));
@@ -1956,29 +1994,13 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
     $text_telegram = implode("\n\n", $text_parts_plain);
 
     $customer_message_lines = [];
-    $customer_message_lines[] = $text_parts_plain[0];
+    $customer_message_lines[] = nl2br(htmlspecialchars($text_parts_plain[0], ENT_QUOTES, 'UTF-8'), false);
 
     $customer_details_lines = [];
 
-    if ($order_id !== null) {
-        $company_name = '';
-
-        if (is_array($company)) {
-            $company_name = trim((string) ($company['company'] ?? ''));
-        } elseif (is_string($company)) {
-            $company_name = trim($company);
-        }
-
-        $order_line = 'Новое сообщение по заказу ' . (string) $order_id;
-
-        if ($company_name !== '') {
-            $order_line .= ', ' . $company_name;
-        }
-
-        $customer_details_lines[] = $order_line;
-
-        $order_url = fn_url('orders.details?order_id=' . (int) $order_id, 'C', 'current', CART_LANGUAGE, true);
-        $customer_details_lines[] = 'Для ответа перейдите на страницу заказа ' . Registry::get('config.http_host') . ': ' . $order_url;
+    if ($order_url !== '') {
+        $customer_details_lines[] = $order_line_html;
+        $customer_details_lines[] = 'Для ответа перейдите на <a href="' . $order_url_html . '">страницу заказа ' . $http_host . '</a>';
     }
 
     if ($customer_details_lines) {
@@ -2002,11 +2024,26 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
     if ($token && $chat_id) {
         // Telegram Bot API
         $url = "https://api.telegram.org/bot{$token}/sendMessage";
-        $resp = Http::post($url, [
+        $message_payload = [
             'chat_id'    => $chat_id,
             'text'       => $text_telegram,
             'parse_mode' => 'HTML',
-        ], [
+        ];
+
+        if ($order_url !== '') {
+            $message_payload['reply_markup'] = json_encode([
+                'inline_keyboard' => [
+                    [
+                        [
+                            'text' => 'Ответить',
+                            'url'  => $order_url,
+                        ],
+                    ],
+                ],
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
+
+        $resp = Http::post($url, $message_payload, [
             'timeout'    => 10,
             'headers'    => [
                 'Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -2023,11 +2060,26 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
             $event_repository->markProcessed($event_id, EventRepository::STATUS_FAILED, $error_message);
         } else {
             if ($customer_chat_id !== '' && $customer_chat_id !== $chat_id) {
-                $customer_resp_raw = Http::post($url, [
+                $customer_payload = [
                     'chat_id'    => $customer_chat_id,
                     'text'       => $customer_text_telegram !== '' ? $customer_text_telegram : $text_telegram,
                     'parse_mode' => 'HTML',
-                ], [
+                ];
+
+                if ($order_url !== '') {
+                    $customer_payload['reply_markup'] = $message_payload['reply_markup'] ?? json_encode([
+                        'inline_keyboard' => [
+                            [
+                                [
+                                    'text' => 'Ответить',
+                                    'url'  => $order_url,
+                                ],
+                            ],
+                        ],
+                    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                }
+
+                $customer_resp_raw = Http::post($url, $customer_payload, [
                     'timeout'    => 10,
                     'headers'    => [
                         'Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8',
