@@ -159,6 +159,62 @@ msgctxt "Languages::mwl_xlsx.settings_backup"
 msgid "Backup settings"
 msgstr "Резерв настроек"
 
+msgctxt "Languages::mwl_xlsx_vc_new_message_order"
+msgid "New message for order [order_id]"
+msgstr "Новое сообщение по заказу [order_id]"
+
+msgctxt "Languages::mwl_xlsx_vc_author_admin"
+msgid "Admin"
+msgstr "Администратор"
+
+msgctxt "Languages::mwl_xlsx_vc_author_customer"
+msgid "Customer"
+msgstr "Клиент"
+
+msgctxt "Languages::mwl_xlsx_vc_planfix_author_line"
+msgid "- Author: [author]"
+msgstr "- Кто написал: [author]"
+
+msgctxt "Languages::mwl_xlsx_vc_planfix_admin_link"
+msgid "To reply, go to the admin area [host]: <a href=\"[url]\">URL</a>"
+msgstr "Для ответа перейдите в админку [host]: <a href=\"[url]\">URL</a>"
+
+msgctxt "Languages::mwl_xlsx_vc_planfix_telegram"
+msgid "Telegram: [handle]"
+msgstr "Telegram: [handle]"
+
+msgctxt "Languages::mwl_xlsx_vc_planfix_email"
+msgid "Email: [email]"
+msgstr "Email: [email]"
+
+msgctxt "Languages::mwl_xlsx_vc_planfix_company"
+msgid "Company: [company]"
+msgstr "Компания: [company]"
+
+msgctxt "Languages::mwl_xlsx_vc_planfix_company_email"
+msgid "Company email: [email]"
+msgstr "Email компании: [email]"
+
+msgctxt "Languages::mwl_xlsx_vc_planfix_company_phone"
+msgid "Company phone: [phone]"
+msgstr "Телефон компании: [phone]"
+
+msgctxt "Languages::mwl_xlsx_vc_admin_reply_link"
+msgid "To reply, go to the <a href=\"[url]\">order page on [host]</a>"
+msgstr "Для ответа перейдите на <a href=\"[url]\">страницу заказа [host]</a>"
+
+msgctxt "Languages::mwl_xlsx_vc_customer_reply_link"
+msgid "To reply, go to the <a href=\"[url]\">order page on [host]</a>"
+msgstr "Для ответа перейдите на <a href=\"[url]\">страницу заказа [host]</a>"
+
+msgctxt "Languages::mwl_xlsx_vc_customer_telegram_label"
+msgid "Customer Telegram: [handle]"
+msgstr "Telegram покупателя: [handle]"
+
+msgctxt "Languages::mwl_xlsx_vc_button_reply"
+msgid "Reply"
+msgstr "Ответить"
+
 msgctxt "Languages::mwl_xlsx.settings_backup_done"
 msgid "Settings backup updated"
 msgstr "Резервная копия настроек обновлена"

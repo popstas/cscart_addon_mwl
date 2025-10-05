@@ -199,6 +199,61 @@ function fn_mwl_planfix_get_webhook_allowlist_ips(): array
     return fn_mwl_planfix_integration_settings()->getWebhookAllowlistIps();
 }
 
+function fn_mwl_xlsx_order_details_has_column(string $column): bool
+{
+    static $columns;
+
+    if ($columns === null) {
+        $fields = db_get_fields('SHOW COLUMNS FROM ?:order_details');
+
+        if (!is_array($fields)) {
+            $fields = [];
+        }
+
+        $columns = array_fill_keys($fields, true);
+    }
+
+    return isset($columns[$column]);
+}
+
+function fn_mwl_xlsx_resolve_lang_code(?string $lang_code): string
+{
+    static $available_langs = null;
+
+    if ($available_langs === null) {
+        $available_langs = [];
+        $languages = fn_get_languages(['include_hidden' => true]);
+
+        foreach ($languages as $code => $language) {
+            $available_langs[strtolower((string) $code)] = (string) $code;
+        }
+    }
+
+    $lang_code_normalized = strtolower((string) $lang_code);
+
+    if ($lang_code_normalized === '' || !isset($available_langs[$lang_code_normalized])) {
+        $lang_code_normalized = strtolower((string) CART_LANGUAGE);
+    }
+
+    return $available_langs[$lang_code_normalized] ?? (string) CART_LANGUAGE;
+}
+
+function fn_mwl_xlsx_get_order_lang_code(?int $order_id): string
+{
+    if ($order_id === null) {
+        return fn_mwl_xlsx_resolve_lang_code(null);
+    }
+
+    static $lang_cache = [];
+
+    if (!isset($lang_cache[$order_id])) {
+        $order_lang_code = db_get_field('SELECT lang_code FROM ?:orders WHERE order_id = ?i', $order_id);
+        $lang_cache[$order_id] = fn_mwl_xlsx_resolve_lang_code($order_lang_code);
+    }
+
+    return $lang_cache[$order_id];
+}
+
 function fn_mwl_planfix_mcp_client(bool $force_reload = false): McpClient
 {
     static $client;
@@ -1271,6 +1326,111 @@ function fn_mwl_xlsx_normalize_telegram_chat_id(string $chat_id): string
     return '@' . ltrim($chat_id, '@');
 }
 
+function fn_mwl_xlsx_get_chat_id_by_username(string $token, string $username): string
+{
+    $token = trim($token);
+    $username = trim($username);
+
+    if ($token === '' || $username === '') {
+        return '';
+    }
+
+    $normalized_username = ltrim($username, '@');
+
+    if ($normalized_username === '') {
+        return '';
+    }
+
+    $username_with_at = '@' . $normalized_username;
+    $base_url = "https://api.telegram.org/bot{$token}";
+    $options_base = [
+        'timeout'    => 10,
+        'log_result' => true,
+    ];
+
+    $get_chat_response = Http::get(
+        $base_url . '/getChat',
+        ['chat_id' => $username_with_at],
+        array_merge($options_base, ['log_pre' => 'mwl_xlsx.telegram_get_chat'])
+    );
+
+    if ($get_chat_response) {
+        $decoded = json_decode($get_chat_response, true);
+
+        if (!empty($decoded['ok']) && isset($decoded['result']['id'])) {
+            return (string) $decoded['result']['id'];
+        }
+    }
+
+    $updates_response = Http::get(
+        $base_url . '/getUpdates',
+        [],
+        array_merge($options_base, ['log_pre' => 'mwl_xlsx.telegram_get_updates'])
+    );
+
+    if (!$updates_response) {
+        return '';
+    }
+
+    $updates = json_decode($updates_response, true);
+
+    if (empty($updates['ok']) || empty($updates['result']) || !is_array($updates['result'])) {
+        return '';
+    }
+
+    $needle = fn_strtolower($normalized_username);
+
+    foreach ($updates['result'] as $update) {
+        if (!is_array($update)) {
+            continue;
+        }
+
+        $messages = [];
+
+        foreach (['message', 'edited_message', 'channel_post', 'edited_channel_post'] as $key) {
+            if (isset($update[$key]) && is_array($update[$key])) {
+                $messages[] = $update[$key];
+            }
+        }
+
+        if (isset($update['callback_query']) && is_array($update['callback_query'])) {
+            $callback_query = $update['callback_query'];
+
+            if (isset($callback_query['message']) && is_array($callback_query['message'])) {
+                $messages[] = $callback_query['message'];
+            }
+
+            if (isset($callback_query['from']) && is_array($callback_query['from'])) {
+                $messages[] = ['from' => $callback_query['from']];
+            }
+        }
+
+        foreach ($messages as $message) {
+            if (!is_array($message)) {
+                continue;
+            }
+
+            if (isset($message['from']) && is_array($message['from'])) {
+                $from = $message['from'];
+
+                if (isset($from['username']) && fn_strtolower((string) $from['username']) === $needle && isset($from['id'])) {
+                    return (string) $from['id'];
+                }
+            }
+
+            if (isset($message['chat']) && is_array($message['chat'])) {
+                $chat = $message['chat'];
+
+                if (isset($chat['username']) && fn_strtolower((string) $chat['username']) === $needle && isset($chat['id'])) {
+                    return (string) $chat['id'];
+                }
+            }
+        }
+    }
+
+    return '';
+}
+
 function fn_mwl_xlsx_url($list_id)
 {
     $list_id = (int) $list_id;
@@ -1803,114 +1963,261 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
     $message_body_plain = str_replace(["\r\n", "\r"], "\n", (string) $last_message);
     $message_body_plain = str_replace(["\r\n", "\r"], "\n", $message_body_plain);
 
-    $http_host = htmlspecialchars(Registry::get('config.http_host'), ENT_QUOTES, 'UTF-8');
-    $admin_url = fn_url($action_url, 'A', 'current', CART_LANGUAGE, true);
+    $order_lang_code = fn_mwl_xlsx_get_order_lang_code($order_id !== null ? (int) $order_id : null);
 
-    $details_plain = [
-        'Новое сообщение по заказу ' . (string) $order_id,
-        '- Кто написал: ' . ($is_admin ? 'Администратор' : 'Клиент'),
-        'Для ответа перейдите в админку ' . Registry::get('config.http_host') . ': ' . $admin_url,
+    $http_host_raw = (string) Registry::get('config.http_host');
+    $http_host = htmlspecialchars($http_host_raw, ENT_QUOTES, 'UTF-8');
+    $admin_url = fn_url($action_url, 'A', 'current', $order_lang_code, true);
+    $admin_url_html = htmlspecialchars($admin_url, ENT_QUOTES, 'UTF-8');
+
+    $order_id_display = $order_id !== null ? (string) $order_id : '';
+    $order_line_plain = __('mwl_xlsx_vc_new_message_order', ['[order_id]' => $order_id_display], $order_lang_code);
+    $order_line_html = htmlspecialchars($order_line_plain, ENT_QUOTES, 'UTF-8');
+    $order_context_text = '';
+    $order_url = '';
+    $order_url_html = '';
+
+    if ($order_id !== null) {
+        $order_id_int = (int) $order_id;
+        $first_product_name = '';
+
+        $select_fields = ['od.product_id'];
+
+        if (fn_mwl_xlsx_order_details_has_column('product')) {
+            $select_fields[] = 'od.product';
+        }
+
+        $first_product = db_get_row(
+            'SELECT ' . implode(', ', $select_fields) . ' FROM ?:order_details AS od WHERE od.order_id = ?i ORDER BY od.item_id ASC LIMIT 1',
+            $order_id_int
+        );
+
+        if ($first_product) {
+            if (!empty($first_product['product'])) {
+                $first_product_name = (string) $first_product['product'];
+            }
+
+            if ($first_product_name === '' && !empty($first_product['product_id'])) {
+                $first_product_name = (string) db_get_field(
+                    'SELECT product FROM ?:product_descriptions WHERE product_id = ?i AND lang_code = ?s',
+                    (int) $first_product['product_id'],
+                    $order_lang_code
+                );
+            }
+        }
+
+        $company_name = '';
+
+        if (is_array($company)) {
+            $company_name = trim((string) ($company['company'] ?? ''));
+        } elseif (is_string($company)) {
+            $company_name = trim($company);
+        }
+
+        if ($first_product_name !== '') {
+            $order_context_text = $first_product_name;
+        } elseif ($company_name !== '') {
+            $order_context_text = $company_name;
+        }
+
+        if ($order_context_text !== '') {
+            $order_line_plain .= ', ' . $order_context_text;
+            $order_line_html .= ', ' . htmlspecialchars($order_context_text, ENT_QUOTES, 'UTF-8');
+        }
+
+        $order_url = fn_url('orders.details?order_id=' . $order_id_int, 'C', 'current', $order_lang_code, true);
+        $order_url_html = htmlspecialchars($order_url, ENT_QUOTES, 'UTF-8');
+    }
+
+    $author_lang_var = $is_admin ? 'mwl_xlsx_vc_author_admin' : 'mwl_xlsx_vc_author_customer';
+    $author_label = __($author_lang_var, [], $order_lang_code);
+    $author_label_html = htmlspecialchars($author_label, ENT_QUOTES, 'UTF-8');
+
+    $planfix_details = [
+        $order_line_html,
+        __('mwl_xlsx_vc_planfix_author_line', ['[author]' => $author_label_html], $order_lang_code),
+        __('mwl_xlsx_vc_planfix_admin_link', ['[host]' => $http_host, '[url]' => $admin_url_html], $order_lang_code),
     ];
-    $details_html = [
-        'Новое сообщение по заказу ' . htmlspecialchars((string) $order_id, ENT_QUOTES, 'UTF-8'),
-        '- Кто написал: ' . htmlspecialchars($is_admin ? 'Администратор' : 'Клиент', ENT_QUOTES, 'UTF-8'),
-        'Для ответа перейдите в админку ' . $http_host . ': <a href="' . htmlspecialchars($admin_url, ENT_QUOTES, 'UTF-8') . '">URL</a>',
-    ];
+
+    $token = trim((string) Registry::get('addons.mwl_xlsx.telegram_bot_token'));
+    $chat_id = trim((string) Registry::get('addons.mwl_xlsx.telegram_chat_id'));
 
     $message_author_telegram = fn_mwl_xlsx_get_user_telegram((int) ($last_message_user_id ?? 0));
+    $customer_telegram_display = '';
+    $customer_telegram_display_html = '';
 
     if ($message_author_telegram !== '') {
-        $details_plain[] = 'Telegram: ' . $message_author_telegram;
-        $details_html[] = 'Telegram: ' . htmlspecialchars($message_author_telegram, ENT_QUOTES, 'UTF-8');
+        $normalized_handle = ltrim($message_author_telegram, '@');
+        $customer_telegram_display = '@' . $normalized_handle;
+        $customer_telegram_display_html = htmlspecialchars($customer_telegram_display, ENT_QUOTES, 'UTF-8');
+        $planfix_details[] = __('mwl_xlsx_vc_planfix_telegram', ['[handle]' => $customer_telegram_display_html], $order_lang_code);
     }
+
+    if ($customer_email !== null && $customer_email !== '') {
+        $planfix_details[] = __('mwl_xlsx_vc_planfix_email', ['[email]' => htmlspecialchars((string) $customer_email, ENT_QUOTES, 'UTF-8')], $order_lang_code);
+    }
+
+    if ($company !== null) {
+        if (is_array($company)) {
+            if (!empty($company['company'])) {
+                $planfix_details[] = __('mwl_xlsx_vc_planfix_company', ['[company]' => htmlspecialchars((string) $company['company'], ENT_QUOTES, 'UTF-8')], $order_lang_code);
+            }
+            if (!empty($company['email'])) {
+                $planfix_details[] = __('mwl_xlsx_vc_planfix_company_email', ['[email]' => htmlspecialchars((string) $company['email'], ENT_QUOTES, 'UTF-8')], $order_lang_code);
+            }
+            if (!empty($company['phone'])) {
+                $planfix_details[] = __('mwl_xlsx_vc_planfix_company_phone', ['[phone]' => htmlspecialchars((string) $company['phone'], ENT_QUOTES, 'UTF-8')], $order_lang_code);
+            }
+        } elseif (is_string($company) && $company !== '') {
+            $planfix_details[] = __('mwl_xlsx_vc_planfix_company', ['[company]' => htmlspecialchars($company, ENT_QUOTES, 'UTF-8')], $order_lang_code);
+        }
+    }
+
+    $planfix_details = array_values(array_filter($planfix_details, static function ($line) {
+        return $line !== '';
+    }));
+
+    $customer_message_intro_plain = $message_author_plain . ': ' . $message_body_plain;
+    $customer_message_lines = [];
+    $customer_message_lines[] = nl2br(htmlspecialchars($customer_message_intro_plain, ENT_QUOTES, 'UTF-8'), false);
+
+    $admin_message_intro_html = $message_author_text . ': ' . $last_message_html;
+    $admin_details_html = [];
+
+    if ($order_line_html !== '') {
+        $admin_details_html[] = $order_line_html;
+    }
+
+    $admin_details_html[] = __('mwl_xlsx_vc_admin_reply_link', ['[url]' => $admin_url_html, '[host]' => $http_host], $order_lang_code);
+
+    if ($customer_telegram_display_html !== '') {
+        $admin_details_html[] = __('mwl_xlsx_vc_customer_telegram_label', ['[handle]' => $customer_telegram_display_html], $order_lang_code);
+    }
+
+    $admin_message_parts_html = [$admin_message_intro_html];
+
+    if ($admin_details_html) {
+        $admin_message_parts_html[] = implode("\n", $admin_details_html);
+    }
+
+    $text_telegram = implode("\n\n", $admin_message_parts_html);
+
+    $customer_details_lines = [];
+
+    if ($order_url !== '') {
+        $customer_details_lines[] = $order_line_html;
+        $customer_details_lines[] = __('mwl_xlsx_vc_customer_reply_link', ['[url]' => $order_url_html, '[host]' => $http_host], $order_lang_code);
+    }
+
+    if ($customer_details_lines) {
+        $customer_message_lines[] = implode("\n", $customer_details_lines);
+    }
+
+    $customer_text_telegram = implode("\n\n", array_values(array_filter($customer_message_lines, static function ($line) {
+        return $line !== '';
+    })));
+
+    $planfix_parts_html = [$admin_message_intro_html];
+
+    if ($planfix_details) {
+        $planfix_parts_html[] = '<span style="color:#888888;font-size:smaller;">' . implode('<br>', $planfix_details) . '</span>';
+    }
+
+    $planfix_message = implode('<br><br>', $planfix_parts_html);
 
     $customer_chat_id = '';
 
-    if ($is_admin && $message_author_telegram !== '') {
-        $customer_chat_id = fn_mwl_xlsx_normalize_telegram_chat_id($message_author_telegram);
+    if ($is_admin && $message_author_telegram !== '' && $token !== '') {
+        $customer_chat_id = fn_mwl_xlsx_get_chat_id_by_username($token, $message_author_telegram);
     }
 
-    $details_plain = array_values(array_filter($details_plain, static function ($line) {
-        return $line !== '';
-    }));
+    $error_message = null;
+    $url = '';
 
-    $details_html = array_values(array_filter($details_html, static function ($line) {
-        return $line !== '';
-    }));
+    if (!$is_admin) {
+        if ($token !== '' && $chat_id !== '') {
+            $url = "https://api.telegram.org/bot{$token}/sendMessage";
+            $message_payload = [
+                'chat_id'    => $chat_id,
+                'text'       => $text_telegram,
+                'parse_mode' => 'HTML',
+            ];
 
-    $text_parts_plain = [];
-    $text_parts_plain[] = $message_author_plain . ': ' . $message_body_plain;
+            if ($admin_url !== '') {
+                $message_payload['reply_markup'] = json_encode([
+                    'inline_keyboard' => [
+                        [
+                            [
+                                'text' => __('mwl_xlsx_vc_button_reply', [], $order_lang_code),
+                                'url'  => $admin_url,
+                            ],
+                        ],
+                    ],
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            }
 
-    if ($details_plain) {
-        $text_parts_plain[] = implode("\n", $details_plain);
-    }
+            $resp_raw = Http::post($url, $message_payload, [
+                'timeout'    => 10,
+                'headers'    => [
+                    'Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8',
+                ],
+                'log_pre'    => 'mwl_xlsx.telegram_vc_request',
+                'log_result' => true,
+            ]);
 
-    $text_telegram = implode("\n\n", $text_parts_plain);
-
-    $text_parts_html = [];
-    $text_parts_html[] = $message_author_text . ': ' . $last_message_html;
-
-    if ($details_html) {
-        $text_parts_html[] = '<span style="color:#888888;font-size:smaller;">' . implode('<br>', $details_html) . '</span>';
-    }
-
-    $planfix_message = implode('<br><br>', $text_parts_html);
-
-    // Отправляем в Telegram
-    $token = trim((string) Registry::get('addons.mwl_xlsx.telegram_bot_token'));
-    $chat_id = trim((string) Registry::get('addons.mwl_xlsx.telegram_chat_id'));
-    
-    
-    if ($token && $chat_id) {
-        // Telegram Bot API
+            $resp = $resp_raw ? json_decode($resp_raw, true) : null;
+            if (empty($resp['ok'])) {
+                $error_message = 'Failed to send Telegram notification for VC event: ' . print_r($resp, true);
+                error_log($error_message);
+            }
+        } else {
+            $error_message = 'Telegram bot token or chat_id not configured for VC notifications';
+            error_log($error_message);
+        }
+    } elseif ($token !== '') {
         $url = "https://api.telegram.org/bot{$token}/sendMessage";
-        $resp = Http::post($url, [
-            'chat_id'    => $chat_id,
-            'text'       => $text_telegram,
+    }
+
+    if ($error_message === null && $token !== '' && $customer_chat_id !== '' && $customer_chat_id !== $chat_id) {
+        $customer_payload = [
+            'chat_id'    => $customer_chat_id,
+            'text'       => $customer_text_telegram !== '' ? $customer_text_telegram : $text_telegram,
             'parse_mode' => 'HTML',
-        ], [
+        ];
+
+        if ($order_url !== '') {
+            $customer_payload['reply_markup'] = json_encode([
+                'inline_keyboard' => [
+                    [
+                        [
+                            'text' => __('mwl_xlsx_vc_button_reply', [], $order_lang_code),
+                            'url'  => $order_url,
+                        ],
+                    ],
+                ],
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
+
+        $customer_resp_raw = Http::post($url, $customer_payload, [
             'timeout'    => 10,
             'headers'    => [
                 'Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8',
             ],
-            'log_pre'    => 'mwl_xlsx.telegram_vc_request',
+            'log_pre'    => 'mwl_xlsx.telegram_vc_customer',
             'log_result' => true,
         ]);
-        $ok = $resp && ($resp = json_decode($resp, true)) && !empty($resp['ok']);
-        
-        $error_message = null;
-        if (!$ok) {
-            $error_message = 'Failed to send Telegram notification for VC event: ' . print_r($resp, true);
-            error_log($error_message);
-            $event_repository->markProcessed($event_id, EventRepository::STATUS_FAILED, $error_message);
-        } else {
-            if ($customer_chat_id !== '' && $customer_chat_id !== $chat_id) {
-                $customer_resp_raw = Http::post($url, [
-                    'chat_id'    => $customer_chat_id,
-                    'text'       => $text_telegram,
-                    'parse_mode' => 'HTML',
-                ], [
-                    'timeout'    => 10,
-                    'headers'    => [
-                        'Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8',
-                    ],
-                    'log_pre'    => 'mwl_xlsx.telegram_vc_customer',
-                    'log_result' => true,
-                ]);
 
-                $customer_resp = $customer_resp_raw ? json_decode($customer_resp_raw, true) : null;
+        $customer_resp = $customer_resp_raw ? json_decode($customer_resp_raw, true) : null;
 
-                if (empty($customer_resp['ok'])) {
-                    error_log('Failed to send Telegram notification to customer: ' . print_r($customer_resp, true));
-                }
-            }
-
-            $event_repository->markProcessed($event_id, EventRepository::STATUS_PROCESSED);
+        if (empty($customer_resp['ok'])) {
+            error_log('Failed to send Telegram notification to customer: ' . print_r($customer_resp, true));
         }
-    } else {
-        $error_message = 'Telegram bot token or chat_id not configured for VC notifications';
-        error_log($error_message);
+    }
+
+    if ($error_message !== null) {
         $event_repository->markProcessed($event_id, EventRepository::STATUS_FAILED, $error_message);
+    } else {
+        $event_repository->markProcessed($event_id, EventRepository::STATUS_PROCESSED);
     }
 
     // Отправляем в Планфикс
