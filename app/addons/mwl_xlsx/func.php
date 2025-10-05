@@ -1925,8 +1925,7 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
     $message_body_plain = str_replace(["\r\n", "\r"], "\n", (string) $last_message);
     $message_body_plain = str_replace(["\r\n", "\r"], "\n", $message_body_plain);
 
-    $http_host_plain = (string) Registry::get('config.http_host');
-    $http_host = htmlspecialchars($http_host_plain, ENT_QUOTES, 'UTF-8');
+    $http_host = htmlspecialchars((string) Registry::get('config.http_host'), ENT_QUOTES, 'UTF-8');
     $admin_url = fn_url($action_url, 'A', 'current', CART_LANGUAGE, true);
     $admin_url_html = htmlspecialchars($admin_url, ENT_QUOTES, 'UTF-8');
 
@@ -1988,52 +1987,72 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
         $order_url_html = htmlspecialchars($order_url, ENT_QUOTES, 'UTF-8');
     }
 
-    $details_plain = [
-        $order_line_plain,
-        '- Кто написал: ' . ($is_admin ? 'Администратор' : 'Клиент'),
-        'Для ответа перейдите в админку ' . $http_host_plain . ': ' . $admin_url,
-    ];
-    $details_html = [
+    $planfix_details = [
         $order_line_html,
         '- Кто написал: ' . htmlspecialchars($is_admin ? 'Администратор' : 'Клиент', ENT_QUOTES, 'UTF-8'),
         'Для ответа перейдите в админку ' . $http_host . ': <a href="' . $admin_url_html . '">URL</a>',
     ];
 
-    $message_author_telegram = fn_mwl_xlsx_get_user_telegram((int) ($last_message_user_id ?? 0));
-
-    if ($message_author_telegram !== '') {
-        $details_plain[] = 'Telegram: ' . $message_author_telegram;
-        $details_html[] = 'Telegram: ' . htmlspecialchars($message_author_telegram, ENT_QUOTES, 'UTF-8');
-    }
-
     $token = trim((string) Registry::get('addons.mwl_xlsx.telegram_bot_token'));
     $chat_id = trim((string) Registry::get('addons.mwl_xlsx.telegram_chat_id'));
 
-    $customer_chat_id = '';
+    $message_author_telegram = fn_mwl_xlsx_get_user_telegram((int) ($last_message_user_id ?? 0));
+    $customer_telegram_display = '';
 
-    if ($is_admin && $message_author_telegram !== '' && $token !== '') {
-        $customer_chat_id = fn_mwl_xlsx_get_chat_id_by_username($token, $message_author_telegram);
+    if ($message_author_telegram !== '') {
+        $normalized_handle = ltrim($message_author_telegram, '@');
+        $customer_telegram_display = '@' . $normalized_handle;
+        $planfix_details[] = 'Telegram: ' . htmlspecialchars($customer_telegram_display, ENT_QUOTES, 'UTF-8');
     }
 
-    $details_plain = array_values(array_filter($details_plain, static function ($line) {
+    if ($customer_email !== null && $customer_email !== '') {
+        $planfix_details[] = 'Email: ' . htmlspecialchars((string) $customer_email, ENT_QUOTES, 'UTF-8');
+    }
+
+    if ($company !== null) {
+        if (is_array($company)) {
+            if (!empty($company['company'])) {
+                $planfix_details[] = 'Компания: ' . htmlspecialchars((string) $company['company'], ENT_QUOTES, 'UTF-8');
+            }
+            if (!empty($company['email'])) {
+                $planfix_details[] = 'Email компании: ' . htmlspecialchars((string) $company['email'], ENT_QUOTES, 'UTF-8');
+            }
+            if (!empty($company['phone'])) {
+                $planfix_details[] = 'Телефон компании: ' . htmlspecialchars((string) $company['phone'], ENT_QUOTES, 'UTF-8');
+            }
+        } elseif (is_string($company) && $company !== '') {
+            $planfix_details[] = 'Компания: ' . htmlspecialchars($company, ENT_QUOTES, 'UTF-8');
+        }
+    }
+
+    $planfix_details = array_values(array_filter($planfix_details, static function ($line) {
         return $line !== '';
     }));
 
-    $details_html = array_values(array_filter($details_html, static function ($line) {
-        return $line !== '';
-    }));
-
-    $text_parts_plain = [];
-    $text_parts_plain[] = $message_author_plain . ': ' . $message_body_plain;
-
-    if ($details_plain) {
-        $text_parts_plain[] = implode("\n", $details_plain);
-    }
-
-    $text_telegram = implode("\n\n", $text_parts_plain);
-
+    $customer_message_intro_plain = $message_author_plain . ': ' . $message_body_plain;
     $customer_message_lines = [];
-    $customer_message_lines[] = nl2br(htmlspecialchars($text_parts_plain[0], ENT_QUOTES, 'UTF-8'), false);
+    $customer_message_lines[] = nl2br(htmlspecialchars($customer_message_intro_plain, ENT_QUOTES, 'UTF-8'), false);
+
+    $admin_message_intro_html = $message_author_text . ': ' . $last_message_html;
+    $admin_details_html = [];
+
+    if ($order_line_html !== '') {
+        $admin_details_html[] = $order_line_html;
+    }
+
+    $admin_details_html[] = 'Для ответа перейдите на <a href="' . $admin_url_html . '">страницу заказа ' . $http_host . '</a>';
+
+    if ($customer_telegram_display !== '') {
+        $admin_details_html[] = 'Telegram покупателя: ' . htmlspecialchars($customer_telegram_display, ENT_QUOTES, 'UTF-8');
+    }
+
+    $admin_message_parts_html = [$admin_message_intro_html];
+
+    if ($admin_details_html) {
+        $admin_message_parts_html[] = implode("\n", $admin_details_html);
+    }
+
+    $text_telegram = implode("\n\n", $admin_message_parts_html);
 
     $customer_details_lines = [];
 
@@ -2050,14 +2069,19 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
         return $line !== '';
     })));
 
-    $text_parts_html = [];
-    $text_parts_html[] = $message_author_text . ': ' . $last_message_html;
+    $planfix_parts_html = [$admin_message_intro_html];
 
-    if ($details_html) {
-        $text_parts_html[] = '<span style="color:#888888;font-size:smaller;">' . implode('<br>', $details_html) . '</span>';
+    if ($planfix_details) {
+        $planfix_parts_html[] = '<span style="color:#888888;font-size:smaller;">' . implode('<br>', $planfix_details) . '</span>';
     }
 
-    $planfix_message = implode('<br><br>', $text_parts_html);
+    $planfix_message = implode('<br><br>', $planfix_parts_html);
+
+    $customer_chat_id = '';
+
+    if ($is_admin && $message_author_telegram !== '' && $token !== '') {
+        $customer_chat_id = fn_mwl_xlsx_get_chat_id_by_username($token, $message_author_telegram);
+    }
 
     // Отправляем в Telegram
     if ($token && $chat_id) {
@@ -2069,13 +2093,13 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
             'parse_mode' => 'HTML',
         ];
 
-        if ($order_url !== '') {
+        if ($admin_url !== '') {
             $message_payload['reply_markup'] = json_encode([
                 'inline_keyboard' => [
                     [
                         [
                             'text' => 'Ответить',
-                            'url'  => $order_url,
+                            'url'  => $admin_url,
                         ],
                     ],
                 ],
@@ -2106,7 +2130,7 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
                 ];
 
                 if ($order_url !== '') {
-                    $customer_payload['reply_markup'] = $message_payload['reply_markup'] ?? json_encode([
+                    $customer_payload['reply_markup'] = json_encode([
                         'inline_keyboard' => [
                             [
                                 [
