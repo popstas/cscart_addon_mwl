@@ -12,7 +12,16 @@ use Google\Service\Sheets;
 use Google\Service\Sheets\Spreadsheet;
 
 if ($mode === 'planfix_changed_status') {
-    fn_mwl_planfix_handle_planfix_status_webhook();
+    $handler = fn_mwl_planfix_webhook_handler();
+    $raw_body = file_get_contents('php://input');
+    $response = $handler->handleStatusWebhook($_SERVER, is_string($raw_body) ? $raw_body : '', $_REQUEST);
+
+    foreach ($response->getHeaders() as $header => $value) {
+        header($header . ': ' . $value);
+    }
+
+    fn_mwl_planfix_output_json($response->getStatusCode(), $response->getPayload());
+
     return [CONTROLLER_STATUS_NO_CONTENT];
 }
 

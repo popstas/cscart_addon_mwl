@@ -46,7 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'planfix_create_task') {
         return [CONTROLLER_STATUS_OK, $return_url];
     }
 
-    $result = fn_mwl_planfix_create_task_for_order($order_id, $order_info);
+    $planfix_service = fn_mwl_planfix_service();
+    $result = $planfix_service->createTaskForOrder($order_id, $order_info);
 
     if (defined('AJAX_REQUEST')) {
         Tygh::$app['ajax']->assign('success', (bool) ($result['success'] ?? false));
@@ -94,7 +95,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'planfix_bind_task') {
 
     $company_id = (int) db_get_field('SELECT company_id FROM ?:orders WHERE order_id = ?i', $order_id);
 
-    $result = fn_mwl_planfix_bind_task_to_order($order_id, $company_id, $planfix_task_id, $planfix_object_type);
+    $planfix_service = fn_mwl_planfix_service();
+    $result = $planfix_service->bindTaskToOrder($order_id, $company_id, $planfix_task_id, $planfix_object_type);
 
     if (!empty($result['success'])) {
         fn_set_notification('N', __('notice'), $result['message']);
