@@ -29,12 +29,10 @@ if (!fn_mwl_xlsx_access_service()->canAccessLists($auth)) {
     return [CONTROLLER_STATUS_DENIED];
 }
 
+$list_service = fn_mwl_xlsx_list_service();
+
 if ($mode === 'manage') {
-    if (!empty($auth['user_id'])) {
-        $lists = fn_mwl_xlsx_get_lists($auth['user_id']);
-    } else {
-        $lists = fn_mwl_xlsx_get_lists(null, Tygh::$app['session']->getID());
-    }
+    $lists = $list_service->getLists($auth['user_id'] ?? null);
     Tygh::$app['view']->assign('lists', $lists);
     Tygh::$app['view']->assign('page_title', __('mwl_xlsx.my_lists'));
     Tygh::$app['view']->assign('breadcrumbs', [
@@ -44,7 +42,7 @@ if ($mode === 'manage') {
 }
 
 if ($mode === 'settings') {
-    $settings = fn_mwl_xlsx_get_user_settings($auth);
+    $settings = $list_service->getUserSettings($auth);
     Tygh::$app['view']->assign('user_settings', $settings);
     Tygh::$app['view']->assign('page_title', __('mwl_xlsx.settings'));
     Tygh::$app['view']->assign('breadcrumbs', [
@@ -57,7 +55,7 @@ if ($mode === 'settings') {
 if ($mode === 'view') {
     // get list data
     $list_id = (int) $_REQUEST['list_id'];
-    $list = fn_mwl_xlsx_get_list($list_id, $auth);
+    $list = $list_service->getList($list_id, $auth);
     if (!$list) {
         return [CONTROLLER_STATUS_NO_PAGE];
     }
@@ -88,7 +86,7 @@ if ($mode === 'export') {
 
     // get list data
     $list_id = (int) $_REQUEST['list_id'];
-    $list = fn_mwl_xlsx_get_list($list_id, $auth);
+    $list = $list_service->getList($list_id, $auth);
     if (!$list) {
         return [CONTROLLER_STATUS_NO_PAGE];
     }
@@ -151,7 +149,7 @@ if ($mode === 'export_google') {
 
     // get list data
     $list_id = (int) $_REQUEST['list_id'];
-    $list = fn_mwl_xlsx_get_list($list_id, $auth);
+    $list = $list_service->getList($list_id, $auth);
     if (!$list) {
         return [CONTROLLER_STATUS_NO_PAGE];
     }
@@ -291,20 +289,21 @@ if ($mode === 'rename_list' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $user_id = $auth['user_id'] ?? null;
     $session_id = $user_id ? null : Tygh::$app['session']->getID();
     $name = trim((string) $_REQUEST['name']);
-    $updated = $name === '' ? false : fn_mwl_xlsx_update_list_name((int) $_REQUEST['list_id'], $name, $user_id, $session_id);
+    $updated = $list_service->updateListName((int) $_REQUEST['list_id'], $name, $user_id, $session_id);
     exit(json_encode(['success' => $updated, 'name' => $name]));
 }
 
 if ($mode === 'delete_list' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $user_id = $auth['user_id'] ?? null;
     $session_id = $user_id ? null : Tygh::$app['session']->getID();
-    $deleted = fn_mwl_xlsx_delete_list((int) $_REQUEST['list_id'], $user_id, $session_id);
+    $deleted = $list_service->deleteList((int) $_REQUEST['list_id'], $user_id, $session_id);
     exit(json_encode(['success' => $deleted]));
 }
 
 if ($mode === 'add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $list_id = (int) $_REQUEST['list_id'];
-    $status = fn_mwl_xlsx_add($list_id, $_REQUEST['product_id'], $_REQUEST['product_options'] ?? [], 1);
+    $product_id = (int) ($_REQUEST['product_id'] ?? 0);
+    $status = $list_service->addProduct($list_id, $product_id, $_REQUEST['product_options'] ?? [], 1);
 
     if ($status === 'added') {
         $list_name = db_get_field('SELECT name FROM ?:mwl_xlsx_lists WHERE list_id = ?i', $list_id);
@@ -326,7 +325,8 @@ if ($mode === 'add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
 if ($mode === 'remove' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $list_id = (int) $_REQUEST['list_id'];
-    $removed = fn_mwl_xlsx_remove($list_id, $_REQUEST['product_id']);
+    $product_id = (int) ($_REQUEST['product_id'] ?? 0);
+    $removed = $list_service->removeProduct($list_id, $product_id);
     exit(json_encode(['success' => $removed]));
 }
 
@@ -336,7 +336,7 @@ if ($mode === 'save_settings' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         'price_append'     => isset($_REQUEST['price_append']) ? (string) $_REQUEST['price_append'] : 0,
         'round_to'         => isset($_REQUEST['round_to']) ? (float) $_REQUEST['round_to'] : 10.0,
     ];
-    fn_mwl_xlsx_save_user_settings($auth, $data);
+    $list_service->saveUserSettings($auth, $data);
     fn_set_notification('N', __('notice'), __('mwl_xlsx.settings_saved'));
     return [CONTROLLER_STATUS_REDIRECT, 'mwl_xlsx.settings'];
 }
@@ -353,7 +353,7 @@ if ($mode === 'add_list' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $added = false;
     foreach ($product_ids as $pid) {
-        $status = fn_mwl_xlsx_add($list_id, $pid, [], 1);
+        $status = $list_service->addProduct($list_id, $pid, [], 1);
         if ($status === 'added') {
             $added = true;
         } elseif ($status === 'limit') {

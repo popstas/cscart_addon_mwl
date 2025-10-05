@@ -8,10 +8,11 @@
     {assign var=is_price_request value=(fn_mwl_xlsx_can_view_price($auth) && ($runtime.controller == 'products' && $runtime.mode == 'view'))}
     {assign var="view_layout" value=$selected_layout|default:$smarty.request.layout|default:$smarty.cookies.selected_layout|default:$settings.Appearance.default_products_view}
     {if $is_lists}
-        {if $auth}
-            {assign var=lists value=fn_mwl_xlsx_get_lists($auth.user_id)}
+        {assign var=list_service value=fn_mwl_xlsx_list_service()}
+        {if $auth && $auth.user_id}
+            {assign var=lists value=$list_service->getLists($auth.user_id)}
         {else}
-            {assign var=lists value=fn_mwl_xlsx_get_lists(null)}
+            {assign var=lists value=$list_service->getLists(null)}
         {/if}
 
         <div class="mwl_xlsx-control">

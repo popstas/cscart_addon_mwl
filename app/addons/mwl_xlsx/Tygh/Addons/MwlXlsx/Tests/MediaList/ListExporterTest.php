@@ -84,13 +84,6 @@ if (!function_exists(__NAMESPACE__ . '\\__')) {
     }
 }
 
-if (!function_exists(__NAMESPACE__ . '\\fn_mwl_xlsx_get_user_settings')) {
-    function fn_mwl_xlsx_get_user_settings(array $auth)
-    {
-        return ListExporterTestState::$userSettings;
-    }
-}
-
 if (!function_exists(__NAMESPACE__ . '\\fn_mwl_xlsx_transform_price_for_export')) {
     function fn_mwl_xlsx_transform_price_for_export($price, array $settings)
     {
@@ -174,6 +167,14 @@ use PHPUnit\Framework\TestCase;
 use Tygh\Addons\MwlXlsx\MediaList\ListExporter;
 use Tygh\Addons\MwlXlsx\MediaList\ListExporterTestState;
 
+class ListServiceStub
+{
+    public function getUserSettings(array $auth): array
+    {
+        return ListExporterTestState::$userSettings;
+    }
+}
+
 class ListExporterTest extends TestCase
 {
     protected function setUp(): void
@@ -232,7 +233,7 @@ class ListExporterTest extends TestCase
         ];
 
         $auth = ['user_id' => 5];
-        $exporter = new ListExporter();
+        $exporter = new ListExporter(null, null, new ListServiceStub());
 
         $products = $exporter->getListProducts(10, $auth, 'en');
         $this->assertCount(2, $products);
@@ -269,7 +270,7 @@ class ListExporterTest extends TestCase
     {
         $sheet_response = new FakeSpreadsheetResponse([['sheetId' => 321]]);
         $sheets = new FakeSheets($sheet_response);
-        $exporter = new ListExporter($sheets);
+        $exporter = new ListExporter($sheets, null, new ListServiceStub());
 
         $data = [
             ['H1', 'H2', 'H3'],
