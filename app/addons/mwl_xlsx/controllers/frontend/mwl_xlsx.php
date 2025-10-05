@@ -1,7 +1,7 @@
 <?php
 
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
-use Tygh\Languages\Helper;
+use Tygh\Addons\MwlXlsx\MediaList\ListExporter;
 use Tygh\Registry;
 use Tygh\Storage;
 use Tygh\Http;
@@ -10,8 +10,6 @@ use Tygh\Enum\NotificationSeverity;
 use Google\Client;
 use Google\Service\Sheets;
 use Google\Service\Sheets\Spreadsheet;
-use Google\Service\Sheets\ValueRange;
-use Google\Service\Sheets\BatchUpdateSpreadsheetRequest;
 
 if ($mode === 'planfix_changed_status') {
     fn_mwl_planfix_handle_planfix_status_webhook();
@@ -54,7 +52,8 @@ if ($mode === 'view') {
     if (!$list) {
         return [CONTROLLER_STATUS_NO_PAGE];
     }
-    $products = fn_mwl_xlsx_get_list_products($list_id, CART_LANGUAGE);
+    $list_exporter = new ListExporter();
+    $products = $list_exporter->getListProducts($list_id, $auth, CART_LANGUAGE);
 
     Tygh::$app['view']->assign('is_mwl_xlsx_view', true);
     Tygh::$app['view']->assign('list', $list);
@@ -84,7 +83,8 @@ if ($mode === 'export') {
     if (!$list) {
         return [CONTROLLER_STATUS_NO_PAGE];
     }
-    $list_data = fn_mwl_xlsx_get_list_data($list_id, $auth, CART_LANGUAGE);
+    $list_exporter = new ListExporter();
+    $list_data = $list_exporter->getListData($list_id, $auth, CART_LANGUAGE);
     $data = $list_data['data'];
 
     // load xlsx template
@@ -146,7 +146,8 @@ if ($mode === 'export_google') {
     if (!$list) {
         return [CONTROLLER_STATUS_NO_PAGE];
     }
-    $list_data = fn_mwl_xlsx_get_list_data($list_id, $auth, CART_LANGUAGE);
+    $list_exporter = new ListExporter($service);
+    $list_data = $list_exporter->getListData($list_id, $auth, CART_LANGUAGE);
     $data = $list_data['data'];
 
     // doc title
@@ -247,7 +248,7 @@ if ($mode === 'export_google') {
     }
 
     // fill sheet with data
-    $ok = fn_mwl_xlsx_fill_google_sheet($service, $id, $data);
+    $ok = $list_exporter->fillGoogleSheet($id, $data);
     if (!$ok) {
         echo "Error filling Google Sheet\n";
         exit;
