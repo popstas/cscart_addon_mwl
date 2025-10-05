@@ -2083,87 +2083,93 @@ function fn_mwl_xlsx_handle_vc_event($schema, $receiver_search_conditions, ?int 
         $customer_chat_id = fn_mwl_xlsx_get_chat_id_by_username($token, $message_author_telegram);
     }
 
-    // Отправляем в Telegram
-    if ($token && $chat_id) {
-        // Telegram Bot API
+    $error_message = null;
+    $url = '';
+
+    if (!$is_admin) {
+        if ($token !== '' && $chat_id !== '') {
+            $url = "https://api.telegram.org/bot{$token}/sendMessage";
+            $message_payload = [
+                'chat_id'    => $chat_id,
+                'text'       => $text_telegram,
+                'parse_mode' => 'HTML',
+            ];
+
+            if ($admin_url !== '') {
+                $message_payload['reply_markup'] = json_encode([
+                    'inline_keyboard' => [
+                        [
+                            [
+                                'text' => 'Ответить',
+                                'url'  => $admin_url,
+                            ],
+                        ],
+                    ],
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            }
+
+            $resp_raw = Http::post($url, $message_payload, [
+                'timeout'    => 10,
+                'headers'    => [
+                    'Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8',
+                ],
+                'log_pre'    => 'mwl_xlsx.telegram_vc_request',
+                'log_result' => true,
+            ]);
+
+            $resp = $resp_raw ? json_decode($resp_raw, true) : null;
+            if (empty($resp['ok'])) {
+                $error_message = 'Failed to send Telegram notification for VC event: ' . print_r($resp, true);
+                error_log($error_message);
+            }
+        } else {
+            $error_message = 'Telegram bot token or chat_id not configured for VC notifications';
+            error_log($error_message);
+        }
+    } elseif ($token !== '') {
         $url = "https://api.telegram.org/bot{$token}/sendMessage";
-        $message_payload = [
-            'chat_id'    => $chat_id,
-            'text'       => $text_telegram,
+    }
+
+    if ($error_message === null && $token !== '' && $customer_chat_id !== '' && $customer_chat_id !== $chat_id) {
+        $customer_payload = [
+            'chat_id'    => $customer_chat_id,
+            'text'       => $customer_text_telegram !== '' ? $customer_text_telegram : $text_telegram,
             'parse_mode' => 'HTML',
         ];
 
-        if ($admin_url !== '') {
-            $message_payload['reply_markup'] = json_encode([
+        if ($order_url !== '') {
+            $customer_payload['reply_markup'] = json_encode([
                 'inline_keyboard' => [
                     [
                         [
                             'text' => 'Ответить',
-                            'url'  => $admin_url,
+                            'url'  => $order_url,
                         ],
                     ],
                 ],
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }
 
-        $resp = Http::post($url, $message_payload, [
+        $customer_resp_raw = Http::post($url, $customer_payload, [
             'timeout'    => 10,
             'headers'    => [
                 'Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8',
             ],
-            'log_pre'    => 'mwl_xlsx.telegram_vc_request',
+            'log_pre'    => 'mwl_xlsx.telegram_vc_customer',
             'log_result' => true,
         ]);
-        $ok = $resp && ($resp = json_decode($resp, true)) && !empty($resp['ok']);
-        
-        $error_message = null;
-        if (!$ok) {
-            $error_message = 'Failed to send Telegram notification for VC event: ' . print_r($resp, true);
-            error_log($error_message);
-            $event_repository->markProcessed($event_id, EventRepository::STATUS_FAILED, $error_message);
-        } else {
-            if ($customer_chat_id !== '' && $customer_chat_id !== $chat_id) {
-                $customer_payload = [
-                    'chat_id'    => $customer_chat_id,
-                    'text'       => $customer_text_telegram !== '' ? $customer_text_telegram : $text_telegram,
-                    'parse_mode' => 'HTML',
-                ];
 
-                if ($order_url !== '') {
-                    $customer_payload['reply_markup'] = json_encode([
-                        'inline_keyboard' => [
-                            [
-                                [
-                                    'text' => 'Ответить',
-                                    'url'  => $order_url,
-                                ],
-                            ],
-                        ],
-                    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-                }
+        $customer_resp = $customer_resp_raw ? json_decode($customer_resp_raw, true) : null;
 
-                $customer_resp_raw = Http::post($url, $customer_payload, [
-                    'timeout'    => 10,
-                    'headers'    => [
-                        'Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8',
-                    ],
-                    'log_pre'    => 'mwl_xlsx.telegram_vc_customer',
-                    'log_result' => true,
-                ]);
-
-                $customer_resp = $customer_resp_raw ? json_decode($customer_resp_raw, true) : null;
-
-                if (empty($customer_resp['ok'])) {
-                    error_log('Failed to send Telegram notification to customer: ' . print_r($customer_resp, true));
-                }
-            }
-
-            $event_repository->markProcessed($event_id, EventRepository::STATUS_PROCESSED);
+        if (empty($customer_resp['ok'])) {
+            error_log('Failed to send Telegram notification to customer: ' . print_r($customer_resp, true));
         }
-    } else {
-        $error_message = 'Telegram bot token or chat_id not configured for VC notifications';
-        error_log($error_message);
+    }
+
+    if ($error_message !== null) {
         $event_repository->markProcessed($event_id, EventRepository::STATUS_FAILED, $error_message);
+    } else {
+        $event_repository->markProcessed($event_id, EventRepository::STATUS_PROCESSED);
     }
 
     // Отправляем в Планфикс
