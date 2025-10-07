@@ -112,11 +112,14 @@
         background-color: var(--ut2-warning-background-hover, fade(#f0ad4e, 24%));
       }
     }
-
   }
 }
 
-/* show old prices */
+/* show old prices on product lists */
 .ty-product-list .ut2-pl__price .ty-price-update + span:has([type=hidden]) {
+  display: flex !important;
+}
+/* show old prices on product page */
+.ut2-pb .ty-product-prices .ty-price-update + span:has([type=hidden]) {
   display: flex !important;
 }
