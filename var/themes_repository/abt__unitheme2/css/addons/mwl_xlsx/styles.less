@@ -1,0 +1,122 @@
+/* show icon on mobile header */
+.ty-wishlist__a {
+  display: flex !important;
+}
+.mwl_xlsx-export {
+  display: inline-block;
+}
+
+.mwl_xlsx-export img {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+}
+
+.mwl_xlsx-view-page {
+  .ty-sort-container {
+    display: none;
+  }
+}
+
+.mwl_xlsx-control {
+  margin-top: 10px;
+  align-items: center;
+  .ty-btn {
+    margin: 5px 0;
+    min-width: 36px !important;
+  }
+}
+
+.mwl-xlsx-order-messages-link {
+  display: inline-flex;
+  align-items: center;
+}
+
+.mwl-xlsx-order-messages-link__total {
+  font-weight: 600;
+  min-width: 1.5em;
+  text-align: center;
+}
+
+// product page
+.ut2-pb__right-wrapper .mwl_xlsx-control .ty-btn {
+  min-width: 320px !important;
+}
+
+.request-price-check-btn {
+  margin-left:2px !important;
+  padding: 0 5px !important;
+  height: 26px !important;
+}
+
+.mwl-status-label {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+}
+
+// Status gradients mixin
+.status-gradient(@start-color, @end-color) {
+  background: linear-gradient(135deg, @start-color 0%, @end-color 100%);
+}
+
+/* Status labels */
+.mwl-status-label {
+  transition: background 0.5s ease;
+  &.Local { .status-gradient(#cd7f32, #a97142); }
+  &.National { .status-gradient(#dcdcdc, #a9a9a9); }
+  &.Continental { .status-gradient(#ffd700, #daa520); }
+  &.Global { .status-gradient(#e5e4e2, #b5b5b5); }
+
+  &:hover {
+    color: #fff;
+    &.Local { .status-gradient(#a97142, #cd7f32); }
+    &.National { .status-gradient(#a9a9a9, #dcdcdc); }
+    &.Continental { .status-gradient(#daa520, #ffd700); }
+    &.Global { .status-gradient(#b5b5b5, #e5e4e2); }
+  }
+}
+
+/* Hide phone column in orders management */
+.table-manage-orders {
+  /* Hide phone column header - targets the 5th th element (phone column) */
+  th:nth-child(6) {
+    display: none !important;
+  }
+
+  /* Hide phone column data cells - targets the 6th td element in each row */
+  tbody tr td:nth-child(6) {
+    display: none !important;
+  }
+}
+
+/* Frontend orders list */
+.ty-orders-search {
+
+
+  .mwl-xlsx-order-messages-link {
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+      background-color: var(--ut2-warning-background-hover, fade(#428bca, 24%));
+    }
+
+    &.ty-text-warning {
+      color: var(--ut2-warning-color, #f0ad4e);
+      &:hover,
+      &:focus {
+        background-color: var(--ut2-warning-background-hover, fade(#f0ad4e, 24%));
+      }
+    }
+
+  }
+}
+
+/* show old prices */
+.ty-product-list .ut2-pl__price .ty-price-update + span:has([type=hidden]) {
+  display: flex !important;
+}
