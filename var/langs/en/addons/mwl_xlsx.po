@@ -561,3 +561,55 @@ msgctxt "Languages::mwl_xlsx.never_logged_in"
 msgid "Never"
 msgstr "Never"
 
+msgctxt "Languages::mwl_xlsx.status_map"
+msgid "Status mapping"
+msgstr "Status mapping"
+
+msgctxt "Languages::mwl_xlsx.add_status_mapping"
+msgid "Add status mapping"
+msgstr "Add status mapping"
+
+msgctxt "Languages::mwl_xlsx.edit_status_mapping"
+msgid "Edit status mapping"
+msgstr "Edit status mapping"
+
+msgctxt "Languages::mwl_xlsx.entity_status"
+msgid "Entity status"
+msgstr "Entity status"
+
+msgctxt "Languages::mwl_xlsx.planfix_status_id"
+msgid "Planfix status ID"
+msgstr "Planfix status ID"
+
+msgctxt "Languages::mwl_xlsx.planfix_status_name"
+msgid "Planfix status name"
+msgstr "Planfix status name"
+
+msgctxt "Languages::mwl_xlsx.is_default"
+msgid "Is default"
+msgstr "Is default"
+
+msgctxt "Languages::mwl_xlsx.status_map_added"
+msgid "Status mapping added"
+msgstr "Status mapping added"
+
+msgctxt "Languages::mwl_xlsx.status_map_updated"
+msgid "Status mapping updated"
+msgstr "Status mapping updated"
+
+msgctxt "Languages::mwl_xlsx.status_map_deleted"
+msgid "Status mapping deleted"
+msgstr "Status mapping deleted"
+
+msgctxt "Languages::mwl_xlsx.status_map_already_exists"
+msgid "Status mapping already exists"
+msgstr "Status mapping already exists"
+
+msgctxt "Languages::mwl_xlsx.status_map_fill_required_fields"
+msgid "Please fill in all required fields"
+msgstr "Please fill in all required fields"
+
+msgctxt "Languages::mwl_xlsx.entity_type"
+msgid "Entity type"
+msgstr "Entity type"
+

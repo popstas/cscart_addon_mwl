@@ -535,3 +535,55 @@ msgctxt "Languages::mwl_xlsx.never_logged_in"
 msgid "Never"
 msgstr "Никогда"
 
+msgctxt "Languages::mwl_xlsx.status_map"
+msgid "Status mapping"
+msgstr "Сопоставление статусов"
+
+msgctxt "Languages::mwl_xlsx.add_status_mapping"
+msgid "Add status mapping"
+msgstr "Добавить сопоставление статусов"
+
+msgctxt "Languages::mwl_xlsx.edit_status_mapping"
+msgid "Edit status mapping"
+msgstr "Редактировать сопоставление статусов"
+
+msgctxt "Languages::mwl_xlsx.entity_status"
+msgid "Entity status"
+msgstr "Статус сущности"
+
+msgctxt "Languages::mwl_xlsx.planfix_status_id"
+msgid "Planfix status ID"
+msgstr "ID статуса Planfix"
+
+msgctxt "Languages::mwl_xlsx.planfix_status_name"
+msgid "Planfix status name"
+msgstr "Название статуса Planfix"
+
+msgctxt "Languages::mwl_xlsx.is_default"
+msgid "Is default"
+msgstr "По умолчанию"
+
+msgctxt "Languages::mwl_xlsx.status_map_added"
+msgid "Status mapping added"
+msgstr "Сопоставление статусов добавлено"
+
+msgctxt "Languages::mwl_xlsx.status_map_updated"
+msgid "Status mapping updated"
+msgstr "Сопоставление статусов обновлено"
+
+msgctxt "Languages::mwl_xlsx.status_map_deleted"
+msgid "Status mapping deleted"
+msgstr "Сопоставление статусов удалено"
+
+msgctxt "Languages::mwl_xlsx.status_map_already_exists"
+msgid "Status mapping already exists"
+msgstr "Сопоставление статусов уже существует"
+
+msgctxt "Languages::mwl_xlsx.status_map_fill_required_fields"
+msgid "Please fill in all required fields"
+msgstr "Пожалуйста, заполните все обязательные поля"
+
+msgctxt "Languages::mwl_xlsx.entity_type"
+msgid "Entity type"
+msgstr "Тип сущности"
+

@@ -7,6 +7,11 @@ $schema['central']['mwl_xlsx'] = [
             'position'    => 100,
             'permissions' => 'view_catalog',
         ],
+        'mwl_xlsx.status_map' => [
+            'href'        => 'mwl_xlsx_status_map.manage',
+            'position'    => 110,
+            'permissions' => 'view_catalog',
+        ],
         'mwl_xlsx.invites' => [
             'href'        => 'mwl_xlsx_invites.invites',
             'position'    => 150,
