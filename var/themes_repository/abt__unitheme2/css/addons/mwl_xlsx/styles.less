@@ -97,23 +97,25 @@
 .ty-orders-search {
 
 
-  .mwl-xlsx-order-messages-link {
-    text-decoration: none;
+    .mwl-xlsx-order-messages-link {
+        text-decoration: none;
 
-    &:hover,
-    &:focus {
-        background-color: var(--ut2-warning-background-hover, fade(#428bca, 24%));
+        &:hover,
+        &:focus {
+            background-color: var(--ut2-warning-background-hover, fade(#428bca, 24%));
+        }
+
+        &.ty-text-warning {
+            color: var(--ut2-warning-color, #f0ad4e);
+            &:hover,
+            &:focus {
+                background-color: var(--ut2-warning-background-hover, fade(#f0ad4e, 24%));
+            }
+        }
     }
-
-    &.ty-text-warning {
-      color: var(--ut2-warning-color, #f0ad4e);
-      &:hover,
-      &:focus {
-          background-color: var(--ut2-warning-background-hover, fade(#f0ad4e, 24%));
-      }
-      
-      }
-
 }
 
+/* show old prices */
+.ty-product-list .ut2-pl__price .ty-price-update + span:has([type=hidden]) {
+    display: flex !important;
 }
