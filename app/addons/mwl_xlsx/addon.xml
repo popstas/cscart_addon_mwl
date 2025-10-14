@@ -124,6 +124,33 @@
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ]]></item>
 
+        <item for="install"><![CDATA[
+        CREATE TABLE IF NOT EXISTS `?:mwl_wallets` (
+          `user_id` INT UNSIGNED NOT NULL PRIMARY KEY,
+          `currency` CHAR(3) NOT NULL DEFAULT 'USD',
+          `balance` DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+          `updated_at` INT UNSIGNED NOT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+        ]]></item>
+
+        <item for="install"><![CDATA[
+        CREATE TABLE IF NOT EXISTS `?:mwl_wallet_transactions` (
+          `txn_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+          `user_id` INT UNSIGNED NOT NULL,
+          `type` ENUM('topup','debit','refund','adjust') NOT NULL,
+          `amount` DECIMAL(14,2) NOT NULL,
+          `currency` CHAR(3) NOT NULL,
+          `status` ENUM('pending','succeeded','failed','reversed') NOT NULL DEFAULT 'pending',
+          `source` VARCHAR(32) NOT NULL,
+          `external_id` VARCHAR(64) DEFAULT NULL,
+          `meta` JSON DEFAULT NULL,
+          `created_at` INT UNSIGNED NOT NULL,
+          `updated_at` INT UNSIGNED NOT NULL,
+          KEY `user_idx` (`user_id`),
+          KEY `source_idx` (`source`, `external_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+        ]]></item>
+
         <!-- uninstall -->
         <!-- <item for="uninstall"><![CDATA[
         DROP TABLE IF EXISTS `?:mwl_planfix_events`;
@@ -323,6 +350,43 @@
                     <item id="compact_price_slider_labels" type="checkbox">
                         <name>mwl_xlsx.setting.compact_price_slider_labels</name>
                         <value>Y</value>
+                    </item>
+                </items>
+            </section>
+            <section id="wallet">
+                <items>
+                    <item id="stripe_mode" type="selectbox">
+                        <name>mwl_wallet.setting.stripe_mode</name>
+                        <variants>
+                            <item id="test">mwl_wallet.setting.stripe_mode.test</item>
+                            <item id="live">mwl_wallet.setting.stripe_mode.live</item>
+                        </variants>
+                        <value>test</value>
+                    </item>
+                    <item id="stripe_secret_key" type="password">
+                        <name>mwl_wallet.setting.stripe_secret_key</name>
+                    </item>
+                    <item id="stripe_webhook_secret" type="password">
+                        <name>mwl_wallet.setting.stripe_webhook_secret</name>
+                    </item>
+                    <item id="allowed_currencies" type="input">
+                        <name>mwl_wallet.setting.allowed_currencies</name>
+                    </item>
+                    <item id="topup_min" type="input">
+                        <name>mwl_wallet.setting.topup_min</name>
+                        <value>1.00</value>
+                    </item>
+                    <item id="topup_max" type="input">
+                        <name>mwl_wallet.setting.topup_max</name>
+                        <value>1000.00</value>
+                    </item>
+                    <item id="fee_percent" type="input">
+                        <name>mwl_wallet.setting.fee_percent</name>
+                        <value>0.00</value>
+                    </item>
+                    <item id="fee_fixed" type="input">
+                        <name>mwl_wallet.setting.fee_fixed</name>
+                        <value>0.00</value>
                     </item>
                 </items>
             </section>

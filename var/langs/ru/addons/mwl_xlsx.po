@@ -587,3 +587,225 @@ msgctxt "Languages::mwl_xlsx.entity_type"
 msgid "Entity type"
 msgstr "Тип сущности"
 
+msgctxt "Languages::mwl_wallet.my_wallet"
+msgid "My wallet"
+msgstr "Мой счёт"
+
+msgctxt "Languages::mwl_wallet.current_balance_title"
+msgid "Current balance"
+msgstr "Текущий баланс"
+
+msgctxt "Languages::mwl_wallet.balance_currency"
+msgid "Wallet currency: [currency]"
+msgstr "Валюта счёта: [currency]"
+
+msgctxt "Languages::mwl_wallet.topup_title"
+msgid "Add funds"
+msgstr "Пополнение баланса"
+
+msgctxt "Languages::mwl_wallet.amount_label"
+msgid "Amount"
+msgstr "Сумма"
+
+msgctxt "Languages::mwl_wallet.amount_hint_min"
+msgid "Minimum top-up: [min] [currency]"
+msgstr "Минимальное пополнение: [min] [currency]"
+
+msgctxt "Languages::mwl_wallet.amount_hint_max"
+msgid "Maximum top-up: [max] [currency]"
+msgstr "Максимальное пополнение: [max] [currency]"
+
+msgctxt "Languages::mwl_wallet.currency_label"
+msgid "Currency"
+msgstr "Валюта"
+
+msgctxt "Languages::mwl_wallet.fee_notice"
+msgid "A service fee of [percent]% + [fixed] [currency] will be applied to each top-up."
+msgstr "За каждое пополнение удерживается комиссия [percent]% + [fixed] [currency]."
+
+msgctxt "Languages::mwl_wallet.topup_button"
+msgid "Proceed to payment"
+msgstr "Перейти к оплате"
+
+msgctxt "Languages::mwl_wallet.transaction_history_title"
+msgid "Transactions"
+msgstr "История операций"
+
+msgctxt "Languages::mwl_wallet.transaction_date"
+msgid "Date"
+msgstr "Дата"
+
+msgctxt "Languages::mwl_wallet.transaction_type"
+msgid "Type"
+msgstr "Тип"
+
+msgctxt "Languages::mwl_wallet.transaction_status"
+msgid "Status"
+msgstr "Статус"
+
+msgctxt "Languages::mwl_wallet.transaction_amount"
+msgid "Amount"
+msgstr "Сумма"
+
+msgctxt "Languages::mwl_wallet.no_transactions"
+msgid "No wallet transactions yet."
+msgstr "Операций по счёту пока нет."
+
+msgctxt "Languages::mwl_wallet.transaction_id"
+msgid "Transaction"
+msgstr "Операция"
+
+msgctxt "Languages::mwl_wallet.topup_success_title"
+msgid "Payment received"
+msgstr "Платёж получен"
+
+msgctxt "Languages::mwl_wallet.topup_cancel_title"
+msgid "Payment cancelled"
+msgstr "Платёж отменён"
+
+msgctxt "Languages::mwl_wallet.topup_pending_title"
+msgid "Payment pending"
+msgstr "Платёж ожидает подтверждения"
+
+msgctxt "Languages::mwl_wallet.topup_success_message"
+msgid "Stripe confirmed the payment. The funds have been added to your wallet."
+msgstr "Stripe подтвердил платёж. Средства зачислены на ваш счёт."
+
+msgctxt "Languages::mwl_wallet.topup_cancel_message"
+msgid "You cancelled the payment. No funds were added."
+msgstr "Вы отменили оплату. Средства не были зачислены."
+
+msgctxt "Languages::mwl_wallet.topup_pending_message"
+msgid "We are waiting for payment confirmation from Stripe."
+msgstr "Ожидаем подтверждение платежа от Stripe."
+
+msgctxt "Languages::mwl_wallet.back_to_wallet"
+msgid "Back to wallet"
+msgstr "Вернуться в счёт"
+
+msgctxt "Languages::mwl_wallet.checkout_balance_label"
+msgid "Available wallet balance"
+msgstr "Доступно на счёте"
+
+msgctxt "Languages::mwl_wallet.checkout_hint_title"
+msgid "About wallet payments"
+msgstr "Оплата со счёта"
+
+msgctxt "Languages::mwl_wallet.checkout_hint_text"
+msgid "The order total will be deducted from your wallet balance."
+msgstr "Сумма заказа будет списана с вашего баланса."
+
+msgctxt "Languages::mwl_wallet.checkout_product_name"
+msgid "Wallet top-up"
+msgstr "Пополнение счёта"
+
+msgctxt "Languages::mwl_wallet.error_creating_checkout"
+msgid "Unable to create Stripe Checkout session: [message]"
+msgstr "Не удалось создать сессию Stripe Checkout: [message]"
+
+msgctxt "Languages::mwl_wallet.error_invalid_amount"
+msgid "Enter a valid amount."
+msgstr "Введите корректную сумму."
+
+msgctxt "Languages::mwl_wallet.error_min_amount"
+msgid "Minimum top-up is [amount] [currency]."
+msgstr "Минимальная сумма пополнения — [amount] [currency]."
+
+msgctxt "Languages::mwl_wallet.error_max_amount"
+msgid "Maximum top-up is [amount] [currency]."
+msgstr "Максимальная сумма пополнения — [amount] [currency]."
+
+msgctxt "Languages::mwl_wallet.error_currency_not_allowed"
+msgid "Currency [currency] is not allowed for wallet top-ups."
+msgstr "Валюта [currency] недоступна для пополнения."
+
+msgctxt "Languages::mwl_wallet.error_stripe_not_configured"
+msgid "Stripe secret key is not configured."
+msgstr "Не указан секретный ключ Stripe."
+
+msgctxt "Languages::mwl_wallet.error_amount_after_fees"
+msgid "The amount is too small after fees. Increase the top-up amount."
+msgstr "Сумма слишком мала с учётом комиссий. Увеличьте пополнение."
+
+msgctxt "Languages::mwl_wallet_payment_requires_login"
+msgid "You must be logged in to pay from the wallet."
+msgstr "Чтобы оплатить со счёта, необходимо войти в систему."
+
+msgctxt "Languages::mwl_wallet_insufficient_funds"
+msgid "Not enough funds in the wallet."
+msgstr "Недостаточно средств на счёте."
+
+msgctxt "Languages::mwl_wallet.type_topup"
+msgid "Top-up"
+msgstr "Пополнение"
+
+msgctxt "Languages::mwl_wallet.type_debit"
+msgid "Debit"
+msgstr "Списание"
+
+msgctxt "Languages::mwl_wallet.type_refund"
+msgid "Refund"
+msgstr "Возврат"
+
+msgctxt "Languages::mwl_wallet.type_adjust"
+msgid "Adjustment"
+msgstr "Корректировка"
+
+msgctxt "Languages::mwl_wallet.status_pending"
+msgid "Pending"
+msgstr "В ожидании"
+
+msgctxt "Languages::mwl_wallet.status_succeeded"
+msgid "Completed"
+msgstr "Завершено"
+
+msgctxt "Languages::mwl_wallet.status_failed"
+msgid "Failed"
+msgstr "Ошибка"
+
+msgctxt "Languages::mwl_wallet.status_reversed"
+msgid "Reversed"
+msgstr "Откат"
+
+msgctxt "Languages::mwl_wallet.setting.stripe_mode"
+msgid "Stripe mode"
+msgstr "Режим Stripe"
+
+msgctxt "Languages::mwl_wallet.setting.stripe_mode.test"
+msgid "Test"
+msgstr "Тест"
+
+msgctxt "Languages::mwl_wallet.setting.stripe_mode.live"
+msgid "Live"
+msgstr "Продакшн"
+
+msgctxt "Languages::mwl_wallet.setting.stripe_secret_key"
+msgid "Stripe secret key"
+msgstr "Секретный ключ Stripe"
+
+msgctxt "Languages::mwl_wallet.setting.stripe_webhook_secret"
+msgid "Stripe webhook secret"
+msgstr "Секрет вебхука Stripe"
+
+msgctxt "Languages::mwl_wallet.setting.allowed_currencies"
+msgid "Allowed top-up currencies (comma separated)"
+msgstr "Разрешённые валюты пополнения (через запятую)"
+
+msgctxt "Languages::mwl_wallet.setting.topup_min"
+msgid "Minimum top-up amount"
+msgstr "Минимальная сумма пополнения"
+
+msgctxt "Languages::mwl_wallet.setting.topup_max"
+msgid "Maximum top-up amount"
+msgstr "Максимальная сумма пополнения"
+
+msgctxt "Languages::mwl_wallet.setting.fee_percent"
+msgid "Fee percent"
+msgstr "Процент комиссии"
+
+msgctxt "Languages::mwl_wallet.setting.fee_fixed"
+msgid "Fee fixed amount"
+msgstr "Фиксированная комиссия"
+msgctxt "Languages::mwl_wallet.payment_processor_name"
+msgid "Wallet balance"
+msgstr "Оплата со счёта"

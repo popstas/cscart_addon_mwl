@@ -18,6 +18,11 @@ use Tygh\Tygh;
 use Google\Service\Sheets;
 use Google\Service\Sheets\ValueRange;
 use Google\Service\Sheets\BatchUpdateSpreadsheetRequest;
+use Stripe\Checkout\Session as StripeCheckoutSession;
+use Stripe\Exception\ApiErrorException;
+use Stripe\Exception\SignatureVerificationException;
+use Stripe\Stripe;
+use Stripe\Webhook;
 
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
 
@@ -351,6 +356,697 @@ function fn_mwl_planfix_output_json(int $status_code, array $data): void
 
     echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
+}
+
+function fn_mwl_wallet_get_balance(int $user_id): array
+{
+    $user_id = (int) $user_id;
+
+    if ($user_id <= 0) {
+        return [
+            'balance'  => 0.0,
+            'currency' => (string) CART_PRIMARY_CURRENCY,
+        ];
+    }
+
+    $db = Tygh::$app['db'];
+    $row = $db->getRow('SELECT balance, currency FROM ?:mwl_wallets WHERE user_id = ?i', $user_id);
+
+    if (!$row) {
+        return [
+            'balance'  => 0.0,
+            'currency' => (string) CART_PRIMARY_CURRENCY,
+        ];
+    }
+
+    return [
+        'balance'  => (float) $row['balance'],
+        'currency' => (string) ($row['currency'] ?: CART_PRIMARY_CURRENCY),
+    ];
+}
+
+function fn_mwl_wallet_get_transaction(int $txn_id): ?array
+{
+    $txn_id = (int) $txn_id;
+
+    if ($txn_id <= 0) {
+        return null;
+    }
+
+    $row = Tygh::$app['db']->getRow('SELECT * FROM ?:mwl_wallet_transactions WHERE txn_id = ?i', $txn_id);
+
+    if (!$row) {
+        return null;
+    }
+
+    $row['amount'] = (float) $row['amount'];
+    $row['meta'] = fn_mwl_wallet_decode_meta($row['meta']);
+
+    return $row;
+}
+
+function fn_mwl_wallet_get_transactions(int $user_id, array $params = []): array
+{
+    $user_id = (int) $user_id;
+
+    if ($user_id <= 0) {
+        return [];
+    }
+
+    $limit = isset($params['limit']) ? max(1, (int) $params['limit']) : 20;
+    $offset = isset($params['offset']) ? max(0, (int) $params['offset']) : 0;
+
+    $rows = Tygh::$app['db']->getArray(
+        'SELECT txn_id, user_id, type, amount, currency, status, source, external_id, meta, created_at, updated_at'
+        . ' FROM ?:mwl_wallet_transactions WHERE user_id = ?i ORDER BY created_at DESC, txn_id DESC LIMIT ?i OFFSET ?i',
+        $user_id,
+        $limit,
+        $offset
+    );
+
+    foreach ($rows as &$row) {
+        $row['amount'] = (float) $row['amount'];
+        $row['meta'] = fn_mwl_wallet_decode_meta($row['meta']);
+    }
+
+    unset($row);
+
+    return $rows;
+}
+
+function fn_mwl_wallet_decode_meta($meta): array
+{
+    if (is_array($meta)) {
+        return $meta;
+    }
+
+    if ($meta === null || $meta === '') {
+        return [];
+    }
+
+    $decoded = json_decode((string) $meta, true);
+
+    return is_array($decoded) ? $decoded : [];
+}
+
+function fn_mwl_wallet_encode_meta(?array $meta): ?string
+{
+    if (empty($meta)) {
+        return null;
+    }
+
+    return json_encode($meta, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+}
+
+function fn_mwl_wallet_get_allowed_currencies(): array
+{
+    $setting = (string) Registry::get('addons.mwl_xlsx.allowed_currencies');
+    $codes = [];
+
+    if ($setting !== '') {
+        $parts = preg_split('/[\s,]+/', $setting, -1, PREG_SPLIT_NO_EMPTY);
+
+        foreach ($parts as $part) {
+            $codes[] = strtoupper($part);
+        }
+    }
+
+    if (!$codes) {
+        $codes[] = (string) CART_PRIMARY_CURRENCY;
+    }
+
+    $available = Registry::get('currencies');
+
+    $codes = array_values(array_filter(array_unique($codes), static function ($code) use ($available) {
+        return isset($available[$code]);
+    }));
+
+    if (!$codes) {
+        $codes[] = (string) CART_PRIMARY_CURRENCY;
+    }
+
+    return $codes;
+}
+
+function fn_mwl_wallet_get_limits(): array
+{
+    $min = (float) Registry::get('addons.mwl_xlsx.topup_min');
+    $max = (float) Registry::get('addons.mwl_xlsx.topup_max');
+
+    if ($min < 0) {
+        $min = 0.0;
+    }
+
+    if ($max > 0 && $max < $min) {
+        $max = $min;
+    }
+
+    return [
+        'min' => round($min, 2),
+        'max' => $max > 0 ? round($max, 2) : 0.0,
+    ];
+}
+
+function fn_mwl_wallet_calculate_fee(float $amount): array
+{
+    $percent = (float) Registry::get('addons.mwl_xlsx.fee_percent');
+    $fixed = (float) Registry::get('addons.mwl_xlsx.fee_fixed');
+
+    $percent_fee = $amount * ($percent / 100);
+    $fee = $percent_fee + $fixed;
+
+    if ($fee < 0) {
+        $fee = 0.0;
+    }
+
+    $fee = round($fee, 2);
+    $net = round($amount - $fee, 2);
+
+    if ($net < 0) {
+        $net = 0.0;
+    }
+
+    return [
+        'fee' => $fee,
+        'net' => $net,
+    ];
+}
+
+function fn_mwl_wallet_normalize_currency(string $currency): string
+{
+    $currency = strtoupper(trim($currency));
+
+    if ($currency === '') {
+        $currency = (string) CART_PRIMARY_CURRENCY;
+    }
+
+    return $currency;
+}
+
+function fn_mwl_wallet_change_balance(int $user_id, float $delta, string $currency, array $txn_data): int
+{
+    $user_id = (int) $user_id;
+
+    if ($user_id <= 0) {
+        return 0;
+    }
+
+    $currency = fn_mwl_wallet_normalize_currency($currency);
+    $delta = round($delta, 2);
+    $now = TIME;
+    $db = Tygh::$app['db'];
+
+    if ($delta !== 0.0) {
+        $db->query(
+            'INSERT INTO ?:mwl_wallets (user_id, currency, balance, updated_at) VALUES (?i, ?s, ?d, ?i)'
+            . ' ON DUPLICATE KEY UPDATE balance = balance + ?d, currency = ?s, updated_at = ?i',
+            $user_id,
+            $currency,
+            $delta,
+            $now,
+            $delta,
+            $currency,
+            $now
+        );
+    } else {
+        $db->query(
+            'INSERT INTO ?:mwl_wallets (user_id, currency, balance, updated_at) VALUES (?i, ?s, 0, ?i)'
+            . ' ON DUPLICATE KEY UPDATE currency = VALUES(currency), updated_at = VALUES(updated_at)',
+            $user_id,
+            $currency,
+            $now
+        );
+    }
+
+    $meta = isset($txn_data['meta']) && is_array($txn_data['meta']) ? $txn_data['meta'] : [];
+
+    if (!empty($txn_data['txn_id'])) {
+        $existing = fn_mwl_wallet_get_transaction((int) $txn_data['txn_id']);
+        if ($existing && !empty($existing['meta'])) {
+            $meta = array_merge($existing['meta'], $meta);
+        }
+    }
+
+    $encoded_meta = fn_mwl_wallet_encode_meta($meta);
+
+    $record = [
+        'type'        => (string) ($txn_data['type'] ?? 'adjust'),
+        'amount'      => $delta,
+        'currency'    => $currency,
+        'status'      => (string) ($txn_data['status'] ?? 'pending'),
+        'source'      => (string) ($txn_data['source'] ?? 'manual'),
+        'external_id' => isset($txn_data['external_id']) ? (string) $txn_data['external_id'] : null,
+        'meta'        => $encoded_meta,
+        'updated_at'  => $now,
+    ];
+
+    if (!empty($txn_data['txn_id'])) {
+        $txn_id = (int) $txn_data['txn_id'];
+        $db->query('UPDATE ?:mwl_wallet_transactions SET ?u WHERE txn_id = ?i', $record, $txn_id);
+    } else {
+        $record['user_id'] = $user_id;
+        $record['created_at'] = $now;
+        $db->query('INSERT INTO ?:mwl_wallet_transactions ?e', $record);
+        $txn_id = (int) $db->insertId();
+    }
+
+    return $txn_id;
+}
+
+function fn_mwl_wallet_update_transaction(int $txn_id, array $fields): void
+{
+    $txn_id = (int) $txn_id;
+
+    if ($txn_id <= 0 || !$fields) {
+        return;
+    }
+
+    if (isset($fields['meta']) && is_array($fields['meta'])) {
+        $current = fn_mwl_wallet_get_transaction($txn_id);
+        $meta = $current['meta'] ?? [];
+        $fields['meta'] = fn_mwl_wallet_encode_meta(array_merge($meta, $fields['meta']));
+    }
+
+    $fields['updated_at'] = TIME;
+
+    Tygh::$app['db']->query('UPDATE ?:mwl_wallet_transactions SET ?u WHERE txn_id = ?i', $fields, $txn_id);
+}
+
+function fn_mwl_wallet_require_balance(int $user_id, float $amount, string $currency): bool
+{
+    $balance = fn_mwl_wallet_get_balance($user_id);
+    $wallet_currency = $balance['currency'];
+    $amount_in_wallet_currency = fn_mwl_wallet_convert_amount($amount, $currency, $wallet_currency);
+
+    return $balance['balance'] >= $amount_in_wallet_currency;
+}
+
+function fn_mwl_wallet_convert_amount(float $amount, string $from_currency, string $to_currency): float
+{
+    $from_currency = fn_mwl_wallet_normalize_currency($from_currency);
+    $to_currency = fn_mwl_wallet_normalize_currency($to_currency);
+
+    if ($from_currency === $to_currency) {
+        return round($amount, 2);
+    }
+
+    $currencies = Registry::get('currencies');
+
+    if (!isset($currencies[$from_currency], $currencies[$to_currency])) {
+        return round($amount, 2);
+    }
+
+    $from = $currencies[$from_currency];
+    $to = $currencies[$to_currency];
+
+    $from_coeff = (float) ($from['coefficient'] ?? 1.0);
+    $to_coeff = (float) ($to['coefficient'] ?? 1.0);
+
+    if ($from_coeff == 0.0) {
+        $from_coeff = 1.0;
+    }
+
+    $base_amount = $amount / $from_coeff;
+    $converted = $base_amount * $to_coeff;
+
+    return round($converted, 2);
+}
+
+function fn_mwl_wallet_validate_topup_amount(float $amount, string $currency, ?string &$error = null): bool
+{
+    $amount = round($amount, 2);
+
+    if ($amount <= 0) {
+        $error = __('mwl_wallet.error_invalid_amount');
+        return false;
+    }
+
+    $currency = fn_mwl_wallet_normalize_currency($currency);
+    $limits = fn_mwl_wallet_get_limits();
+
+    if ($amount < $limits['min']) {
+        $error = __('mwl_wallet.error_min_amount', [
+            '[amount]'   => fn_format_price($limits['min'], $currency, null, false),
+            '[currency]' => $currency,
+        ]);
+        return false;
+    }
+
+    if ($limits['max'] > 0 && $amount > $limits['max']) {
+        $error = __('mwl_wallet.error_max_amount', [
+            '[amount]'   => fn_format_price($limits['max'], $currency, null, false),
+            '[currency]' => $currency,
+        ]);
+        return false;
+    }
+
+    $allowed = fn_mwl_wallet_get_allowed_currencies();
+
+    if (!in_array($currency, $allowed, true)) {
+        $error = __('mwl_wallet.error_currency_not_allowed', [
+            '[currency]' => $currency,
+        ]);
+        return false;
+    }
+
+    $error = null;
+
+    return true;
+}
+
+function fn_mwl_wallet_create_checkout_session(int $user_id, float $amount, string $currency): string
+{
+    $user_id = (int) $user_id;
+
+    if ($user_id <= 0) {
+        throw new \InvalidArgumentException('User ID is required');
+    }
+
+    $currency = fn_mwl_wallet_normalize_currency($currency);
+    $amount = round($amount, 2);
+
+    $secret_key = (string) Registry::get('addons.mwl_xlsx.stripe_secret_key');
+
+    if ($secret_key === '') {
+        throw new \RuntimeException(__('mwl_wallet.error_stripe_not_configured'));
+    }
+
+    $fees = fn_mwl_wallet_calculate_fee($amount);
+
+    if ($fees['net'] <= 0.0) {
+        throw new \RuntimeException(__('mwl_wallet.error_amount_after_fees'));
+    }
+
+    fn_mwl_xlsx_load_vendor_autoloader();
+    Stripe::setApiKey($secret_key);
+
+    $db = Tygh::$app['db'];
+    $now = TIME;
+    $meta = [
+        'gross_amount' => $amount,
+        'fee_amount'   => $fees['fee'],
+        'net_amount'   => $fees['net'],
+        'stripe_mode'  => (string) Registry::get('addons.mwl_xlsx.stripe_mode'),
+    ];
+
+    $db->query(
+        'INSERT INTO ?:mwl_wallet_transactions (user_id, type, amount, currency, status, source, external_id, meta, created_at, updated_at)'
+        . ' VALUES (?i, ?s, ?d, ?s, ?s, ?s, ?s, ?s, ?i, ?i)',
+        $user_id,
+        'topup',
+        $fees['net'],
+        $currency,
+        'pending',
+        'stripe',
+        '',
+        fn_mwl_wallet_encode_meta($meta),
+        $now,
+        $now
+    );
+
+    $txn_id = (int) $db->insertId();
+
+    $success_url = fn_url('mwl_wallet.success?txn_id=' . $txn_id, 'C', 'http');
+    $cancel_url = fn_url('mwl_wallet.cancel?txn_id=' . $txn_id, 'C', 'http');
+
+    try {
+        $session = StripeCheckoutSession::create([
+            'mode' => 'payment',
+            'payment_method_types' => ['card'],
+            'client_reference_id' => $user_id . ':' . $txn_id,
+            'line_items' => [[
+                'price_data' => [
+                    'currency' => strtolower($currency),
+                    'product_data' => ['name' => __('mwl_wallet.checkout_product_name')],
+                    'unit_amount' => (int) round($amount * 100),
+                ],
+                'quantity' => 1,
+            ]],
+            'metadata' => [
+                'user_id' => (string) $user_id,
+                'txn_id'  => (string) $txn_id,
+            ],
+            'success_url' => $success_url,
+            'cancel_url'  => $cancel_url,
+        ]);
+    } catch (ApiErrorException $exception) {
+        fn_mwl_wallet_update_transaction($txn_id, [
+            'status' => 'failed',
+            'meta'   => ['error' => $exception->getMessage()],
+        ]);
+
+        throw $exception;
+    }
+
+    fn_mwl_wallet_update_transaction($txn_id, [
+        'external_id' => $session->id,
+        'meta'        => ['stripe_session_id' => $session->id],
+    ]);
+
+    return $session->url;
+}
+
+function fn_mwl_wallet_get_transaction_by_external(string $source, string $external_id): ?array
+{
+    $row = Tygh::$app['db']->getRow(
+        'SELECT * FROM ?:mwl_wallet_transactions WHERE source = ?s AND external_id = ?s ORDER BY txn_id ASC LIMIT 1',
+        $source,
+        $external_id
+    );
+
+    if (!$row) {
+        return null;
+    }
+
+    $row['amount'] = (float) $row['amount'];
+    $row['meta'] = fn_mwl_wallet_decode_meta($row['meta']);
+
+    return $row;
+}
+
+function fn_mwl_wallet_handle_webhook(): void
+{
+    fn_mwl_xlsx_load_vendor_autoloader();
+
+    $payload = file_get_contents('php://input');
+    $signature = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '';
+    $secret = (string) Registry::get('addons.mwl_xlsx.stripe_webhook_secret');
+
+    if ($secret === '') {
+        http_response_code(400);
+        echo 'Webhook secret not configured';
+        exit;
+    }
+
+    try {
+        $event = Webhook::constructEvent($payload, $signature, $secret);
+    } catch (SignatureVerificationException $exception) {
+        http_response_code(400);
+        echo 'Invalid signature';
+        exit;
+    } catch (\UnexpectedValueException $exception) {
+        http_response_code(400);
+        echo 'Invalid payload';
+        exit;
+    }
+
+    $type = (string) $event->type;
+
+    switch ($type) {
+        case 'checkout.session.completed':
+            fn_mwl_wallet_process_checkout_completed($event);
+            break;
+
+        case 'checkout.session.async_payment_failed':
+        case 'checkout.session.expired':
+            fn_mwl_wallet_process_checkout_failed($event);
+            break;
+
+        case 'charge.refunded':
+            fn_mwl_wallet_process_charge_refunded($event);
+            break;
+
+        case 'charge.dispute.funds_withdrawn':
+            fn_mwl_wallet_process_dispute_withdrawn($event);
+            break;
+
+        default:
+            // ignore other events
+            break;
+    }
+
+    http_response_code(200);
+    echo 'ok';
+    exit;
+}
+
+function fn_mwl_wallet_process_checkout_completed($event): void
+{
+    $session = $event->data->object;
+    $metadata = $session->metadata ?? new stdClass();
+    $txn_id = isset($metadata->txn_id) ? (int) $metadata->txn_id : 0;
+    $user_id = isset($metadata->user_id) ? (int) $metadata->user_id : 0;
+
+    if (!$txn_id || !$user_id || $session->payment_status !== 'paid') {
+        return;
+    }
+
+    $transaction = fn_mwl_wallet_get_transaction($txn_id);
+
+    if (!$transaction || (int) $transaction['user_id'] !== $user_id) {
+        return;
+    }
+
+    if ($transaction['status'] === 'succeeded') {
+        return;
+    }
+
+    $meta = $transaction['meta'];
+    $meta['stripe_session_id'] = (string) $session->id;
+    if (!empty($session->payment_intent)) {
+        $meta['payment_intent'] = (string) $session->payment_intent;
+    }
+    if (!empty($session->customer)) {
+        $meta['customer'] = (string) $session->customer;
+    }
+    $meta['event'] = (string) $event->type;
+
+    $external_id = !empty($session->payment_intent) ? (string) $session->payment_intent : (string) $session->id;
+
+    fn_mwl_wallet_change_balance($user_id, (float) $transaction['amount'], $transaction['currency'], [
+        'txn_id'      => $txn_id,
+        'type'        => 'topup',
+        'status'      => 'succeeded',
+        'source'      => 'stripe',
+        'external_id' => $external_id,
+        'meta'        => $meta,
+    ]);
+}
+
+function fn_mwl_wallet_process_checkout_failed($event): void
+{
+    $session = $event->data->object;
+    $metadata = $session->metadata ?? new stdClass();
+    $txn_id = isset($metadata->txn_id) ? (int) $metadata->txn_id : 0;
+
+    if (!$txn_id) {
+        return;
+    }
+
+    $transaction = fn_mwl_wallet_get_transaction($txn_id);
+
+    if (!$transaction || $transaction['status'] !== 'pending') {
+        return;
+    }
+
+    $meta = $transaction['meta'];
+    $meta['event'] = (string) $event->type;
+    $meta['stripe_session_id'] = (string) $session->id;
+
+    fn_mwl_wallet_update_transaction($txn_id, [
+        'status'      => 'failed',
+        'external_id' => $transaction['external_id'] ?: (string) $session->id,
+        'meta'        => $meta,
+    ]);
+}
+
+function fn_mwl_wallet_process_charge_refunded($event): void
+{
+    $charge = $event->data->object;
+    $payment_intent = isset($charge->payment_intent) ? (string) $charge->payment_intent : '';
+
+    if ($payment_intent === '') {
+        return;
+    }
+
+    $transaction = fn_mwl_wallet_get_transaction_by_external('stripe', $payment_intent);
+
+    if (!$transaction || $transaction['status'] !== 'succeeded') {
+        return;
+    }
+
+    $refunds = $charge->refunds->data ?? [];
+
+    foreach ($refunds as $refund) {
+        $refund_id = isset($refund->id) ? (string) $refund->id : '';
+
+        if ($refund_id === '') {
+            continue;
+        }
+
+        if (fn_mwl_wallet_get_transaction_by_external('stripe', $refund_id)) {
+            continue;
+        }
+
+        $status = isset($refund->status) ? (string) $refund->status : 'succeeded';
+
+        if ($status !== 'succeeded') {
+            continue;
+        }
+
+        $amount_cents = isset($refund->amount) ? (int) $refund->amount : 0;
+
+        if ($amount_cents <= 0) {
+            continue;
+        }
+
+        $amount = round($amount_cents / 100, 2);
+
+        fn_mwl_wallet_change_balance((int) $transaction['user_id'], -$amount, $transaction['currency'], [
+            'type'        => 'refund',
+            'status'      => 'succeeded',
+            'source'      => 'stripe',
+            'external_id' => $refund_id,
+            'meta'        => [
+                'event'          => (string) $event->type,
+                'payment_intent' => $payment_intent,
+                'charge_id'      => (string) $charge->id,
+                'reason'         => isset($refund->reason) ? (string) $refund->reason : '',
+            ],
+        ]);
+    }
+}
+
+function fn_mwl_wallet_process_dispute_withdrawn($event): void
+{
+    $dispute = $event->data->object;
+    $payment_intent = isset($dispute->payment_intent) ? (string) $dispute->payment_intent : '';
+
+    if ($payment_intent === '') {
+        return;
+    }
+
+    $transaction = fn_mwl_wallet_get_transaction_by_external('stripe', $payment_intent);
+
+    if (!$transaction) {
+        return;
+    }
+
+    $amount_cents = isset($dispute->amount) ? (int) $dispute->amount : 0;
+
+    if ($amount_cents <= 0) {
+        return;
+    }
+
+    $amount = round($amount_cents / 100, 2);
+
+    $external_id = isset($dispute->id) ? (string) $dispute->id : 'dispute-' . $payment_intent;
+
+    if (fn_mwl_wallet_get_transaction_by_external('stripe', $external_id)) {
+        return;
+    }
+
+    fn_mwl_wallet_change_balance((int) $transaction['user_id'], -$amount, $transaction['currency'], [
+        'type'        => 'refund',
+        'status'      => 'reversed',
+        'source'      => 'stripe',
+        'external_id' => $external_id,
+        'meta'        => [
+            'event'          => (string) $event->type,
+            'payment_intent' => $payment_intent,
+            'reason'         => isset($dispute->reason) ? (string) $dispute->reason : '',
+        ],
+    ]);
 }
 
 function fn_mwl_xlsx_change_order_status_post(

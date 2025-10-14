@@ -34,6 +34,7 @@
 - Push order status changes, comments, and payment summaries to Planfix through MCP while storing the latest payload snapshot and timestamp in the binding record.
 - Compact price slider labels: Display min/max values in shortened format (1,000 → 1 K / 1 тыс.) with localization support for Russian and English.
 - Yandex Metrika tracking includes `user_id` for segmentation via `userParams` when available.
+- Customer wallet balance with Stripe Checkout top-ups, webhook-driven accruals, and a "Pay from wallet" processor at checkout.
 
 ### Shortcuts
 - Press "a" on a product page to open the "Add to media list" dialog.
@@ -51,6 +52,27 @@
 - `index.php?dispatch=mwl_xlsx.rename_list` – rename a media list (POST).
 - `index.php?dispatch=mwl_xlsx.delete_list` – remove a media list (POST).
 - `index.php?dispatch=mwl_xlsx.planfix_changed_status` – Planfix webhook for status updates (POST).
+- `index.php?dispatch=mwl_wallet.topup` – customer wallet page with balance, history, and Stripe top-up form.
+- `index.php?dispatch=mwl_wallet.webhook` – Stripe webhook endpoint for wallet events (POST).
+
+### Wallet balance
+
+The add-on provisions customer wallets (`cscart_mwl_wallets`) and a full ledger of operations
+(`cscart_mwl_wallet_transactions`). Customers can top up their balance from the **My wallet**
+page via Stripe Checkout; only the asynchronous webhook (`dispatch=mwl_wallet.webhook`) can
+finalise a credit, which keeps balance updates idempotent.
+
+Key points:
+
+* Configure Stripe credentials, top-up limits, allowed currencies, and optional fees in
+  **Add-ons → Media Lists → Settings → Wallet**.
+* `stripe/stripe-php` powers Checkout session creation and webhook verification.
+* Wallet balances use the currency stored in the wallet record; helper functions convert
+  from order currency when the "Pay from wallet" processor is selected.
+* Refunds (`charge.refunded`) and disputes (`charge.dispute.funds_withdrawn`) from Stripe
+  automatically create compensating transactions and lower the wallet balance.
+* The checkout processor denies payment if the balance is insufficient and creates a debit
+  ledger entry when an order is paid successfully.
 
 ### Planfix integration modes
 
