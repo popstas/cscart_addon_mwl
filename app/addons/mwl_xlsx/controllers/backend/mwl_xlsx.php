@@ -7,6 +7,79 @@ use Tygh\Addons\MwlXlsx\Service\SettingsBackup;
 
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
 
+if ($mode === 'filters_sync') {
+    if (PHP_SAPI !== 'cli') {
+        fn_set_notification('W', __('warning'), __('mwl_xlsx.filters_sync_cli_only'));
+
+        return [CONTROLLER_STATUS_NO_CONTENT];
+    }
+
+    $csv_path = trim((string) Registry::get('addons.mwl_xlsx.filters_csv_path'));
+
+    if ($csv_path === '') {
+        $message = __('mwl_xlsx.filters_sync_missing_path');
+        echo $message . PHP_EOL;
+        fn_mwl_xlsx_append_log($message);
+
+        return [CONTROLLER_STATUS_NO_CONTENT];
+    }
+
+    $result = fn_mwl_xlsx_read_filters_csv($csv_path);
+
+    if (!empty($result['errors'])) {
+        foreach ($result['errors'] as $error) {
+            echo '[error] ' . $error . PHP_EOL;
+            fn_mwl_xlsx_append_log('[error] ' . $error);
+        }
+
+        return [CONTROLLER_STATUS_NO_CONTENT];
+    }
+
+    $rows = $result['rows'];
+
+    if (!$rows) {
+        $message = __('mwl_xlsx.filters_sync_error_empty');
+        echo $message . PHP_EOL;
+        fn_mwl_xlsx_append_log($message);
+
+        return [CONTROLLER_STATUS_NO_CONTENT];
+    }
+
+    if (count($rows) > 100) {
+        $message = __('mwl_xlsx.filters_sync_limit_exceeded');
+        echo '[error] ' . $message . PHP_EOL;
+        fn_mwl_xlsx_append_log('[error] ' . $message);
+
+        return [CONTROLLER_STATUS_NO_CONTENT];
+    }
+
+    $service = fn_mwl_xlsx_filter_sync_service();
+    $report = $service->syncPriceFilters($rows);
+
+    $summary = $report->getSummary();
+    $summary_message = __('mwl_xlsx.filters_sync_summary', [
+        '[created]' => $summary['created'],
+        '[updated]' => $summary['updated'],
+        '[deleted]' => $summary['deleted'],
+        '[skipped]' => $summary['skipped'],
+        '[errors]' => $summary['errors'],
+    ]);
+
+    echo $summary_message . PHP_EOL;
+
+    foreach ($report->getErrors() as $error) {
+        echo '[error] ' . $error . PHP_EOL;
+    }
+
+    foreach ($report->getSkipped() as $skip) {
+        echo '[skip] ' . $skip . PHP_EOL;
+    }
+
+    fn_mwl_xlsx_append_log($summary_message . ' | ' . json_encode($report->toArray(), JSON_UNESCAPED_UNICODE));
+
+    return [CONTROLLER_STATUS_NO_CONTENT];
+}
+
 if ($mode === 'dev_reload_langs') {
     // импортирует var/langs/*/addons/mwl_xlsx.po в БД
     fn_reinstall_addon_files('mwl_xlsx');

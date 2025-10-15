@@ -309,6 +309,10 @@
                         <name>mwl_xlsx.currencies_path</name>
                         <value></value>
                     </item>
+                    <item id="filters_csv_path" type="input">
+                        <name>mwl_xlsx.filters_csv_path</name>
+                        <value></value>
+                    </item>
                     <item id="planfix_origin" type="input">
                         <name>mwl_xlsx.planfix_origin</name>
                         <tooltip>mwl_xlsx.planfix_origin.desc</tooltip>
