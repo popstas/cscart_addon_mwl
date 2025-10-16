@@ -46,26 +46,6 @@ class FilterRepository
             return [];
         }
 
-        $filter_ids = array_keys($filters);
-        $params = $this->db->getArray(
-            'SELECT filter_id, param_name, param_value FROM ?:product_filter_params WHERE filter_id IN (?n)',
-            $filter_ids
-        );
-
-        foreach ($params as $param) {
-            $filter_id = (int) $param['filter_id'];
-
-            if (!isset($filters[$filter_id])) {
-                continue;
-            }
-
-            if (!isset($filters[$filter_id]['params']) || !is_array($filters[$filter_id]['params'])) {
-                $filters[$filter_id]['params'] = [];
-            }
-
-            $filters[$filter_id]['params'][$param['param_name']] = $param['param_value'];
-        }
-
         return $filters;
     }
 
