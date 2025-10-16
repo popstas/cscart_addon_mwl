@@ -229,11 +229,7 @@ function fn_mwl_xlsx_read_filters_csv(string $path): array
     $normalized_header = [];
 
     foreach ($header as $index => $column) {
-        if ($index === 0) {
-            $column = preg_replace('/^\xEF\xBB\xBF/u', '', (string) $column);
-        }
-
-        $normalized_header[$index] = mb_strtolower(trim((string) $column), 'UTF-8');
+        $normalized_header[$index] = fn_mwl_xlsx_normalize_csv_header_value((string) $column, $index === 0);
     }
 
     $header_map = array_flip($normalized_header);
@@ -343,6 +339,17 @@ function fn_mwl_xlsx_detect_csv_delimiter(string $line): string
     }
 
     return ',';
+}
+
+function fn_mwl_xlsx_normalize_csv_header_value(string $column, bool $is_first_column = false): string
+{
+    if ($is_first_column && strncmp($column, "\xEF\xBB\xBF", 3) === 0) {
+        $column = substr($column, 3);
+    }
+
+    $column = str_replace(["\xEF\xBB\xBF", "\u{FEFF}"], '', $column);
+
+    return mb_strtolower(trim($column), 'UTF-8');
 }
 
 function fn_mwl_planfix_webhook_handler(bool $force_reload = false): WebhookHandler

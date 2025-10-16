@@ -15,6 +15,14 @@
     <name>Media Lists</name>
     <description>Adds multiple media lists per user without core changes (hooks, own tables, UI on product buttons).</description>
 
+    <authors>
+        <author>
+            <name>popstas</name>
+            <email>popstas@gmail.com</email>
+        </author>
+    </authors>
+    <supplier>popstas</supplier>
+
     <install>fn_mwl_xlsx_install</install>
     <uninstall>fn_mwl_xlsx_uninstall</uninstall>
 

@@ -8,12 +8,6 @@ use Tygh\Addons\MwlXlsx\Service\SettingsBackup;
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
 
 if ($mode === 'filters_sync') {
-    if (PHP_SAPI !== 'cli') {
-        fn_set_notification('W', __('warning'), __('mwl_xlsx.filters_sync_cli_only'));
-
-        return [CONTROLLER_STATUS_NO_CONTENT];
-    }
-
     $csv_path = trim((string) Registry::get('addons.mwl_xlsx.filters_csv_path'));
 
     if ($csv_path === '') {
