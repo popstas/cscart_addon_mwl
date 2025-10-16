@@ -10,9 +10,6 @@ class FilterSyncReport
     /** @var array<int, array{name: string, filter_id: int|null}> */
     private $updated = [];
 
-    /** @var array<int, array{name: string, filter_id: int|null}> */
-    private $deleted = [];
-
     /** @var array<int, string> */
     private $skipped = [];
 
@@ -30,14 +27,6 @@ class FilterSyncReport
     public function addUpdated(string $name, ?int $filter_id = null): void
     {
         $this->updated[] = [
-            'name' => $name,
-            'filter_id' => $filter_id,
-        ];
-    }
-
-    public function addDeleted(string $name, ?int $filter_id = null): void
-    {
-        $this->deleted[] = [
             'name' => $name,
             'filter_id' => $filter_id,
         ];
@@ -70,14 +59,6 @@ class FilterSyncReport
     }
 
     /**
-     * @return array<int, array{name: string, filter_id: int|null}>
-     */
-    public function getDeleted(): array
-    {
-        return $this->deleted;
-    }
-
-    /**
      * @return array<int, string>
      */
     public function getSkipped(): array
@@ -98,7 +79,6 @@ class FilterSyncReport
         return [
             'created' => count($this->created),
             'updated' => count($this->updated),
-            'deleted' => count($this->deleted),
             'skipped' => count($this->skipped),
             'errors' => count($this->errors),
         ];
@@ -109,10 +89,9 @@ class FilterSyncReport
         $summary = $this->getSummary();
 
         return sprintf(
-            'created: %d, updated: %d, deleted: %d, skipped: %d, errors: %d',
+            'created: %d, updated: %d, skipped: %d, errors: %d',
             $summary['created'],
             $summary['updated'],
-            $summary['deleted'],
             $summary['skipped'],
             $summary['errors']
         );
@@ -124,7 +103,6 @@ class FilterSyncReport
             'summary' => $this->getSummary(),
             'created' => $this->created,
             'updated' => $this->updated,
-            'deleted' => $this->deleted,
             'skipped' => $this->skipped,
             'errors' => $this->errors,
         ];

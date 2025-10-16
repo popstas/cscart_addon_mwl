@@ -54,7 +54,6 @@ if ($mode === 'filters_sync') {
     $summary_message = __('mwl_xlsx.filters_sync_summary', [
         '[created]' => $summary['created'],
         '[updated]' => $summary['updated'],
-        '[deleted]' => $summary['deleted'],
         '[skipped]' => $summary['skipped'],
         '[errors]' => $summary['errors'],
     ]);

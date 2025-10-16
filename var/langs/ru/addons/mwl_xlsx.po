@@ -604,8 +604,8 @@ msgid "The CSV file contains more than 100 rows."
 msgstr "CSV содержит более 100 строк."
 
 msgctxt "Languages::mwl_xlsx.filters_sync_summary"
-msgid "Filters sync summary — created: [created], updated: [updated], deleted: [deleted], skipped: [skipped], errors: [errors]."
-msgstr "Итог синхронизации фильтров — создано: [created], обновлено: [updated], удалено: [deleted], пропущено: [skipped], ошибок: [errors]."
+msgid "Filters sync summary — created: [created], updated: [updated], skipped: [skipped], errors: [errors]."
+msgstr "Итог синхронизации фильтров — создано: [created], обновлено: [updated], пропущено: [skipped], ошибок: [errors]."
 
 msgctxt "Languages::mwl_xlsx.filters_sync_error_not_found"
 msgid "File \"[path]\" was not found."

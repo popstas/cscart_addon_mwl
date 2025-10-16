@@ -3,6 +3,7 @@
 namespace Tygh\Addons\MwlXlsx\Service;
 
 use Tygh\Addons\MwlXlsx\Repository\FilterRepository;
+use Tygh\Registry;
 
 class FilterSyncService
 {
@@ -30,8 +31,12 @@ class FilterSyncService
     {
         $report = new FilterSyncReport();
 
+        \fn_mwl_xlsx_append_log(sprintf('[filters_sync] Starting sync for %d CSV rows', count($rows)));
+
         $existing = $this->repository->getCompanyFilters(self::COMPANY_ID);
         $existing_by_name = [];
+
+        $existing_names = [];
 
         foreach ($existing as $filter) {
             $normalized_name = $this->normalizeName($filter['filter'] ?? '');
@@ -39,6 +44,13 @@ class FilterSyncService
                 continue;
             }
             $existing_by_name[$normalized_name] = $filter;
+            $existing_names[] = (string) ($filter['filter'] ?? '');
+        }
+
+        if ($existing_names) {
+            \fn_mwl_xlsx_append_log(sprintf('[filters_sync] Existing filters (%d): %s', count($existing_names), implode(', ', $existing_names)));
+        } else {
+            \fn_mwl_xlsx_append_log('[filters_sync] No existing filters matched the criteria');
         }
 
         $processed_ids = [];
@@ -50,6 +62,7 @@ class FilterSyncService
             if ($name === '') {
                 $report->addError(sprintf('Row %d: missing required "filter" value', $row_number));
                 $report->addSkipped(sprintf('Row %d skipped due to missing name', $row_number));
+                \fn_mwl_xlsx_append_log(sprintf('[filters_sync] Row %d skipped: missing name', $row_number));
                 continue;
             }
 
@@ -58,12 +71,13 @@ class FilterSyncService
             if (isset($processed_ids[$normalized_name])) {
                 $report->addError(sprintf('Row %d: duplicate filter name "%s"', $row_number, $name));
                 $report->addSkipped(sprintf('Row %d skipped as duplicate', $row_number));
+                \fn_mwl_xlsx_append_log(sprintf('[filters_sync] Row %d skipped: duplicate name "%s"', $row_number, $name));
                 continue;
             }
 
             $name_ru = trim((string) ($row['name_ru'] ?? $row['filter_ru'] ?? ''));
             $position = isset($row['position']) ? (int) $row['position'] : 0;
-            $round_to = isset($row['round_to']) ? (int) $row['round_to'] : 0;
+            $round_to = $this->normalizeRoundTo($row['round_to'] ?? null);
             $display = $this->normalizeBoolean($row['display'] ?? '');
             $display_mobile = $this->normalizeBoolean($row['abt__ut2_display_mobile'] ?? null, $display);
             $display_tablet = $this->normalizeBoolean($row['abt__ut2_display_tablet'] ?? null, $display);
@@ -85,6 +99,8 @@ class FilterSyncService
             );
 
             if (!isset($existing_by_name[$normalized_name])) {
+                \fn_mwl_xlsx_append_log(sprintf('[filters_sync] Creating filter "%s" (feature_id=%d, filter_type=%s)', $name, $feature_id, $filter_type));
+
                 $filter_data = [
                     'filter' => $name,
                     'position' => $position,
@@ -107,11 +123,13 @@ class FilterSyncService
                 $filter_id = fn_update_product_filter($filter_data, 0);
 
                 if ($filter_id) {
+                    \fn_mwl_xlsx_append_log(sprintf('[filters_sync] Created filter "%s" with ID %d', $name, $filter_id));
                     $this->syncTranslation((int) $filter_id, $name_ru, $row_number, $name, $report, $filter_type);
                     $report->addCreated($name, (int) $filter_id);
                     $processed_ids[$normalized_name] = (int) $filter_id;
                 } else {
                     $report->addError(sprintf('Row %d: failed to create filter "%s"', $row_number, $name));
+                    \fn_mwl_xlsx_append_log(sprintf('[filters_sync] Failed to create filter "%s"', $name));
                 }
 
                 continue;
@@ -127,7 +145,8 @@ class FilterSyncService
                 $updates['position'] = $position;
             }
 
-            if ((int) ($existing_filter['round_to'] ?? 0) !== $round_to) {
+            $existing_round_to = $this->normalizeRoundTo($existing_filter['round_to'] ?? null);
+            if ($existing_round_to !== $round_to) {
                 $updates['round_to'] = $round_to;
             }
 
@@ -172,13 +191,20 @@ class FilterSyncService
 
                 $filter_data['params'] = array_merge($existing_params, $params);
 
+                \fn_mwl_xlsx_append_log(sprintf('[filters_sync] Updating filter #%d "%s": %s', $filter_id, $name, json_encode([
+                    'updates' => $updates,
+                    'params_updates' => $params_updates,
+                ], JSON_UNESCAPED_UNICODE)));
+
                 $result = fn_update_product_filter($filter_data, $filter_id);
 
                 if ($result) {
                     $had_changes = true;
                     $report->addUpdated($name, $filter_id);
+                    \fn_mwl_xlsx_append_log(sprintf('[filters_sync] Updated filter #%d "%s"', $filter_id, $name));
                 } else {
                     $report->addError(sprintf('Row %d: failed to update filter "%s"', $row_number, $name));
+                    \fn_mwl_xlsx_append_log(sprintf('[filters_sync] Failed to update filter #%d "%s"', $filter_id, $name));
                 }
             }
 
@@ -198,19 +224,14 @@ class FilterSyncService
 
         $existing_ids = array_map('intval', array_column($existing, 'filter_id'));
         $processed_filter_ids = array_values($processed_ids);
+
         $obsolete_ids = array_diff($existing_ids, $processed_filter_ids);
 
         if ($obsolete_ids) {
-            foreach ($existing as $filter) {
-                $filter_id = (int) $filter['filter_id'];
-                if (!in_array($filter_id, $obsolete_ids, true)) {
-                    continue;
-                }
-
-                $this->repository->deleteFilters([$filter_id]);
-                $report->addDeleted((string) ($filter['filter'] ?? ''), $filter_id);
-            }
+            \fn_mwl_xlsx_append_log(sprintf('[filters_sync] Deletion disabled. Obsolete filter IDs detected but kept: %s', implode(', ', $obsolete_ids)));
         }
+
+        $this->clearFiltersCache();
 
         return $report;
     }
@@ -263,6 +284,34 @@ class FilterSyncService
         return (int) $value;
     }
 
+    /**
+     * @param mixed $value
+     */
+    private function normalizeRoundTo($value): string
+    {
+        if ($value === null || $value === '') {
+            return '0';
+        }
+
+        if (is_string($value)) {
+            $value = trim(str_replace(',', '.', $value));
+        }
+
+        if (!is_numeric($value)) {
+            return '0';
+        }
+
+        $float_value = (float) $value;
+
+        if ((int) $float_value == $float_value) {
+            return (string) (int) $float_value;
+        }
+
+        $normalized = rtrim(rtrim(sprintf('%.8F', $float_value), '0'), '.');
+
+        return $normalized === '' ? '0' : $normalized;
+    }
+
     private function syncTranslation(
         int $filter_id,
         string $name_ru,
@@ -293,6 +342,8 @@ class FilterSyncService
 
             return false;
         }
+
+        \fn_mwl_xlsx_append_log(sprintf('[filters_sync] Updated "%s" translation for filter #%d', self::RUSSIAN_LANG_CODE, $filter_id));
 
         return true;
     }
@@ -350,5 +401,33 @@ class FilterSyncService
         }
 
         return 'FF-';
+    }
+
+    private function clearFiltersCache(): void
+    {
+        $cleared = false;
+
+        if (class_exists(Registry::class)) {
+            if (method_exists(Registry::class, 'delByPattern')) {
+                Registry::delByPattern('product_filters_filters');
+                $cleared = true;
+            }
+
+            if (method_exists(Registry::class, 'del')) {
+                Registry::del('product_filters_filters');
+                $cleared = true;
+            }
+        }
+
+        if (!$cleared && function_exists('fn_clear_cache')) {
+            fn_clear_cache(['target' => 'registry']);
+            $cleared = true;
+        }
+
+        if ($cleared) {
+            \fn_mwl_xlsx_append_log('[filters_sync] Cleared filters cache');
+        } else {
+            \fn_mwl_xlsx_append_log('[filters_sync] Unable to clear filters cache (no suitable method)');
+        }
     }
 }

@@ -34,7 +34,7 @@
 - Push order status changes, comments, and payment summaries to Planfix through MCP while storing the latest payload snapshot and timestamp in the binding record.
 - Compact price slider labels: Display min/max values in shortened format (1,000 → 1 K / 1 тыс.) with localization support for Russian and English.
 - Yandex Metrika tracking includes `user_id` for segmentation via `userParams` when available.
-- Synchronize Unitheme price filters from a CSV file via CLI cron with insert, update, and delete support and detailed logging.
+- Synchronize Unitheme price filters from a CSV file via CLI cron with insert/update support, float-aware rounding values, and detailed debug logging.
 
 ### Shortcuts
 - Press "a" on a product page to open the "Add to media list" dialog.
@@ -63,10 +63,11 @@
   * `feature_id > 0` rows are treated as feature-based filters (`filter_type = 'F'`, `field_type = 'F'`). Empty `feature_id` values fall back to price filters (`filter_type = 'P'`, `field_type = 'P'`, `feature_id = 0`).
   * Shared defaults applied on insert: `company_id = 3`, `categories_path = ''`, `status = 'A'`, `display_count = 10`.
   * Boolean flags (`display` and the Unitheme display columns) are normalized to `Y`/`N` per row.
+  * `round_to` supports decimal values (e.g., `0.01`) and preserves precision when stored.
   * Existing filters are matched by the `name`/`filter` column. Only varying attributes (`position`, `round_to`, display flags, feature linkage, filter/field types) are updated; stable fields keep their database values.
   * Russian titles are refreshed from `name_ru` for every processed row.
-  * Filters missing from the CSV but present in the database for company 3 are deleted.
-* **Reporting**: The service returns a summary with counts for created/updated/deleted/skipped/errors. The controller prints the summary to STDOUT and appends both the summary and the full payload to `var/log/mwl_xlsx.log`.
+  * Filters missing from the CSV but present in the database for company 3 remain untouched; the sync never deletes existing entries.
+* **Reporting**: The service returns a summary with counts for created/updated/skipped/errors. The controller prints the summary to STDOUT and appends both the summary and the full payload (including debug lines about searches and skipped deletions) to `var/log/mwl_xlsx.log`.
 * **Failure handling**: Missing files, unreadable CSVs, header issues, or limit violations are logged and reported to STDOUT without touching the database.
 
 ### Planfix integration modes

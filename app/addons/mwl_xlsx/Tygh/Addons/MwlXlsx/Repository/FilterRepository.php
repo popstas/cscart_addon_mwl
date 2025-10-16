@@ -21,6 +21,8 @@ class FilterRepository
      */
     public function getCompanyFilters(int $company_id): array
     {
+        \fn_mwl_xlsx_append_log(sprintf('[filters_sync] Searching filters for company %d', $company_id));
+
         $filter_ids = $this->db->getColumn(
             'SELECT filter_id FROM ?:product_filters WHERE company_id = ?i AND (field_type = ?s OR feature_id > 0)',
             $company_id,
@@ -28,14 +30,18 @@ class FilterRepository
         );
 
         if (!$filter_ids) {
+            \fn_mwl_xlsx_append_log(sprintf('[filters_sync] No filters found for company %d', $company_id));
             return [];
         }
 
         $filter_ids = array_filter(array_map('intval', $filter_ids));
 
         if (!$filter_ids) {
+            \fn_mwl_xlsx_append_log(sprintf('[filters_sync] No valid filter IDs detected for company %d', $company_id));
             return [];
         }
+
+        \fn_mwl_xlsx_append_log(sprintf('[filters_sync] Found filter IDs for company %d: %s', $company_id, implode(', ', $filter_ids)));
 
         $filters = fn_product_filters_get_filters([
             'filter_item_ids' => implode(',', $filter_ids),
@@ -86,22 +92,8 @@ class FilterRepository
             $result[$filter_id] = array_merge($raw_data, $core_data);
         }
 
+        \fn_mwl_xlsx_append_log(sprintf('[filters_sync] Loaded %d filters for company %d', count($result), $company_id));
+
         return $result;
-    }
-
-    /**
-     * @param array<int> $filter_ids
-     */
-    public function deleteFilters(array $filter_ids): void
-    {
-        foreach ($filter_ids as $filter_id) {
-            $filter_id = (int) $filter_id;
-
-            if ($filter_id <= 0) {
-                continue;
-            }
-
-            fn_delete_product_filter($filter_id);
-        }
     }
 }
