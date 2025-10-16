@@ -7,7 +7,7 @@ use Tygh\Registry;
 
 class FilterSyncService
 {
-    private const COMPANY_ID = 3;
+    private const COMPANY_ID = 0;
     private const STATUS = 'A';
     private const DISPLAY_COUNT = 10;
     private const CATEGORIES_PATH = '';
@@ -34,26 +34,35 @@ class FilterSyncService
         \fn_mwl_xlsx_append_log(sprintf('[filters_sync] Starting sync for %d CSV rows', count($rows)));
 
         $existing = $this->repository->getCompanyFilters(self::COMPANY_ID);
-        $existing_by_name = [];
-
+        $existing_by_key = [];
         $existing_names = [];
 
         foreach ($existing as $filter) {
-            $normalized_name = $this->normalizeName($filter['filter'] ?? '');
-            if ($normalized_name === '') {
-                continue;
+            $name = (string) ($filter['filter'] ?? '');
+            $normalized_name = $this->normalizeName($name);
+            $feature_id = isset($filter['feature_id']) ? (int) $filter['feature_id'] : 0;
+            $field_type = isset($filter['field_type']) ? (string) $filter['field_type'] : '';
+
+            if ($feature_id > 0) {
+                $existing_by_key[$this->buildFeatureKey($feature_id)] = $filter;
+            } elseif ($field_type === self::PRICE_FIELD_TYPE) {
+                $existing_by_key[$this->buildPriceKey()] = $filter;
             }
-            $existing_by_name[$normalized_name] = $filter;
-            $existing_names[] = (string) ($filter['filter'] ?? '');
+
+            if ($normalized_name !== '') {
+                $existing_by_key[$this->buildNameKey($normalized_name)] = $filter;
+                $existing_names[] = $name;
+            }
         }
 
         if ($existing_names) {
-            \fn_mwl_xlsx_append_log(sprintf('[filters_sync] Existing filters (%d): %s', count($existing_names), implode(', ', $existing_names)));
+            \fn_mwl_xlsx_append_log(sprintf('[filters_sync] Existing filters (%d): %s', count($existing_names), implode(', ', array_unique($existing_names))));
         } else {
             \fn_mwl_xlsx_append_log('[filters_sync] No existing filters matched the criteria');
         }
 
-        $processed_ids = [];
+        $processed_keys = [];
+        $processed_names = [];
 
         foreach ($rows as $index => $row) {
             $row_number = $index + 2; // +2 to account for header row in CSV
@@ -68,11 +77,15 @@ class FilterSyncService
 
             $normalized_name = $this->normalizeName($name);
 
-            if (isset($processed_ids[$normalized_name])) {
+            if ($normalized_name !== '' && isset($processed_names[$normalized_name])) {
                 $report->addError(sprintf('Row %d: duplicate filter name "%s"', $row_number, $name));
                 $report->addSkipped(sprintf('Row %d skipped as duplicate', $row_number));
                 \fn_mwl_xlsx_append_log(sprintf('[filters_sync] Row %d skipped: duplicate name "%s"', $row_number, $name));
                 continue;
+            }
+
+            if ($normalized_name !== '') {
+                $processed_names[$normalized_name] = true;
             }
 
             $name_ru = trim((string) ($row['name_ru'] ?? $row['filter_ru'] ?? ''));
@@ -86,19 +99,39 @@ class FilterSyncService
             $feature_id = $this->normalizeFeatureId($row['feature_id'] ?? null);
             $field_type = $feature_id > 0 ? self::FEATURE_FIELD_TYPE : self::PRICE_FIELD_TYPE;
 
+            if ($feature_id === 0 && $field_type !== self::PRICE_FIELD_TYPE) {
+                $field_type = self::PRICE_FIELD_TYPE;
+            }
+
             $params = [
                 'abt__ut2_display_mobile' => $display_mobile,
                 'abt__ut2_display_tablet' => $display_tablet,
                 'abt__ut2_display_desktop' => $display_desktop,
             ];
 
+            $lookup_key = $this->resolveLookupKey($feature_id, $field_type, $normalized_name);
+            $existing_filter = $lookup_key !== null ? ($existing_by_key[$lookup_key] ?? null) : null;
+
             $filter_type = $this->resolveFilterType(
-                $existing_by_name[$normalized_name] ?? null,
+                $existing_filter,
                 $feature_id,
                 $field_type
             );
 
-            if (!isset($existing_by_name[$normalized_name])) {
+            if ($lookup_key !== null && isset($processed_keys[$lookup_key])) {
+                $duplicate_label = $feature_id > 0
+                    ? sprintf('feature_id %d', $feature_id)
+                    : ($field_type === self::PRICE_FIELD_TYPE
+                        ? 'price filter'
+                        : sprintf('name "%s"', $name));
+
+                $report->addError(sprintf('Row %d: duplicate filter for %s', $row_number, $duplicate_label));
+                $report->addSkipped(sprintf('Row %d skipped as duplicate', $row_number));
+                \fn_mwl_xlsx_append_log(sprintf('[filters_sync] Row %d skipped: duplicate %s', $row_number, $duplicate_label));
+                continue;
+            }
+
+            if (!$existing_filter) {
                 \fn_mwl_xlsx_append_log(sprintf('[filters_sync] Creating filter "%s" (feature_id=%d, filter_type=%s)', $name, $feature_id, $filter_type));
 
                 $filter_data = [
@@ -126,7 +159,16 @@ class FilterSyncService
                     \fn_mwl_xlsx_append_log(sprintf('[filters_sync] Created filter "%s" with ID %d', $name, $filter_id));
                     $this->syncTranslation((int) $filter_id, $name_ru, $row_number, $name, $report, $filter_type);
                     $report->addCreated($name, (int) $filter_id);
-                    $processed_ids[$normalized_name] = (int) $filter_id;
+
+                    if ($lookup_key !== null) {
+                        $processed_keys[$lookup_key] = (int) $filter_id;
+                    }
+
+                    $new_filter_snapshot = array_merge($filter_data, [
+                        'filter_id' => (int) $filter_id,
+                    ]);
+
+                    $this->updateLookupIndexes($existing_by_key, $new_filter_snapshot, $feature_id, $field_type, $normalized_name);
                 } else {
                     $report->addError(sprintf('Row %d: failed to create filter "%s"', $row_number, $name));
                     \fn_mwl_xlsx_append_log(sprintf('[filters_sync] Failed to create filter "%s"', $name));
@@ -135,7 +177,6 @@ class FilterSyncService
                 continue;
             }
 
-            $existing_filter = $existing_by_name[$normalized_name];
             $filter_id = (int) $existing_filter['filter_id'];
             $updates = [];
             $params_updates = [];
@@ -168,6 +209,10 @@ class FilterSyncService
                 ? $existing_filter['params']
                 : [];
 
+            $old_feature_id = isset($existing_filter['feature_id']) ? (int) $existing_filter['feature_id'] : 0;
+            $old_field_type = isset($existing_filter['field_type']) ? (string) $existing_filter['field_type'] : '';
+            $old_normalized_name = $this->normalizeName((string) ($existing_filter['filter'] ?? ''));
+
             foreach (['abt__ut2_display_mobile', 'abt__ut2_display_tablet', 'abt__ut2_display_desktop'] as $param_name) {
                 $current_value = isset($existing_params[$param_name])
                     ? (string) $existing_params[$param_name]
@@ -188,6 +233,7 @@ class FilterSyncService
                 $filter_data['feature_id'] = $feature_id;
                 $filter_data['field_type'] = $field_type;
                 $filter_data['filter_type'] = $filter_type;
+                $filter_data['company_id'] = self::COMPANY_ID;
 
                 $filter_data['params'] = array_merge($existing_params, $params);
 
@@ -219,16 +265,35 @@ class FilterSyncService
                 $report->addSkipped(sprintf('Row %d: no changes for "%s"', $row_number, $name));
             }
 
-            $processed_ids[$normalized_name] = $filter_id;
-        }
+            if ($lookup_key !== null) {
+                $processed_keys[$lookup_key] = $filter_id;
+            }
 
-        $existing_ids = array_map('intval', array_column($existing, 'filter_id'));
-        $processed_filter_ids = array_values($processed_ids);
+            if ($old_feature_id > 0 && $old_feature_id !== $feature_id) {
+                unset($existing_by_key[$this->buildFeatureKey($old_feature_id)]);
+            }
 
-        $obsolete_ids = array_diff($existing_ids, $processed_filter_ids);
+            if ($old_field_type === self::PRICE_FIELD_TYPE && $field_type !== self::PRICE_FIELD_TYPE) {
+                unset($existing_by_key[$this->buildPriceKey()]);
+            }
 
-        if ($obsolete_ids) {
-            \fn_mwl_xlsx_append_log(sprintf('[filters_sync] Deletion disabled. Obsolete filter IDs detected but kept: %s', implode(', ', $obsolete_ids)));
+            if ($old_normalized_name !== '' && $old_normalized_name !== $normalized_name) {
+                unset($existing_by_key[$this->buildNameKey($old_normalized_name)]);
+            }
+
+            $final_snapshot = $existing_filter;
+            $final_snapshot['params'] = array_merge($existing_params, $params);
+            $final_snapshot['filter_id'] = $filter_id;
+            $final_snapshot['filter'] = $name;
+            $final_snapshot['position'] = $position;
+            $final_snapshot['round_to'] = $round_to;
+            $final_snapshot['display'] = $display;
+            $final_snapshot['feature_id'] = $feature_id;
+            $final_snapshot['field_type'] = $field_type;
+            $final_snapshot['filter_type'] = $filter_type;
+            $final_snapshot['company_id'] = self::COMPANY_ID;
+
+            $this->updateLookupIndexes($existing_by_key, $final_snapshot, $feature_id, $field_type, $normalized_name);
         }
 
         $this->clearFiltersCache();
@@ -242,6 +307,58 @@ class FilterSyncService
         $name = mb_strtolower($name, 'UTF-8');
 
         return $name;
+    }
+
+    private function buildFeatureKey(int $feature_id): string
+    {
+        return 'feature:' . $feature_id;
+    }
+
+    private function buildPriceKey(): string
+    {
+        return 'price:' . self::PRICE_FIELD_TYPE;
+    }
+
+    private function buildNameKey(string $normalized_name): string
+    {
+        return 'name:' . $normalized_name;
+    }
+
+    private function resolveLookupKey(int $feature_id, string $field_type, string $normalized_name): ?string
+    {
+        if ($feature_id > 0) {
+            return $this->buildFeatureKey($feature_id);
+        }
+
+        if ($field_type === self::PRICE_FIELD_TYPE) {
+            return $this->buildPriceKey();
+        }
+
+        if ($normalized_name !== '') {
+            return $this->buildNameKey($normalized_name);
+        }
+
+        return null;
+    }
+
+    private function updateLookupIndexes(
+        array &$existing_by_key,
+        array $snapshot,
+        int $feature_id,
+        string $field_type,
+        string $normalized_name
+    ): void {
+        if ($feature_id > 0) {
+            $existing_by_key[$this->buildFeatureKey($feature_id)] = $snapshot;
+        }
+
+        if ($field_type === self::PRICE_FIELD_TYPE) {
+            $existing_by_key[$this->buildPriceKey()] = $snapshot;
+        }
+
+        if ($normalized_name !== '') {
+            $existing_by_key[$this->buildNameKey($normalized_name)] = $snapshot;
+        }
     }
 
     /**

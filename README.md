@@ -61,12 +61,12 @@
 * **Row limit**: The sync aborts when the CSV contains more than 100 data rows.
 * **Data rules**:
   * `feature_id > 0` rows are treated as feature-based filters (`filter_type = 'F'`, `field_type = 'F'`). Empty `feature_id` values fall back to price filters (`filter_type = 'P'`, `field_type = 'P'`, `feature_id = 0`).
-  * Shared defaults applied on insert: `company_id = 3`, `categories_path = ''`, `status = 'A'`, `display_count = 10`.
+  * Shared defaults applied on insert: `company_id = 0`, `categories_path = ''`, `status = 'A'`, `display_count = 10`.
   * Boolean flags (`display` and the Unitheme display columns) are normalized to `Y`/`N` per row.
   * `round_to` supports decimal values (e.g., `0.01`) and preserves precision when stored.
-  * Existing filters are matched by the `name`/`filter` column. Only varying attributes (`position`, `round_to`, display flags, feature linkage, filter/field types) are updated; stable fields keep their database values.
+  * Existing filters are matched by `feature_id` (feature filters) or `field_type = 'P'` (price filter). The name-based match remains as a fallback when neither identifier is available. Only varying attributes (`position`, `round_to`, display flags, feature linkage, filter/field types) are updated; stable fields keep their database values.
   * Russian titles are refreshed from `name_ru` for every processed row.
-  * Filters missing from the CSV but present in the database for company 3 remain untouched; the sync never deletes existing entries.
+  * Filters missing from the CSV but present in the database remain untouched; the sync never deletes existing entries.
 * **Reporting**: The service returns a summary with counts for created/updated/skipped/errors. The controller prints the summary to STDOUT and appends both the summary and the full payload (including debug lines about searches and skipped deletions) to `var/log/mwl_xlsx.log`.
 * **Failure handling**: Missing files, unreadable CSVs, header issues, or limit violations are logged and reported to STDOUT without touching the database.
 
