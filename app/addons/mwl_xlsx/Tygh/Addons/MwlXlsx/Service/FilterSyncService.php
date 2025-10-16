@@ -73,11 +73,16 @@ class FilterSyncService
             $field_type = $feature_id > 0 ? self::FEATURE_FIELD_TYPE : self::PRICE_FIELD_TYPE;
 
             $params = [
-                'display' => $display,
                 'abt__ut2_display_mobile' => $display_mobile,
                 'abt__ut2_display_tablet' => $display_tablet,
                 'abt__ut2_display_desktop' => $display_desktop,
             ];
+
+            $filter_type = $this->resolveFilterType(
+                $existing_by_name[$normalized_name] ?? null,
+                $feature_id,
+                $field_type
+            );
 
             if (!isset($existing_by_name[$normalized_name])) {
                 $filter_data = [
@@ -93,15 +98,16 @@ class FilterSyncService
                     'company_id' => self::COMPANY_ID,
                     'field_type' => $field_type,
                     'feature_id' => $feature_id,
+                    'filter_type' => $filter_type,
                     'status' => self::STATUS,
                     'display_count' => self::DISPLAY_COUNT,
                     'categories_path' => self::CATEGORIES_PATH,
                 ];
 
-                $filter_id = fn_update_product_filter($filter_data);
+                $filter_id = fn_update_product_filter($filter_data, 0);
 
                 if ($filter_id) {
-                    $this->syncTranslation((int) $filter_id, $name_ru, $row_number, $name, $report);
+                    $this->syncTranslation((int) $filter_id, $name_ru, $row_number, $name, $report, $filter_type);
                     $report->addCreated($name, (int) $filter_id);
                     $processed_ids[$normalized_name] = (int) $filter_id;
                 } else {
@@ -154,11 +160,19 @@ class FilterSyncService
             }
 
             if ($updates || $params_updates) {
-                if ($params_updates) {
-                    $updates['params'] = $params_updates;
-                }
+                $filter_data = array_merge($existing_filter, $updates);
 
-                $result = fn_update_product_filter($updates, $filter_id);
+                $filter_data['filter'] = $name;
+                $filter_data['position'] = $position;
+                $filter_data['round_to'] = $round_to;
+                $filter_data['display'] = $display;
+                $filter_data['feature_id'] = $feature_id;
+                $filter_data['field_type'] = $field_type;
+                $filter_data['filter_type'] = $filter_type;
+
+                $filter_data['params'] = array_merge($existing_params, $params);
+
+                $result = fn_update_product_filter($filter_data, $filter_id);
 
                 if ($result) {
                     $had_changes = true;
@@ -168,7 +182,7 @@ class FilterSyncService
                 }
             }
 
-            $translation_result = $this->syncTranslation($filter_id, $name_ru, $row_number, $name, $report);
+            $translation_result = $this->syncTranslation($filter_id, $name_ru, $row_number, $name, $report, $filter_type);
 
             if ($translation_result === true && !$had_changes) {
                 $had_changes = true;
@@ -249,7 +263,14 @@ class FilterSyncService
         return (int) $value;
     }
 
-    private function syncTranslation(int $filter_id, string $name_ru, int $row_number, string $name, FilterSyncReport $report): ?bool
+    private function syncTranslation(
+        int $filter_id,
+        string $name_ru,
+        int $row_number,
+        string $name,
+        FilterSyncReport $report,
+        string $filter_type
+    ): ?bool
     {
         $name_ru = trim($name_ru);
 
@@ -257,7 +278,10 @@ class FilterSyncService
             return null;
         }
 
-        $result = fn_update_product_filter(['filter' => $name_ru], $filter_id, self::RUSSIAN_LANG_CODE);
+        $result = fn_update_product_filter([
+            'filter' => $name_ru,
+            'filter_type' => $filter_type,
+        ], $filter_id, self::RUSSIAN_LANG_CODE);
 
         if (!$result) {
             $report->addError(sprintf(
@@ -271,5 +295,60 @@ class FilterSyncService
         }
 
         return true;
+    }
+
+    private function resolveFilterType(?array $existing_filter, int $feature_id, string $field_type): string
+    {
+        $existing_type = '';
+
+        if ($existing_filter && isset($existing_filter['filter_type'])) {
+            $existing_type = (string) $existing_filter['filter_type'];
+        }
+
+        if ($feature_id > 0) {
+            $prefix = $this->getFeatureFilterPrefix($feature_id, $existing_type);
+
+            return $prefix . $feature_id;
+        }
+
+        if ($existing_type !== '' && !$this->isFeatureFilterType($existing_type)) {
+            $prefix = substr($existing_type, 0, 2);
+
+            if ($prefix === 'R-' || $prefix === 'B-') {
+                return $prefix . ($field_type !== '' ? $field_type : self::PRICE_FIELD_TYPE);
+            }
+
+            return $existing_type;
+        }
+
+        $effective_field_type = $field_type !== '' ? $field_type : self::PRICE_FIELD_TYPE;
+
+        return 'R-' . $effective_field_type;
+    }
+
+    private function isFeatureFilterType(string $filter_type): bool
+    {
+        return strpos($filter_type, 'FF-') === 0
+            || strpos($filter_type, 'RF-') === 0
+            || strpos($filter_type, 'DF-') === 0;
+    }
+
+    private function getFeatureFilterPrefix(int $feature_id, string $existing_type): string
+    {
+        if ($this->isFeatureFilterType($existing_type)) {
+            return substr($existing_type, 0, 3);
+        }
+
+        $feature_type = fn_get_product_feature_type_by_feature_id($feature_id);
+
+        if ($feature_type === 'D') {
+            return 'DF-';
+        }
+
+        if (in_array($feature_type, ['N', 'O'], true)) {
+            return 'RF-';
+        }
+
+        return 'FF-';
     }
 }
