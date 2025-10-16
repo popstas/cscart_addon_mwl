@@ -10,10 +10,8 @@ class FilterSyncService
     private const STATUS = 'A';
     private const DISPLAY_COUNT = 10;
     private const CATEGORIES_PATH = '';
-    private const PRICE_FILTER_TYPE = 'P';
     private const PRICE_FIELD_TYPE = 'P';
-    private const FEATURE_FILTER_TYPE = 'F';
-    private const FEATURE_FIELD_TYPE = 'F';
+    private const FEATURE_FIELD_TYPE = '';
     private const DEFAULT_FEATURE_ID = 0;
     private const RUSSIAN_LANG_CODE = 'ru';
 
@@ -72,7 +70,6 @@ class FilterSyncService
             $display_desktop = $this->normalizeBoolean($row['abt__ut2_display_desktop'] ?? null, $display);
 
             $feature_id = $this->normalizeFeatureId($row['feature_id'] ?? null);
-            $filter_type = $feature_id > 0 ? self::FEATURE_FILTER_TYPE : self::PRICE_FILTER_TYPE;
             $field_type = $feature_id > 0 ? self::FEATURE_FIELD_TYPE : self::PRICE_FIELD_TYPE;
 
             $params = [
@@ -94,7 +91,6 @@ class FilterSyncService
                         'abt__ut2_display_desktop' => $display_desktop,
                     ],
                     'company_id' => self::COMPANY_ID,
-                    'filter_type' => $filter_type,
                     'field_type' => $field_type,
                     'feature_id' => $feature_id,
                     'status' => self::STATUS,
@@ -136,11 +132,6 @@ class FilterSyncService
 
             if ((int) ($existing_filter['feature_id'] ?? 0) !== $feature_id) {
                 $updates['feature_id'] = $feature_id;
-            }
-
-            $current_filter_type = $this->getExistingValue($existing_filter, 'filter_type', $filter_type);
-            if ($current_filter_type !== $filter_type) {
-                $updates['filter_type'] = $filter_type;
             }
 
             $current_field_type = $this->getExistingValue($existing_filter, 'field_type', $field_type);

@@ -23,9 +23,9 @@ class FilterRepository
     {
         $filters = [];
         $rows = $this->db->getArray(
-            'SELECT * FROM ?:product_filters WHERE company_id = ?i AND filter_type IN (?a)',
+            'SELECT * FROM ?:product_filters WHERE company_id = ?i AND (field_type = ?s OR feature_id > 0)',
             $company_id,
-            ['P', 'F']
+            'P'
         );
 
         if (!$rows) {
