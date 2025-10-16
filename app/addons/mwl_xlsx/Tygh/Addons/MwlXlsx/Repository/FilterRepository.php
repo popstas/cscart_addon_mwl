@@ -6,9 +6,6 @@ use Tygh\Database\Connection;
 
 class FilterRepository
 {
-    private const FILTER_TYPE = 'P';
-    private const FIELD_TYPE = 'P';
-
     /** @var \Tygh\Database\Connection */
     private $db;
 
@@ -18,16 +15,17 @@ class FilterRepository
     }
 
     /**
+     * Returns price/feature filters for the given company.
+     *
      * @return array<int, array<string, mixed>>
      */
-    public function getCompanyPriceFilters(int $company_id): array
+    public function getCompanyFilters(int $company_id): array
     {
         $filters = $this->db->getHashArray(
-            'SELECT * FROM ?:product_filters WHERE company_id = ?i AND filter_type = ?s AND field_type = ?s',
+            'SELECT * FROM ?:product_filters WHERE company_id = ?i AND filter_type IN (?a)',
             'filter_id',
             $company_id,
-            self::FILTER_TYPE,
-            self::FIELD_TYPE
+            ['P', 'F']
         );
 
         if (!$filters) {

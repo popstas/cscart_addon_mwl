@@ -7,12 +7,15 @@ use Tygh\Addons\MwlXlsx\Repository\FilterRepository;
 class FilterSyncService
 {
     private const COMPANY_ID = 3;
-    private const FILTER_TYPE = 'P';
-    private const FIELD_TYPE = 'P';
-    private const FEATURE_ID = 0;
     private const STATUS = 'A';
     private const DISPLAY_COUNT = 10;
     private const CATEGORIES_PATH = '';
+    private const PRICE_FILTER_TYPE = 'P';
+    private const PRICE_FIELD_TYPE = 'P';
+    private const FEATURE_FILTER_TYPE = 'F';
+    private const FEATURE_FIELD_TYPE = 'F';
+    private const DEFAULT_FEATURE_ID = 0;
+    private const RUSSIAN_LANG_CODE = 'ru';
 
     /** @var FilterRepository */
     private $repository;
@@ -29,7 +32,7 @@ class FilterSyncService
     {
         $report = new FilterSyncReport();
 
-        $existing = $this->repository->getCompanyPriceFilters(self::COMPANY_ID);
+        $existing = $this->repository->getCompanyFilters(self::COMPANY_ID);
         $existing_by_name = [];
 
         foreach ($existing as $filter) {
@@ -45,7 +48,7 @@ class FilterSyncService
         foreach ($rows as $index => $row) {
             $row_number = $index + 2; // +2 to account for header row in CSV
 
-            $name = trim((string) ($row['filter'] ?? ''));
+            $name = trim((string) ($row['name'] ?? $row['filter'] ?? ''));
             if ($name === '') {
                 $report->addError(sprintf('Row %d: missing required "filter" value', $row_number));
                 $report->addSkipped(sprintf('Row %d skipped due to missing name', $row_number));
@@ -60,12 +63,17 @@ class FilterSyncService
                 continue;
             }
 
+            $name_ru = trim((string) ($row['name_ru'] ?? $row['filter_ru'] ?? ''));
             $position = isset($row['position']) ? (int) $row['position'] : 0;
             $round_to = isset($row['round_to']) ? (int) $row['round_to'] : 0;
             $display = $this->normalizeBoolean($row['display'] ?? '');
             $display_mobile = $this->normalizeBoolean($row['abt__ut2_display_mobile'] ?? null, $display);
             $display_tablet = $this->normalizeBoolean($row['abt__ut2_display_tablet'] ?? null, $display);
             $display_desktop = $this->normalizeBoolean($row['abt__ut2_display_desktop'] ?? null, $display);
+
+            $feature_id = $this->normalizeFeatureId($row['feature_id'] ?? null);
+            $filter_type = $feature_id > 0 ? self::FEATURE_FILTER_TYPE : self::PRICE_FILTER_TYPE;
+            $field_type = $feature_id > 0 ? self::FEATURE_FIELD_TYPE : self::PRICE_FIELD_TYPE;
 
             $params = [
                 'display' => $display,
@@ -86,9 +94,9 @@ class FilterSyncService
                         'abt__ut2_display_desktop' => $display_desktop,
                     ],
                     'company_id' => self::COMPANY_ID,
-                    'filter_type' => self::FILTER_TYPE,
-                    'field_type' => self::FIELD_TYPE,
-                    'feature_id' => self::FEATURE_ID,
+                    'filter_type' => $filter_type,
+                    'field_type' => $field_type,
+                    'feature_id' => $feature_id,
                     'status' => self::STATUS,
                     'display_count' => self::DISPLAY_COUNT,
                     'categories_path' => self::CATEGORIES_PATH,
@@ -97,6 +105,7 @@ class FilterSyncService
                 $filter_id = fn_update_product_filter($filter_data);
 
                 if ($filter_id) {
+                    $this->syncTranslation((int) $filter_id, $name_ru, $row_number, $name, $report);
                     $report->addCreated($name, (int) $filter_id);
                     $processed_ids[$normalized_name] = (int) $filter_id;
                 } else {
@@ -110,6 +119,7 @@ class FilterSyncService
             $filter_id = (int) $existing_filter['filter_id'];
             $updates = [];
             $params_updates = [];
+            $had_changes = false;
 
             if ((int) ($existing_filter['position'] ?? 0) !== $position) {
                 $updates['position'] = $position;
@@ -122,6 +132,20 @@ class FilterSyncService
             $current_display = $this->getExistingValue($existing_filter, 'display', 'Y');
             if ($current_display !== $display) {
                 $updates['display'] = $display;
+            }
+
+            if ((int) ($existing_filter['feature_id'] ?? 0) !== $feature_id) {
+                $updates['feature_id'] = $feature_id;
+            }
+
+            $current_filter_type = $this->getExistingValue($existing_filter, 'filter_type', $filter_type);
+            if ($current_filter_type !== $filter_type) {
+                $updates['filter_type'] = $filter_type;
+            }
+
+            $current_field_type = $this->getExistingValue($existing_filter, 'field_type', $field_type);
+            if ($current_field_type !== $field_type) {
+                $updates['field_type'] = $field_type;
             }
 
             $existing_params = isset($existing_filter['params']) && is_array($existing_filter['params'])
@@ -146,11 +170,21 @@ class FilterSyncService
                 $result = fn_update_product_filter($updates, $filter_id);
 
                 if ($result) {
+                    $had_changes = true;
                     $report->addUpdated($name, $filter_id);
                 } else {
                     $report->addError(sprintf('Row %d: failed to update filter "%s"', $row_number, $name));
                 }
-            } else {
+            }
+
+            $translation_result = $this->syncTranslation($filter_id, $name_ru, $row_number, $name, $report);
+
+            if ($translation_result === true && !$had_changes) {
+                $had_changes = true;
+                $report->addUpdated($name, $filter_id);
+            }
+
+            if (!$had_changes && $translation_result !== false) {
                 $report->addSkipped(sprintf('Row %d: no changes for "%s"', $row_number, $name));
             }
 
@@ -210,5 +244,41 @@ class FilterSyncService
         $value = $filter[$key];
 
         return is_string($value) ? $value : (string) $value;
+    }
+
+    /**
+     * @param mixed $value
+     */
+    private function normalizeFeatureId($value): int
+    {
+        if ($value === null || $value === '') {
+            return self::DEFAULT_FEATURE_ID;
+        }
+
+        return (int) $value;
+    }
+
+    private function syncTranslation(int $filter_id, string $name_ru, int $row_number, string $name, FilterSyncReport $report): ?bool
+    {
+        $name_ru = trim($name_ru);
+
+        if ($name_ru === '') {
+            return null;
+        }
+
+        $result = fn_update_product_filter(['filter' => $name_ru], $filter_id, self::RUSSIAN_LANG_CODE);
+
+        if (!$result) {
+            $report->addError(sprintf(
+                'Row %d: failed to update %s translation for "%s"',
+                $row_number,
+                self::RUSSIAN_LANG_CODE,
+                $name
+            ));
+
+            return false;
+        }
+
+        return true;
     }
 }

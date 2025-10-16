@@ -57,13 +57,14 @@
 
 * **Entry point**: `php admin.php --dispatch=mwl_xlsx.filters_sync` (CLI/cron only). When called from a browser the controller exits early with a warning.
 * **CSV location**: Configure a single absolute path in the add-on setting **Filters CSV path**.
-* **Supported columns**: `filter`, `position`, `round_to`, `display`, `abt__ut2_display_mobile`, `abt__ut2_display_tablet`, `abt__ut2_display_desktop`. Additional columns (for example `filter_ru`) are ignored.
+* **Supported columns**: `name`, `name_ru`, `position`, `round_to`, `feature_id`, `display`, and optional Unitheme visibility flags (`abt__ut2_display_mobile`, `abt__ut2_display_tablet`, `abt__ut2_display_desktop`). Files that still use the legacy `filter`/`filter_ru` headers continue to work, but the new schema is preferred.
 * **Row limit**: The sync aborts when the CSV contains more than 100 data rows.
 * **Data rules**:
-  * Only price filters are processed (`filter_type = 'P'`, `field_type = 'P'`, `feature_id = 0`).
+  * `feature_id > 0` rows are treated as feature-based filters (`filter_type = 'F'`, `field_type = 'F'`). Empty `feature_id` values fall back to price filters (`filter_type = 'P'`, `field_type = 'P'`, `feature_id = 0`).
   * Shared defaults applied on insert: `company_id = 3`, `categories_path = ''`, `status = 'A'`, `display_count = 10`.
   * Boolean flags (`display` and the Unitheme display columns) are normalized to `Y`/`N` per row.
-  * Existing filters are matched by the `filter` column. Only varying attributes (`position`, `round_to`, display flags) are updated; stable fields keep their database values.
+  * Existing filters are matched by the `name`/`filter` column. Only varying attributes (`position`, `round_to`, display flags, feature linkage, filter/field types) are updated; stable fields keep their database values.
+  * Russian titles are refreshed from `name_ru` for every processed row.
   * Filters missing from the CSV but present in the database for company 3 are deleted.
 * **Reporting**: The service returns a summary with counts for created/updated/deleted/skipped/errors. The controller prints the summary to STDOUT and appends both the summary and the full payload to `var/log/mwl_xlsx.log`.
 * **Failure handling**: Missing files, unreadable CSVs, header issues, or limit violations are logged and reported to STDOUT without touching the database.

@@ -236,7 +236,56 @@ function fn_mwl_xlsx_read_filters_csv(string $path): array
         $normalized_header[$index] = mb_strtolower(trim((string) $column), 'UTF-8');
     }
 
-    $required_columns = ['filter', 'position', 'round_to', 'display'];
+    $header_map = array_flip($normalized_header);
+    $name_column = null;
+
+    if (isset($header_map['name'])) {
+        $name_column = 'name';
+    } elseif (isset($header_map['filter'])) {
+        $name_column = 'filter';
+    }
+
+    if ($name_column === null) {
+        fclose($handle);
+
+        return [
+            'rows' => [],
+            'errors' => [__(
+                'mwl_xlsx.filters_sync_error_missing_column',
+                ['[column]' => 'name']
+            )],
+        ];
+    }
+
+    $required_columns = ['position', 'round_to', 'display'];
+
+    if (!isset($header_map['name_ru'])) {
+        fclose($handle);
+
+        return [
+            'rows' => [],
+            'errors' => [__(
+                'mwl_xlsx.filters_sync_error_missing_column',
+                ['[column]' => 'name_ru']
+            )],
+        ];
+    }
+
+    if (!isset($header_map['feature_id'])) {
+        fclose($handle);
+
+        return [
+            'rows' => [],
+            'errors' => [__(
+                'mwl_xlsx.filters_sync_error_missing_column',
+                ['[column]' => 'feature_id']
+            )],
+        ];
+    }
+
+    $required_columns[] = $name_column;
+    $required_columns[] = 'name_ru';
+    $required_columns[] = 'feature_id';
 
     foreach ($required_columns as $required) {
         if (!in_array($required, $normalized_header, true)) {
@@ -263,6 +312,14 @@ function fn_mwl_xlsx_read_filters_csv(string $path): array
 
         foreach ($normalized_header as $index => $column) {
             $row[$column] = $data[$index] ?? null;
+        }
+
+        if ($name_column === 'filter' && isset($row['filter']) && !isset($row['name'])) {
+            $row['name'] = $row['filter'];
+        }
+
+        if (isset($row['filter_ru']) && !isset($row['name_ru'])) {
+            $row['name_ru'] = $row['filter_ru'];
         }
 
         $rows[] = $row;
