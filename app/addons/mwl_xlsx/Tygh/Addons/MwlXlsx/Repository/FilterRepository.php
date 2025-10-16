@@ -21,12 +21,26 @@ class FilterRepository
      */
     public function getCompanyFilters(int $company_id): array
     {
-        $filters = $this->db->getHashArray(
+        $filters = [];
+        $rows = $this->db->getArray(
             'SELECT * FROM ?:product_filters WHERE company_id = ?i AND filter_type IN (?a)',
-            'filter_id',
             $company_id,
             ['P', 'F']
         );
+
+        if (!$rows) {
+            return [];
+        }
+
+        foreach ($rows as $row) {
+            $filter_id = (int) $row['filter_id'];
+
+            if (!$filter_id) {
+                continue;
+            }
+
+            $filters[$filter_id] = $row;
+        }
 
         if (!$filters) {
             return [];
