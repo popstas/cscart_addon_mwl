@@ -10,6 +10,8 @@ use Tygh\Addons\MwlXlsx\Planfix\McpClient;
 use Tygh\Addons\MwlXlsx\Planfix\PlanfixService;
 use Tygh\Addons\MwlXlsx\Planfix\WebhookHandler;
 use Tygh\Addons\MwlXlsx\Security\AccessService;
+use Tygh\Addons\MwlXlsx\Repository\FilterRepository;
+use Tygh\Addons\MwlXlsx\Service\FilterSyncService;
 use Tygh\Addons\MwlXlsx\Service\SettingsBackup;
 use Tygh\Addons\MwlXlsx\Telegram\TelegramService;
 use Tygh\Registry;
@@ -136,6 +138,218 @@ function fn_mwl_planfix_service(bool $force_reload = false): PlanfixService
     }
 
     return $service;
+}
+
+function fn_mwl_xlsx_filter_sync_service(): FilterSyncService
+{
+    static $service;
+
+    if ($service === null) {
+        $repository = new FilterRepository(Tygh::$app['db']);
+        $service = new FilterSyncService($repository);
+    }
+
+    return $service;
+}
+
+function fn_mwl_xlsx_append_log(string $message): void
+{
+    $log_dir = Registry::get('config.dir.root') . '/var/log';
+    fn_mkdir($log_dir);
+
+    $line = sprintf('[%s] %s%s', date('c'), $message, PHP_EOL);
+    file_put_contents($log_dir . '/mwl_xlsx.log', $line, FILE_APPEND);
+}
+
+/**
+ * @return array{rows: array<int, array<string, mixed>>, errors: array<int, string>}
+ */
+function fn_mwl_xlsx_read_filters_csv(string $path): array
+{
+    $rows = [];
+    $errors = [];
+
+    if (!file_exists($path)) {
+        return [
+            'rows' => $rows,
+            'errors' => [__(
+                'mwl_xlsx.filters_sync_error_not_found',
+                ['[path]' => $path]
+            )],
+        ];
+    }
+
+    if (!is_readable($path)) {
+        return [
+            'rows' => $rows,
+            'errors' => [__(
+                'mwl_xlsx.filters_sync_error_not_readable',
+                ['[path]' => $path]
+            )],
+        ];
+    }
+
+    $handle = fopen($path, 'rb');
+
+    if ($handle === false) {
+        return [
+            'rows' => $rows,
+            'errors' => [__(
+                'mwl_xlsx.filters_sync_error_open_failed',
+                ['[path]' => $path]
+            )],
+        ];
+    }
+
+    $first_line = fgets($handle);
+
+    if ($first_line === false) {
+        fclose($handle);
+
+        return [
+            'rows' => $rows,
+            'errors' => [__('mwl_xlsx.filters_sync_error_empty')],
+        ];
+    }
+
+    $delimiter = fn_mwl_xlsx_detect_csv_delimiter($first_line);
+    rewind($handle);
+
+    $header = fgetcsv($handle, 0, $delimiter);
+
+    if ($header === false) {
+        fclose($handle);
+
+        return [
+            'rows' => $rows,
+            'errors' => [__('mwl_xlsx.filters_sync_error_header')],
+        ];
+    }
+
+    $normalized_header = [];
+
+    foreach ($header as $index => $column) {
+        $normalized_header[$index] = fn_mwl_xlsx_normalize_csv_header_value((string) $column, $index === 0);
+    }
+
+    $header_map = array_flip($normalized_header);
+    $name_column = null;
+
+    if (isset($header_map['name'])) {
+        $name_column = 'name';
+    } elseif (isset($header_map['filter'])) {
+        $name_column = 'filter';
+    }
+
+    if ($name_column === null) {
+        fclose($handle);
+
+        return [
+            'rows' => [],
+            'errors' => [__(
+                'mwl_xlsx.filters_sync_error_missing_column',
+                ['[column]' => 'name']
+            )],
+        ];
+    }
+
+    $required_columns = ['position', 'round_to', 'display'];
+
+    if (!isset($header_map['name_ru'])) {
+        fclose($handle);
+
+        return [
+            'rows' => [],
+            'errors' => [__(
+                'mwl_xlsx.filters_sync_error_missing_column',
+                ['[column]' => 'name_ru']
+            )],
+        ];
+    }
+
+    if (!isset($header_map['feature_id'])) {
+        fclose($handle);
+
+        return [
+            'rows' => [],
+            'errors' => [__(
+                'mwl_xlsx.filters_sync_error_missing_column',
+                ['[column]' => 'feature_id']
+            )],
+        ];
+    }
+
+    $required_columns[] = $name_column;
+    $required_columns[] = 'name_ru';
+    $required_columns[] = 'feature_id';
+
+    foreach ($required_columns as $required) {
+        if (!in_array($required, $normalized_header, true)) {
+            fclose($handle);
+
+            return [
+                'rows' => [],
+                'errors' => [__(
+                    'mwl_xlsx.filters_sync_error_missing_column',
+                    ['[column]' => $required]
+                )],
+            ];
+        }
+    }
+
+    while (($data = fgetcsv($handle, 0, $delimiter)) !== false) {
+        if (count(array_filter($data, static function ($value) {
+            return $value !== null && $value !== '';
+        })) === 0) {
+            continue;
+        }
+
+        $row = [];
+
+        foreach ($normalized_header as $index => $column) {
+            $row[$column] = $data[$index] ?? null;
+        }
+
+        if ($name_column === 'filter' && isset($row['filter']) && !isset($row['name'])) {
+            $row['name'] = $row['filter'];
+        }
+
+        if (isset($row['filter_ru']) && !isset($row['name_ru'])) {
+            $row['name_ru'] = $row['filter_ru'];
+        }
+
+        $rows[] = $row;
+    }
+
+    fclose($handle);
+
+    return [
+        'rows' => $rows,
+        'errors' => $errors,
+    ];
+}
+
+function fn_mwl_xlsx_detect_csv_delimiter(string $line): string
+{
+    $comma_count = substr_count($line, ',');
+    $semicolon_count = substr_count($line, ';');
+
+    if ($semicolon_count > $comma_count) {
+        return ';';
+    }
+
+    return ',';
+}
+
+function fn_mwl_xlsx_normalize_csv_header_value(string $column, bool $is_first_column = false): string
+{
+    if ($is_first_column && strncmp($column, "\xEF\xBB\xBF", 3) === 0) {
+        $column = substr($column, 3);
+    }
+
+    $column = str_replace(["\xEF\xBB\xBF", "\u{FEFF}"], '', $column);
+
+    return mb_strtolower(trim($column), 'UTF-8');
 }
 
 function fn_mwl_planfix_webhook_handler(bool $force_reload = false): WebhookHandler

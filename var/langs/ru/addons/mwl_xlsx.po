@@ -587,3 +587,46 @@ msgctxt "Languages::mwl_xlsx.entity_type"
 msgid "Entity type"
 msgstr "Тип сущности"
 
+msgctxt "Languages::mwl_xlsx.filters_csv_path"
+msgid "Filters CSV path"
+msgstr "Путь к CSV с фильтрами"
+
+msgctxt "Languages::mwl_xlsx.filters_sync_cli_only"
+msgid "Filters sync can only be executed from CLI or cron."
+msgstr "Синхронизацию фильтров можно запускать только из CLI или по cron."
+
+msgctxt "Languages::mwl_xlsx.filters_sync_missing_path"
+msgid "Filters CSV path is not configured in the add-on settings."
+msgstr "В настройках модуля не указан путь к CSV с фильтрами."
+
+msgctxt "Languages::mwl_xlsx.filters_sync_limit_exceeded"
+msgid "The CSV file contains more than 100 rows."
+msgstr "CSV содержит более 100 строк."
+
+msgctxt "Languages::mwl_xlsx.filters_sync_summary"
+msgid "Filters sync summary — created: [created], updated: [updated], skipped: [skipped], errors: [errors]."
+msgstr "Итог синхронизации фильтров — создано: [created], обновлено: [updated], пропущено: [skipped], ошибок: [errors]."
+
+msgctxt "Languages::mwl_xlsx.filters_sync_error_not_found"
+msgid "File \"[path]\" was not found."
+msgstr "Файл \"[path]\" не найден."
+
+msgctxt "Languages::mwl_xlsx.filters_sync_error_not_readable"
+msgid "File \"[path]\" is not readable."
+msgstr "Файл \"[path]\" недоступен для чтения."
+
+msgctxt "Languages::mwl_xlsx.filters_sync_error_open_failed"
+msgid "Unable to open file \"[path]\" for reading."
+msgstr "Не удалось открыть файл \"[path]\" для чтения."
+
+msgctxt "Languages::mwl_xlsx.filters_sync_error_empty"
+msgid "The CSV file is empty."
+msgstr "CSV файл пуст."
+
+msgctxt "Languages::mwl_xlsx.filters_sync_error_header"
+msgid "Unable to read CSV header."
+msgstr "Не удалось прочитать заголовок CSV."
+
+msgctxt "Languages::mwl_xlsx.filters_sync_error_missing_column"
+msgid "Missing required column \"[column]\" in the CSV header."
+msgstr "В заголовке CSV отсутствует обязательный столбец \"[column]\"."
