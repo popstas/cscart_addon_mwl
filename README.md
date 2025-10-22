@@ -70,6 +70,16 @@
 * **Reporting**: The service returns a summary with counts for created/updated/skipped/errors. The controller prints the summary to STDOUT and appends both the summary and the full payload (including debug lines about searches and skipped deletions) to `var/log/mwl_xlsx.log`.
 * **Failure handling**: Missing files, unreadable CSVs, header issues, or limit violations are logged and reported to STDOUT without touching the database.
 
+### Publish down missing products
+
+* **Entry point**: `php admin.php --dispatch=mwl_xlsx.publish_down_missing_products` (intended for cron/CLI).
+* **Settings**:
+  * **Publish down products missing from CSV** toggles the feature.
+  * **Publish down CSV path** points to the absolute CSV file that lists active products (must include either `product_id` or `product_code`).
+  * **Publish down limit** caps the number of products disabled per run (values above 100 remove the cap).
+  * **Publish down period (seconds)** defines how long a product may be absent from the CSV before it is disabled (default `3600` seconds = 1 hour).
+* **Behaviour**: Each run refreshes the seen-at timestamp for products listed in the CSV and disables previously seen products that have been missing for longer than the configured period. Actions, skipped rows, and limit hits are printed to STDOUT and recorded in `var/log/mwl_xlsx.log`.
+
 ### Planfix integration modes
 
 The add-on exposes three Planfix-facing controller modes. All of them live under the

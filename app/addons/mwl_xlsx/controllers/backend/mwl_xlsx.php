@@ -73,6 +73,96 @@ if ($mode === 'filters_sync') {
     return [CONTROLLER_STATUS_NO_CONTENT];
 }
 
+if ($mode === 'publish_down_missing_products') {
+    $enabled = (string) Registry::get('addons.mwl_xlsx.publish_down_missing_products') === 'Y';
+
+    if (!$enabled) {
+        $message = __('mwl_xlsx.publish_down_disabled');
+        echo $message . PHP_EOL;
+        fn_mwl_xlsx_append_log($message);
+
+        return [CONTROLLER_STATUS_NO_CONTENT];
+    }
+
+    $csv_path = trim((string) Registry::get('addons.mwl_xlsx.publish_down_csv_path'));
+
+    if ($csv_path === '') {
+        $message = __('mwl_xlsx.publish_down_missing_path');
+        echo $message . PHP_EOL;
+        fn_mwl_xlsx_append_log($message);
+
+        return [CONTROLLER_STATUS_NO_CONTENT];
+    }
+
+    $result = fn_mwl_xlsx_read_products_csv($csv_path);
+
+    if (!empty($result['errors'])) {
+        foreach ($result['errors'] as $error) {
+            echo '[error] ' . $error . PHP_EOL;
+            fn_mwl_xlsx_append_log('[error] ' . $error);
+        }
+
+        return [CONTROLLER_STATUS_NO_CONTENT];
+    }
+
+    $rows = $result['rows'];
+    $service = fn_mwl_xlsx_publish_down_service();
+    $record_summary = $service->recordSeenProducts($rows);
+
+    $period_setting = (int) Registry::get('addons.mwl_xlsx.publish_down_period');
+    $period_seconds = $period_setting >= 0 ? $period_setting : 3600;
+
+    $limit_setting = (int) Registry::get('addons.mwl_xlsx.publish_down_limit');
+    $limit = ($limit_setting > 0 && $limit_setting <= 100) ? $limit_setting : 0;
+
+    $publish_summary = $service->publishDownOutdated($period_seconds, $limit);
+
+    $summary_message = __('mwl_xlsx.publish_down_summary', [
+        '[processed]' => $record_summary['processed'],
+        '[seen]' => $record_summary['matched'],
+        '[missing]' => count($record_summary['missing']),
+        '[disabled]' => count($publish_summary['disabled']),
+        '[candidates]' => $publish_summary['candidates'],
+    ]);
+
+    echo $summary_message . PHP_EOL;
+
+    foreach ($record_summary['missing'] as $missing_message) {
+        echo '[missing] ' . $missing_message . PHP_EOL;
+        fn_mwl_xlsx_append_log('[missing] ' . $missing_message);
+    }
+
+    foreach ($publish_summary['disabled'] as $product_id) {
+        $line = __('mwl_xlsx.publish_down_disabled_entry', ['[product_id]' => $product_id]);
+        echo '[disabled] ' . $line . PHP_EOL;
+    }
+
+    foreach ($publish_summary['errors'] as $error) {
+        echo '[error] ' . $error . PHP_EOL;
+        fn_mwl_xlsx_append_log('[error] ' . $error);
+    }
+
+    if ($publish_summary['limit_reached'] && $limit > 0) {
+        $limit_message = __('mwl_xlsx.publish_down_limit_reached', ['[limit]' => $limit]);
+        echo '[info] ' . $limit_message . PHP_EOL;
+        fn_mwl_xlsx_append_log('[info] ' . $limit_message);
+    }
+
+    $log_payload = [
+        'processed' => $record_summary['processed'],
+        'matched' => $record_summary['matched'],
+        'missing' => $record_summary['missing'],
+        'disabled' => $publish_summary['disabled'],
+        'errors' => $publish_summary['errors'],
+        'period_seconds' => $period_seconds,
+        'limit' => $limit,
+    ];
+
+    fn_mwl_xlsx_append_log($summary_message . ' | ' . json_encode($log_payload, JSON_UNESCAPED_UNICODE));
+
+    return [CONTROLLER_STATUS_NO_CONTENT];
+}
+
 if ($mode === 'dev_reload_langs') {
     // импортирует var/langs/*/addons/mwl_xlsx.po в БД
     fn_reinstall_addon_files('mwl_xlsx');

@@ -12,6 +12,7 @@ use Tygh\Addons\MwlXlsx\Planfix\WebhookHandler;
 use Tygh\Addons\MwlXlsx\Security\AccessService;
 use Tygh\Addons\MwlXlsx\Repository\FilterRepository;
 use Tygh\Addons\MwlXlsx\Service\FilterSyncService;
+use Tygh\Addons\MwlXlsx\Service\ProductPublishDownService;
 use Tygh\Addons\MwlXlsx\Service\SettingsBackup;
 use Tygh\Addons\MwlXlsx\Telegram\TelegramService;
 use Tygh\Registry;
@@ -147,6 +148,17 @@ function fn_mwl_xlsx_filter_sync_service(): FilterSyncService
     if ($service === null) {
         $repository = new FilterRepository(Tygh::$app['db']);
         $service = new FilterSyncService($repository);
+    }
+
+    return $service;
+}
+
+function fn_mwl_xlsx_publish_down_service(): ProductPublishDownService
+{
+    static $service;
+
+    if ($service === null) {
+        $service = new ProductPublishDownService(Tygh::$app['db']);
     }
 
     return $service;
@@ -318,6 +330,148 @@ function fn_mwl_xlsx_read_filters_csv(string $path): array
             $row['name_ru'] = $row['filter_ru'];
         }
 
+        $rows[] = $row;
+    }
+
+    fclose($handle);
+
+    return [
+        'rows' => $rows,
+        'errors' => $errors,
+    ];
+}
+
+/**
+ * @return array{rows: array<int, array<string, mixed>>, errors: array<int, string>}
+ */
+function fn_mwl_xlsx_read_products_csv(string $path): array
+{
+    $rows = [];
+    $errors = [];
+
+    if (!file_exists($path)) {
+        return [
+            'rows' => [],
+            'errors' => [__(
+                'mwl_xlsx.publish_down_error_not_found',
+                ['[path]' => $path]
+            )],
+        ];
+    }
+
+    if (!is_readable($path)) {
+        return [
+            'rows' => [],
+            'errors' => [__(
+                'mwl_xlsx.publish_down_error_not_readable',
+                ['[path]' => $path]
+            )],
+        ];
+    }
+
+    $handle = fopen($path, 'rb');
+
+    if ($handle === false) {
+        return [
+            'rows' => [],
+            'errors' => [__(
+                'mwl_xlsx.publish_down_error_open_failed',
+                ['[path]' => $path]
+            )],
+        ];
+    }
+
+    $first_line = fgets($handle);
+
+    if ($first_line === false) {
+        fclose($handle);
+
+        return [
+            'rows' => [],
+            'errors' => [__('mwl_xlsx.publish_down_error_empty')],
+        ];
+    }
+
+    $delimiter = fn_mwl_xlsx_detect_csv_delimiter($first_line);
+    rewind($handle);
+
+    $header = fgetcsv($handle, 0, $delimiter);
+
+    if ($header === false) {
+        fclose($handle);
+
+        return [
+            'rows' => [],
+            'errors' => [__('mwl_xlsx.publish_down_error_header')],
+        ];
+    }
+
+    $normalized_header = [];
+
+    foreach ($header as $index => $column) {
+        $normalized_header[$index] = fn_mwl_xlsx_normalize_csv_header_value((string) $column, $index === 0);
+    }
+
+    $alias_map = [
+        'product id' => 'product_id',
+        'productid' => 'product_id',
+        'id' => 'product_id',
+        'id_product' => 'product_id',
+        'sku' => 'product_code',
+        'code' => 'product_code',
+        'product code' => 'product_code',
+        'productcode' => 'product_code',
+        'sku code' => 'product_code',
+        'last changed' => 'changed_at',
+        'last change' => 'changed_at',
+        'changed' => 'changed_at',
+        'change' => 'changed_at',
+        'change date' => 'changed_at',
+        'change_at' => 'changed_at',
+        'updated' => 'updated_at',
+        'update' => 'updated_at',
+        'last updated' => 'updated_at',
+        'last update' => 'updated_at',
+        'modified' => 'updated_at',
+        'modified_at' => 'updated_at',
+    ];
+
+    foreach ($normalized_header as $index => $value) {
+        if (isset($alias_map[$value])) {
+            $normalized_header[$index] = $alias_map[$value];
+        }
+    }
+
+    $has_id = in_array('product_id', $normalized_header, true);
+    $has_code = in_array('product_code', $normalized_header, true);
+
+    if (!$has_id && !$has_code) {
+        fclose($handle);
+
+        return [
+            'rows' => [],
+            'errors' => [__('mwl_xlsx.publish_down_error_missing_identifier')],
+        ];
+    }
+
+    $row_number = 1; // header
+
+    while (($data = fgetcsv($handle, 0, $delimiter)) !== false) {
+        $row_number++;
+
+        if (count(array_filter($data, static function ($value) {
+            return $value !== null && $value !== '';
+        })) === 0) {
+            continue;
+        }
+
+        $row = [];
+
+        foreach ($normalized_header as $index => $column) {
+            $row[$column] = $data[$index] ?? null;
+        }
+
+        $row['__row'] = $row_number;
         $rows[] = $row;
     }
 
