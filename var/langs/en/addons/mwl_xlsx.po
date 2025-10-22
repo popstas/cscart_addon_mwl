@@ -656,3 +656,45 @@ msgstr "Unable to read CSV header."
 msgctxt "Languages::mwl_xlsx.filters_sync_error_missing_column"
 msgid "Missing required column \"[column]\" in the CSV header."
 msgstr "Missing required column \"[column]\" in the CSV header."
+
+msgctxt "Languages::mwl_xlsx.publish_down_missing_products"
+msgid "Publish down stale products"
+msgstr "Publish down stale products"
+
+msgctxt "Languages::mwl_xlsx.publish_down_missing_products.desc"
+msgid "When enabled, the cron mode disables products whose updated timestamp is older than the selected period."
+msgstr "When enabled, the cron mode disables products whose updated timestamp is older than the selected period."
+
+
+msgctxt "Languages::mwl_xlsx.publish_down_limit"
+msgid "Publish down limit"
+msgstr "Publish down limit"
+
+msgctxt "Languages::mwl_xlsx.publish_down_limit.desc"
+msgid "Maximum number of products to disable per run. Set to 0 to disable the limit."
+msgstr "Maximum number of products to disable per run. Set to 0 to disable the limit."
+
+msgctxt "Languages::mwl_xlsx.publish_down_period"
+msgid "Publish down period (seconds)"
+msgstr "Publish down period (seconds)"
+
+msgctxt "Languages::mwl_xlsx.publish_down_period.desc"
+msgid "How long a product may stay without updates before it is disabled. 3600 seconds = 1 hour."
+msgstr "How long a product may stay without updates before it is disabled. 3600 seconds = 1 hour."
+
+msgctxt "Languages::mwl_xlsx.publish_down_disabled"
+msgid "Publish down is disabled in add-on settings."
+msgstr "Publish down is disabled in add-on settings."
+
+msgctxt "Languages::mwl_xlsx.publish_down_summary"
+msgid "Stale products: [candidates], disabled: [disabled], period: [period] s"
+msgstr "Stale products: [candidates], disabled: [disabled], period: [period] s"
+
+msgctxt "Languages::mwl_xlsx.publish_down_disabled_entry"
+msgid "Product #[product_id] published down"
+msgstr "Product #[product_id] published down"
+
+msgctxt "Languages::mwl_xlsx.publish_down_limit_reached"
+msgid "Reached publish down limit ([limit] items)."
+msgstr "Reached publish down limit ([limit] items)."
+

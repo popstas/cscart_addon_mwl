@@ -321,6 +321,18 @@
                         <name>mwl_xlsx.filters_csv_path</name>
                         <value></value>
                     </item>
+                    <item id="publish_down_missing_products" type="checkbox">
+                        <name>mwl_xlsx.publish_down_missing_products</name>
+                        <value>N</value>
+                    </item>
+                    <item id="publish_down_limit" type="input">
+                        <name>mwl_xlsx.publish_down_limit</name>
+                        <value>100</value>
+                    </item>
+                    <item id="publish_down_period" type="input">
+                        <name>mwl_xlsx.publish_down_period</name>
+                        <value>3600</value>
+                    </item>
                     <item id="planfix_origin" type="input">
                         <name>mwl_xlsx.planfix_origin</name>
                         <tooltip>mwl_xlsx.planfix_origin.desc</tooltip>

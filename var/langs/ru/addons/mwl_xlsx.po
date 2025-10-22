@@ -630,3 +630,45 @@ msgstr "Не удалось прочитать заголовок CSV."
 msgctxt "Languages::mwl_xlsx.filters_sync_error_missing_column"
 msgid "Missing required column \"[column]\" in the CSV header."
 msgstr "В заголовке CSV отсутствует обязательный столбец \"[column]\"."
+
+msgctxt "Languages::mwl_xlsx.publish_down_missing_products"
+msgid "Publish down stale products"
+msgstr "Отключать устаревшие товары"
+
+msgctxt "Languages::mwl_xlsx.publish_down_missing_products.desc"
+msgid "When enabled, the cron mode disables products whose updated timestamp is older than the selected period."
+msgstr "При включении крон будет отключать товары с устаревшим полем updated_timestamp."
+
+
+msgctxt "Languages::mwl_xlsx.publish_down_limit"
+msgid "Publish down limit"
+msgstr "Лимит отключений"
+
+msgctxt "Languages::mwl_xlsx.publish_down_limit.desc"
+msgid "Maximum number of products to disable per run. Set to 0 to disable the limit."
+msgstr "Максимальное количество товаров для отключения за один запуск. Значение 0 отключает ограничение."
+
+msgctxt "Languages::mwl_xlsx.publish_down_period"
+msgid "Publish down period (seconds)"
+msgstr "Период отключения (секунды)"
+
+msgctxt "Languages::mwl_xlsx.publish_down_period.desc"
+msgid "How long a product may stay without updates before it is disabled. 3600 seconds = 1 hour."
+msgstr "Как долго товар может быть без обновлений перед отключением. 3600 секунд = 1 час."
+
+msgctxt "Languages::mwl_xlsx.publish_down_disabled"
+msgid "Publish down is disabled in add-on settings."
+msgstr "Отключение товаров выключено в настройках аддона."
+
+msgctxt "Languages::mwl_xlsx.publish_down_summary"
+msgid "Stale products: [candidates], disabled: [disabled], period: [period] s"
+msgstr "Устаревших товаров: [candidates], отключено: [disabled], период: [period] с"
+
+msgctxt "Languages::mwl_xlsx.publish_down_disabled_entry"
+msgid "Product #[product_id] published down"
+msgstr "Товар #[product_id] отключён"
+
+msgctxt "Languages::mwl_xlsx.publish_down_limit_reached"
+msgid "Reached publish down limit ([limit] items)."
+msgstr "Достигнут лимит отключений ([limit])."
+

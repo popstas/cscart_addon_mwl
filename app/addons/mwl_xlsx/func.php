@@ -12,6 +12,7 @@ use Tygh\Addons\MwlXlsx\Planfix\WebhookHandler;
 use Tygh\Addons\MwlXlsx\Security\AccessService;
 use Tygh\Addons\MwlXlsx\Repository\FilterRepository;
 use Tygh\Addons\MwlXlsx\Service\FilterSyncService;
+use Tygh\Addons\MwlXlsx\Service\ProductPublishDownService;
 use Tygh\Addons\MwlXlsx\Service\SettingsBackup;
 use Tygh\Addons\MwlXlsx\Telegram\TelegramService;
 use Tygh\Registry;
@@ -327,6 +328,17 @@ function fn_mwl_xlsx_read_filters_csv(string $path): array
         'rows' => $rows,
         'errors' => $errors,
     ];
+}
+
+function fn_mwl_xlsx_publish_down_service(): ProductPublishDownService
+{
+    static $service;
+
+    if ($service === null) {
+        $service = new ProductPublishDownService(Tygh::$app['db']);
+    }
+
+    return $service;
 }
 
 function fn_mwl_xlsx_detect_csv_delimiter(string $line): string
