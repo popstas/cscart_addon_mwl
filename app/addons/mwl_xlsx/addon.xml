@@ -132,16 +132,6 @@
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ]]></item>
 
-        <item for="install"><![CDATA[
-        CREATE TABLE IF NOT EXISTS `?:mwl_product_publish_tracker` (
-            `product_id` INT UNSIGNED NOT NULL,
-            `last_seen_at` INT UNSIGNED NOT NULL,
-            `last_changed_at` INT UNSIGNED DEFAULT NULL,
-            PRIMARY KEY (`product_id`),
-            KEY `last_seen_at` (`last_seen_at`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-        ]]></item>
-
         <!-- uninstall -->
         <!-- <item for="uninstall"><![CDATA[
         DROP TABLE IF EXISTS `?:mwl_planfix_events`;
@@ -334,10 +324,6 @@
                     <item id="publish_down_missing_products" type="checkbox">
                         <name>mwl_xlsx.publish_down_missing_products</name>
                         <value>N</value>
-                    </item>
-                    <item id="publish_down_csv_path" type="input">
-                        <name>mwl_xlsx.publish_down_csv_path</name>
-                        <value></value>
                     </item>
                     <item id="publish_down_limit" type="input">
                         <name>mwl_xlsx.publish_down_limit</name>

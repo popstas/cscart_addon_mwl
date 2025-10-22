@@ -70,15 +70,14 @@
 * **Reporting**: The service returns a summary with counts for created/updated/skipped/errors. The controller prints the summary to STDOUT and appends both the summary and the full payload (including debug lines about searches and skipped deletions) to `var/log/mwl_xlsx.log`.
 * **Failure handling**: Missing files, unreadable CSVs, header issues, or limit violations are logged and reported to STDOUT without touching the database.
 
-### Publish down missing products
+### Publish down stale products
 
 * **Entry point**: `php admin.php --dispatch=mwl_xlsx.publish_down_missing_products` (intended for cron/CLI).
 * **Settings**:
-  * **Publish down products missing from CSV** toggles the feature.
-  * **Publish down CSV path** points to the absolute CSV file that lists active products (must include either `product_id` or `product_code`).
-  * **Publish down limit** caps the number of products disabled per run (values above 100 remove the cap).
-  * **Publish down period (seconds)** defines how long a product may be absent from the CSV before it is disabled (default `3600` seconds = 1 hour).
-* **Behaviour**: Each run refreshes the seen-at timestamp for products listed in the CSV and disables previously seen products that have been missing for longer than the configured period. Actions, skipped rows, and limit hits are printed to STDOUT and recorded in `var/log/mwl_xlsx.log`.
+  * **Publish down stale products** toggles the feature.
+  * **Publish down limit** caps the number of products disabled per run. Set to `0` to disable the cap.
+  * **Publish down period (seconds)** defines how old the `cscart_products.updated_timestamp` may become before the product is disabled (default `3600` seconds = 1 hour).
+* **Behaviour**: Each run queries `cscart_products` for entries with `status` in `A/H/P` whose `updated_timestamp` (falling back to `timestamp` when empty) is older than the configured period. The matching products are disabled (via `fn_tools_update_status` when available) until the optional limit is reached. Actions, disabled IDs, limit hits, and errors are printed to STDOUT and recorded in `var/log/mwl_xlsx.log`.
 
 ### Planfix integration modes
 
