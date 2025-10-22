@@ -33,6 +33,12 @@ class ProductPublishDownService
             $limit_clause = db_quote(' LIMIT ?i', $limit);
         }
 
+        $this->logDebug(sprintf('[publish_down] Starting run: period=%d seconds, cutoff=%d, limit=%s',
+            $period_seconds,
+            $cutoff,
+            $limit > 0 ? (string) $limit : 'none'
+        ));
+
         $rows = $this->db->getArray(
             'SELECT p.product_id, p.status,'
             . ' CASE WHEN p.updated_timestamp > 0 THEN p.updated_timestamp ELSE p.timestamp END AS updated_at'
@@ -45,47 +51,70 @@ class ProductPublishDownService
             $limit_clause
         );
 
+        $total_candidates = count($rows);
+
+        $this->logDebug(sprintf('[publish_down] Found %d candidate(s) for disabling', $total_candidates));
+
         $disabled = [];
         $errors = [];
 
-        foreach ($rows as $row) {
+        foreach ($rows as $index => $row) {
             $product_id = (int) ($row['product_id'] ?? 0);
             if ($product_id <= 0) {
                 continue;
             }
 
-            if ($this->disableProduct($product_id)) {
+            $status = (string) ($row['status'] ?? '');
+            $updated_at = (int) ($row['updated_at'] ?? 0);
+
+            $this->logDebug(sprintf('[publish_down] #%d/%d: product_id=%d status=%s updated_at=%d',
+                $index + 1,
+                $total_candidates,
+                $product_id,
+                $status,
+                $updated_at
+            ));
+
+            if ($this->disableProduct($product_id, $status, $updated_at)) {
                 $disabled[] = $product_id;
             } else {
-                $errors[] = sprintf('Failed to publish down product #%d', $product_id);
+                $error_message = sprintf('Failed to publish down product #%d', $product_id);
+                $errors[] = $error_message;
+                $this->logDebug('[publish_down] ' . $error_message);
             }
         }
 
         return [
-            'candidates' => count($rows),
+            'candidates' => $total_candidates,
             'disabled' => $disabled,
             'errors' => $errors,
-            'limit_reached' => $limit > 0 && count($rows) >= $limit,
+            'limit_reached' => $limit > 0 && $total_candidates >= $limit,
         ];
     }
 
-    private function disableProduct(int $product_id): bool
+    private function disableProduct(int $product_id, string $previous_status, int $updated_at): bool
     {
         if ($product_id <= 0) {
             return false;
         }
 
-        if (function_exists('fn_tools_update_status')) {
-            $result = fn_tools_update_status('products', $product_id, 'D', '', false, false, 0);
-            if ($result !== false) {
-                \fn_mwl_xlsx_append_log(sprintf('[publish_down] Disabled product #%d via fn_tools_update_status', $product_id));
-                return true;
-            }
-        }
-
         $this->db->query('UPDATE ?:products SET status = ?s WHERE product_id = ?i', 'D', $product_id);
-        \fn_mwl_xlsx_append_log(sprintf('[publish_down] Disabled product #%d directly', $product_id));
+
+        $this->logDebug(sprintf('[publish_down] Disabled product #%d (previous_status=%s, updated_at=%d)',
+            $product_id,
+            $previous_status,
+            $updated_at
+        ));
 
         return true;
+    }
+
+    private function logDebug(string $message): void
+    {
+        echo $message . PHP_EOL;
+
+        if (function_exists('fn_mwl_xlsx_append_log')) {
+            \fn_mwl_xlsx_append_log($message);
+        }
     }
 }
