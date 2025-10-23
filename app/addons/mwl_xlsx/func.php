@@ -1004,3 +1004,34 @@ function fn_mwl_xlsx_switch_currency(string $target_currency, bool $recalc_cart 
         fn_calculate_cart_content($cart, $auth, 'S', true, 'F', true);
     }
 }
+
+/**
+ * Hook handler: skips product image import if product already has images.
+ */
+function fn_mwl_xlsx_exim_import_images_pre(
+    $prefix,
+    $image_file,
+    $detailed_file,
+    $position,
+    $type,
+    $object_id,
+    $object,
+    $import_options,
+    &$perform_import
+) {
+    if ($object !== 'product' || empty($object_id)) {
+        return;
+    }
+
+    $main_pair = fn_get_image_pairs($object_id, 'product', 'M', true, true);
+    if (!empty($main_pair)) {
+        $perform_import = false;
+
+        return;
+    }
+
+    $additional_pairs = fn_get_image_pairs($object_id, 'product', 'A', true, true);
+    if (!empty($additional_pairs)) {
+        $perform_import = false;
+    }
+}

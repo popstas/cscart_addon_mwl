@@ -53,6 +53,16 @@
 - `index.php?dispatch=mwl_xlsx.delete_list` – remove a media list (POST).
 - `index.php?dispatch=mwl_xlsx.planfix_changed_status` – Planfix webhook for status updates (POST).
 
+## Import Behavior
+
+### Image Import Protection
+
+When importing products via CSV with "Detailed image" field:
+- If product already has any images (main or additional) → skip import, keep existing images
+- If product has no images → import images from CSV
+
+This prevents accidental overwriting of existing product images during updates.
+
 ### Price filter sync
 
 * **Entry point**: `php admin.php --dispatch=mwl_xlsx.filters_sync` (CLI/cron only). When called from a browser the controller exits early with a warning.
