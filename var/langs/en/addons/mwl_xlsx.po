@@ -698,3 +698,7 @@ msgctxt "Languages::mwl_xlsx.publish_down_limit_reached"
 msgid "Reached publish down limit ([limit] items)."
 msgstr "Reached publish down limit ([limit] items)."
 
+msgctxt "Languages::mwl_xlsx.publish_down_limit_exceeded"
+msgid "Too many stale products ([count]) to publish down. Limit is [limit]."
+msgstr "Too many stale products ([count]) to publish down. Limit is [limit]."
+
