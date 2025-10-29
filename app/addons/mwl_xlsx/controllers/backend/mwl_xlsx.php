@@ -145,6 +145,17 @@ if ($mode === 'publish_down_missing_products') {
 }
 
 if ($mode === 'delete_unused_products') {
+    $dry_run = false;
+
+    if (defined('MWL_XLSX_DELETE_UNUSED_PRODUCTS_DRY_RUN')) {
+        $dry_run = (bool) MWL_XLSX_DELETE_UNUSED_PRODUCTS_DRY_RUN;
+    }
+
+    if (isset($_REQUEST['dry_run'])) {
+        $dry_run_value = (string) $_REQUEST['dry_run'];
+        $dry_run = in_array(strtolower($dry_run_value), ['1', 'y', 'yes', 'true'], true);
+    }
+
     $critical_tables = [
         '?:mwl_xlsx_list_products' => [
             'columns' => ['product_id'],
@@ -253,6 +264,12 @@ if ($mode === 'delete_unused_products') {
     echo $summary_message . PHP_EOL;
     fn_mwl_xlsx_append_log('[delete_unused] ' . $summary_message);
 
+    if ($dry_run) {
+        $dry_run_message = __('mwl_xlsx.delete_unused_products_dry_run_enabled');
+        echo '[info] ' . $dry_run_message . PHP_EOL;
+        fn_mwl_xlsx_append_log('[delete_unused] ' . $dry_run_message);
+    }
+
     if (!$unused_product_ids) {
         $message = __('mwl_xlsx.delete_unused_products_none');
         echo '[info] ' . $message . PHP_EOL;
@@ -264,6 +281,7 @@ if ($mode === 'delete_unused_products') {
     $deleted_products = [];
     $skipped_products = [];
     $errors = [];
+    $planned_products = [];
 
     $check_references = static function (int $product_id) use ($existing_tables): array {
         $references = [];
@@ -303,6 +321,16 @@ if ($mode === 'delete_unused_products') {
             continue;
         }
 
+        if ($dry_run) {
+            $planned_products[] = $product_id;
+
+            $planned_message = __('mwl_xlsx.delete_unused_products_dry_run_entry', ['[product_id]' => $product_id]);
+            echo '[dry-run] ' . $planned_message . PHP_EOL;
+            fn_mwl_xlsx_append_log('[delete_unused] ' . $planned_message);
+
+            continue;
+        }
+
         $deleted = fn_delete_product($product_id);
 
         if ($deleted) {
@@ -324,16 +352,30 @@ if ($mode === 'delete_unused_products') {
         $errors[] = $product_id;
     }
 
-    $result_message = __('mwl_xlsx.delete_unused_products_result', [
-        '[deleted]' => count($deleted_products),
-        '[skipped]' => count($skipped_products),
-        '[errors]' => count($errors),
-    ]);
+    if ($dry_run) {
+        $result_message = __('mwl_xlsx.delete_unused_products_dry_run_result', [
+            '[planned]' => count($planned_products),
+            '[skipped]' => count($skipped_products),
+            '[errors]' => count($errors),
+        ]);
+    } else {
+        $result_message = __('mwl_xlsx.delete_unused_products_result', [
+            '[deleted]' => count($deleted_products),
+            '[skipped]' => count($skipped_products),
+            '[errors]' => count($errors),
+        ]);
+    }
 
     echo $result_message . PHP_EOL;
     fn_mwl_xlsx_append_log('[delete_unused] ' . $result_message);
 
-    if ($deleted_products) {
+    if ($dry_run && $planned_products) {
+        $planned_message = __('mwl_xlsx.delete_unused_products_dry_run_list', ['[ids]' => implode(', ', $planned_products)]);
+        echo '[info] ' . $planned_message . PHP_EOL;
+        fn_mwl_xlsx_append_log('[delete_unused] ' . $planned_message);
+    }
+
+    if (!$dry_run && $deleted_products) {
         $ids_message = __('mwl_xlsx.delete_unused_products_deleted_list', ['[ids]' => implode(', ', $deleted_products)]);
         echo '[info] ' . $ids_message . PHP_EOL;
         fn_mwl_xlsx_append_log('[delete_unused] ' . $ids_message);

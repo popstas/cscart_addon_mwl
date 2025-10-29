@@ -750,6 +750,10 @@ msgctxt "Languages::mwl_xlsx.delete_unused_products_summary"
 msgid "Unused products scan — total: [total], referenced: [referenced], candidates: [candidates]."
 msgstr "Unused products scan — total: [total], referenced: [referenced], candidates: [candidates]."
 
+msgctxt "Languages::mwl_xlsx.delete_unused_products_dry_run_enabled"
+msgid "Dry-run mode enabled: no products will be deleted."
+msgstr "Dry-run mode enabled: no products will be deleted."
+
 msgctxt "Languages::mwl_xlsx.delete_unused_products_none"
 msgid "No unused products detected."
 msgstr "No unused products detected."
@@ -766,13 +770,25 @@ msgctxt "Languages::mwl_xlsx.delete_unused_products_error"
 msgid "Failed to delete product #[product_id]."
 msgstr "Failed to delete product #[product_id]."
 
+msgctxt "Languages::mwl_xlsx.delete_unused_products_dry_run_entry"
+msgid "Product #[product_id] would be deleted (dry run)."
+msgstr "Product #[product_id] would be deleted (dry run)."
+
 msgctxt "Languages::mwl_xlsx.delete_unused_products_result"
 msgid "Deletion results — deleted: [deleted], skipped: [skipped], errors: [errors]."
 msgstr "Deletion results — deleted: [deleted], skipped: [skipped], errors: [errors]."
 
+msgctxt "Languages::mwl_xlsx.delete_unused_products_dry_run_result"
+msgid "Dry run results — planned deletions: [planned], skipped: [skipped], errors: [errors]."
+msgstr "Dry run results — planned deletions: [planned], skipped: [skipped], errors: [errors]."
+
 msgctxt "Languages::mwl_xlsx.delete_unused_products_deleted_list"
 msgid "Deleted product IDs: [ids]."
 msgstr "Deleted product IDs: [ids]."
+
+msgctxt "Languages::mwl_xlsx.delete_unused_products_dry_run_list"
+msgid "Products that would be deleted: [ids]."
+msgstr "Products that would be deleted: [ids]."
 
 msgctxt "Languages::mwl_xlsx.delete_unused_products_errors_list"
 msgid "Failed product IDs: [ids]."
