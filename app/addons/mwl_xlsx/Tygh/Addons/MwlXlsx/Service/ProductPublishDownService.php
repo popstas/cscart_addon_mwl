@@ -20,7 +20,14 @@ class ProductPublishDownService
      * @param int $period_seconds Non-negative period in seconds.
      * @param int $limit Maximum number of products to publish down (0 = unlimited).
      *
-     * @return array{candidates: int, disabled: array<int, int>, errors: array<int, string>, limit_reached: bool}
+     * @return array{
+     *     candidates: int,
+     *     disabled: array<int, int>,
+     *     errors: array<int, string>,
+     *     limit_reached: bool,
+     *     outdated_total: int,
+     *     aborted_by_limit: bool,
+     * }
      */
     public function publishDownOutdated(int $period_seconds, int $limit = 0): array
     {
@@ -31,6 +38,31 @@ class ProductPublishDownService
         $limit_clause = '';
         if ($limit > 0) {
             $limit_clause = db_quote(' LIMIT ?i', $limit);
+        }
+
+        $outdated_total = (int) $this->db->getField(
+            'SELECT COUNT(*)'
+            . ' FROM ?:products AS p'
+            . ' WHERE (CASE WHEN p.updated_timestamp > 0 THEN p.updated_timestamp ELSE p.timestamp END) < ?i'
+            . '   AND p.status IN (?a)',
+            $cutoff,
+            ['A', 'H', 'P']
+        );
+
+        if ($limit > 0 && $outdated_total > $limit) {
+            $this->logDebug(sprintf('[publish_down] Aborting: %d outdated products exceed the limit of %d',
+                $outdated_total,
+                $limit
+            ));
+
+            return [
+                'candidates' => $outdated_total,
+                'disabled' => [],
+                'errors' => [],
+                'limit_reached' => false,
+                'outdated_total' => $outdated_total,
+                'aborted_by_limit' => true,
+            ];
         }
 
         $this->logDebug(sprintf('[publish_down] Starting run: period=%d seconds, cutoff=%d, limit=%s',
@@ -85,10 +117,12 @@ class ProductPublishDownService
         }
 
         return [
-            'candidates' => $total_candidates,
+            'candidates' => $outdated_total,
             'disabled' => $disabled,
             'errors' => $errors,
             'limit_reached' => $limit > 0 && $total_candidates >= $limit,
+            'outdated_total' => $outdated_total,
+            'aborted_by_limit' => false,
         ];
     }
 

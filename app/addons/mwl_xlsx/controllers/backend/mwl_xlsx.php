@@ -94,6 +94,18 @@ if ($mode === 'publish_down_missing_products') {
 
     $publish_summary = $service->publishDownOutdated($period_seconds, $limit);
 
+    if (!empty($publish_summary['aborted_by_limit'])) {
+        $error_message = __('mwl_xlsx.publish_down_limit_exceeded', [
+            '[count]' => $publish_summary['outdated_total'] ?? 0,
+            '[limit]' => $limit,
+        ]);
+
+        echo '[error] ' . $error_message . PHP_EOL;
+        fn_mwl_xlsx_append_log('[error] ' . $error_message);
+
+        exit(1);
+    }
+
     $summary_message = __('mwl_xlsx.publish_down_summary', [
         '[candidates]' => $publish_summary['candidates'],
         '[disabled]' => count($publish_summary['disabled']),
@@ -124,6 +136,7 @@ if ($mode === 'publish_down_missing_products') {
         'period_seconds' => $period_seconds,
         'limit' => $limit,
         'candidates' => $publish_summary['candidates'],
+        'outdated_total' => $publish_summary['outdated_total'],
     ];
 
     fn_mwl_xlsx_append_log($summary_message . ' | ' . json_encode($log_payload, JSON_UNESCAPED_UNICODE));
