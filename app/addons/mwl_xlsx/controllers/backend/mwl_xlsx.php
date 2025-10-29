@@ -230,7 +230,7 @@ if ($mode === 'delete_unused_products') {
         }
     }
 
-    $all_product_ids = array_map('intval', db_get_fields('SELECT product_id FROM ?:products'));
+    $all_product_ids = array_map('intval', db_get_fields('SELECT product_id FROM ?:products WHERE status = ?s', 'D'));
 
     if (!$all_product_ids) {
         $message = __('mwl_xlsx.delete_unused_products_empty');
@@ -255,9 +255,18 @@ if ($mode === 'delete_unused_products') {
 
     sort($unused_product_ids);
 
+    $disabled_lookup = array_fill_keys($all_product_ids, true);
+    $referenced_disabled_count = 0;
+
+    foreach ($referenced_product_ids as $product_id => $flag) {
+        if (isset($disabled_lookup[$product_id])) {
+            $referenced_disabled_count++;
+        }
+    }
+
     $summary_message = __('mwl_xlsx.delete_unused_products_summary', [
-        '[total]' => count($all_product_ids),
-        '[referenced]' => count($referenced_product_ids),
+        '[disabled_total]' => count($all_product_ids),
+        '[referenced_disabled]' => $referenced_disabled_count,
         '[candidates]' => count($unused_product_ids),
     ]);
 

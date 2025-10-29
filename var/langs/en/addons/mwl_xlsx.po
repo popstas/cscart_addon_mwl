@@ -743,12 +743,12 @@ msgid "Skipping [table]: table not found."
 msgstr "Skipping [table]: table not found."
 
 msgctxt "Languages::mwl_xlsx.delete_unused_products_empty"
-msgid "Products table is empty, nothing to delete."
-msgstr "Products table is empty, nothing to delete."
+msgid "No disabled products found, nothing to delete."
+msgstr "No disabled products found, nothing to delete."
 
 msgctxt "Languages::mwl_xlsx.delete_unused_products_summary"
-msgid "Unused products scan — total: [total], referenced: [referenced], candidates: [candidates]."
-msgstr "Unused products scan — total: [total], referenced: [referenced], candidates: [candidates]."
+msgid "Unused disabled products scan — total disabled: [disabled_total], referenced disabled: [referenced_disabled], candidates: [candidates]."
+msgstr "Unused disabled products scan — total disabled: [disabled_total], referenced disabled: [referenced_disabled], candidates: [candidates]."
 
 msgctxt "Languages::mwl_xlsx.delete_unused_products_dry_run_enabled"
 msgid "Dry-run mode enabled: no products will be deleted."

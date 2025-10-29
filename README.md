@@ -95,7 +95,7 @@ This prevents accidental overwriting of existing product images during updates.
 ### Delete unused products
 
 * **Entry point**: `php admin.php --dispatch=mwl_xlsx.delete_unused_products` (CLI/cron only).
-* **Scan**: Collects product IDs that appear in critical tables (`cscart_mwl_xlsx_list_products`, `cscart_order_details`, `cscart_product_reviews`, `cscart_product_sales`, `cscart_rma_return_products`, `cscart_wishlist_products`, `cscart_user_session_products`, `cscart_product_subscriptions`, and `cscart_discussion_posts` for products). Products that do not occur in any of these tables remain candidates for deletion.
+* **Scan**: Collects disabled product IDs (`status = 'D'`) that appear in critical tables (`cscart_mwl_xlsx_list_products`, `cscart_order_details`, `cscart_product_reviews`, `cscart_product_sales`, `cscart_rma_return_products`, `cscart_wishlist_products`, `cscart_user_session_products`, `cscart_product_subscriptions`, and `cscart_discussion_posts` for products). Disabled products that do not occur in any of these tables remain candidates for deletion.
 * **Dry run**: Pass `dry_run=Y` (or define `MWL_XLSX_DELETE_UNUSED_PRODUCTS_DRY_RUN` before dispatch) to preview the deletion list without touching the database. Candidates are reported with `[dry-run]` log entries and a dedicated summary.
 * **Deletion**: Calls `fn_delete_product($product_id)` for each candidate and removes lingering SEO names. Each deleted, skipped, or failed product ID is printed to STDOUT (`[deleted]`, `[skip]`, `[error]`) and appended to `var/log/mwl_xlsx.log`.
 * **Safety**: Before deletion each product is re-checked against the same tables to avoid race conditions. The run finishes with a summary of deleted, skipped, and failed products.

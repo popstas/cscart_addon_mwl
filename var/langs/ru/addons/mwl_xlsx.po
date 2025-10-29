@@ -717,12 +717,12 @@ msgid "Skipping [table]: table not found."
 msgstr "Пропускаем [table]: таблица не найдена."
 
 msgctxt "Languages::mwl_xlsx.delete_unused_products_empty"
-msgid "Products table is empty, nothing to delete."
-msgstr "Таблица товаров пустая, удалять нечего."
+msgid "No disabled products found, nothing to delete."
+msgstr "Отключённые товары не найдены, удалять нечего."
 
 msgctxt "Languages::mwl_xlsx.delete_unused_products_summary"
-msgid "Unused products scan — total: [total], referenced: [referenced], candidates: [candidates]."
-msgstr "Проверка неиспользуемых товаров — всего: [total], задействованы: [referenced], кандидаты: [candidates]."
+msgid "Unused disabled products scan — total disabled: [disabled_total], referenced disabled: [referenced_disabled], candidates: [candidates]."
+msgstr "Проверка отключённых товаров — всего отключено: [disabled_total], задействованы среди них: [referenced_disabled], кандидаты: [candidates]."
 
 msgctxt "Languages::mwl_xlsx.delete_unused_products_dry_run_enabled"
 msgid "Dry-run mode enabled: no products will be deleted."
