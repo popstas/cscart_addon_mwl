@@ -3,6 +3,73 @@
   var $deleteDialog = $('#mwl_xlsx_delete_dialog');
   var $newListDialog = $('#mwl_xlsx_new_list_dialog');
   var $addDialog = $('#mwl_xlsx_add_dialog');
+  var ELEMENT_NODE = 1;
+  var TEXT_NODE = 3;
+
+  function linkifyElement(el) {
+    if (!el || el.nodeType !== ELEMENT_NODE) { return; }
+
+    var childNodes = Array.prototype.slice.call(el.childNodes || []);
+
+    for (var i = 0; i < childNodes.length; i++) {
+      var node = childNodes[i];
+
+      if (node.nodeType === TEXT_NODE) {
+        var text = node.textContent || '';
+        if (text.indexOf('http') === -1) { continue; }
+
+        var regex = /(https?:\/\/[^\s<]+)/g;
+        var lastIndex = 0;
+        var match;
+        var frag = document.createDocumentFragment();
+        var hasMatch = false;
+
+        while ((match = regex.exec(text)) !== null) {
+          hasMatch = true;
+
+          if (match.index > lastIndex) {
+            frag.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+          }
+
+          var a = document.createElement('a');
+          a.href = match[0];
+          a.textContent = match[0];
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          frag.appendChild(a);
+
+          lastIndex = match.index + match[0].length;
+        }
+
+        if (lastIndex < text.length) {
+          frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+        }
+
+        if (hasMatch) {
+          el.replaceChild(frag, node);
+        }
+      } else if (node.nodeType === ELEMENT_NODE) {
+        if (node.tagName && node.tagName.toLowerCase() === 'a') { continue; }
+        linkifyElement(node);
+      }
+    }
+  }
+
+  function linkifyFeatureValues(context) {
+    var $contextElements = $('.ty-product-feature__value', context);
+
+    if (context && $(context).is && $(context).is('.ty-product-feature__value')) {
+      $contextElements = $contextElements.add(context);
+    }
+
+    if (!$contextElements.length && !context) {
+      $contextElements = $('.ty-product-feature__value');
+    }
+
+    $contextElements.each(function() {
+      linkifyElement(this);
+    });
+  }
 
   // === MWL: минимальное отслеживание целей Метрики ===
   function mwlGetMetrikaId() {
@@ -59,6 +126,10 @@
   $.ceEvent('on', 'ce.commoninit', function(context) {
     // init user id in Metrika
     setMwlUserId();
+
+    if (_ && _.addons && _.addons.mwl_xlsx && _.addons.mwl_xlsx.linkify_feature_urls) {
+      linkifyFeatureValues(context);
+    }
 
     // init new list dialog
     if (!$newListDialog.length) {
