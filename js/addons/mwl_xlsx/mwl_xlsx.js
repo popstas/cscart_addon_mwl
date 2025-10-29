@@ -110,7 +110,7 @@
     });
 
     // Move request-price-check button into the feature row value if present on product page
-    const moveRequestPrice = true;
+    const moveRequestPrice = false;
     if (moveRequestPrice) {
       try {
         var $opener = $('#opener_ut2_features_dialog_552', context);
