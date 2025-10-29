@@ -184,6 +184,13 @@
                 <value id="mwl_xlsx.setting.compact_price_slider_labels.desc">Show min/max slider labels in a compact format without affecting filter values.</value>
                 <value id="mwl_xlsx.setting.linkify_feature_urls">Convert URLs in feature values to links</value>
                 <value id="mwl_xlsx.setting.linkify_feature_urls.desc">Automatically detect web addresses in product feature values and make them clickable.</value>
+                <value id="mwl_xlsx.setting.format_feature_numbers">Format large feature numbers</value>
+                <value id="mwl_xlsx.setting.format_feature_numbers.desc">Add thousands separators to numeric product feature values (1 000 → 1,000) on the storefront.</value>
+                <value id="mwl_xlsx.setting.show_price_hint">Show price tooltip</value>
+                <value id="mwl_xlsx.setting.show_price_hint.desc">Append an info icon next to prices that explains what the amount includes.</value>
+                <value id="mwl_xlsx.setting.auto_detect_language">Auto-detect storefront language</value>
+                <value id="mwl_xlsx.setting.auto_detect_language.desc">Redirect new visitors to the language that matches their browser preferences.</value>
+                <value id="mwl_xlsx.price_hint_text"><![CDATA[The price includes:<br>Placement fee in the publication, coordination of the text with the editorial office, and compliance monitoring of technical requirements (author, date, etc.).]]></value>
                 <value id="mwl_xlsx.shortnum_thousand"> K</value>
                 <value id="mwl_xlsx.shortnum_million"> M</value>
                 <value id="mwl_xlsx.shortnum_billion"> B</value>
@@ -245,6 +252,13 @@
                 <value id="mwl_xlsx.setting.compact_price_slider_labels.desc">Показывать min/max у слайдера в коротком формате, не влияя на значения фильтра.</value>
                 <value id="mwl_xlsx.setting.linkify_feature_urls">Преобразовывать URL в ссылку в значениях характеристик</value>
                 <value id="mwl_xlsx.setting.linkify_feature_urls.desc">Автоматически находить веб-адреса в значениях характеристик товара и делать их кликабельными.</value>
+                <value id="mwl_xlsx.setting.format_feature_numbers">Форматировать большие значения характеристик</value>
+                <value id="mwl_xlsx.setting.format_feature_numbers.desc">Добавлять разделители тысяч в числовых значениях характеристик товара (1000 → 1 000) на витрине.</value>
+                <value id="mwl_xlsx.setting.show_price_hint">Показывать подсказку о составе цены</value>
+                <value id="mwl_xlsx.setting.show_price_hint.desc">Добавлять значок с подсказкой о том, что входит в цену на витрине.</value>
+                <value id="mwl_xlsx.setting.auto_detect_language">Определять язык витрины автоматически</value>
+                <value id="mwl_xlsx.setting.auto_detect_language.desc">Перенаправлять новых посетителей на язык витрины, совпадающий с языком их браузера.</value>
+                <value id="mwl_xlsx.price_hint_text"><![CDATA[Цена включает:<br>Тариф на размещение в издании, согласование текста с редакцией и контроль выполнения технических требований (автор, дата и т.д.).]]></value>
                 <value id="mwl_xlsx.shortnum_thousand"> тыс.</value>
                 <value id="mwl_xlsx.shortnum_million"> млн.</value>
                 <value id="mwl_xlsx.shortnum_billion"> млрд.</value>
@@ -354,6 +368,21 @@
                     </item>
                     <item id="linkify_feature_urls" type="checkbox">
                         <name>mwl_xlsx.setting.linkify_feature_urls</name>
+                        <value>Y</value>
+                    </item>
+                    <item id="format_feature_numbers" type="checkbox">
+                        <name>mwl_xlsx.setting.format_feature_numbers</name>
+                        <tooltip>mwl_xlsx.setting.format_feature_numbers.desc</tooltip>
+                        <value>Y</value>
+                    </item>
+                    <item id="show_price_hint" type="checkbox">
+                        <name>mwl_xlsx.setting.show_price_hint</name>
+                        <tooltip>mwl_xlsx.setting.show_price_hint.desc</tooltip>
+                        <value>Y</value>
+                    </item>
+                    <item id="auto_detect_language" type="checkbox">
+                        <name>mwl_xlsx.setting.auto_detect_language</name>
+                        <tooltip>mwl_xlsx.setting.auto_detect_language.desc</tooltip>
                         <value>Y</value>
                     </item>
                 </items>

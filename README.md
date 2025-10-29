@@ -33,6 +33,9 @@
 - Manage Planfix bindings from a dedicated tab in the order details page: create tasks via MCP, bind existing tasks, and review the full metadata/payload history for each link.
 - Push order status changes, comments, and payment summaries to Planfix through MCP while storing the latest payload snapshot and timestamp in the binding record.
 - Compact price slider labels: Display min/max values in shortened format (1,000 → 1 K / 1 тыс.) with localization support for Russian and English.
+- Format large numeric product feature values with localized thousands separators on the storefront.
+- Show a tooltip icon next to prices that explains what the amount includes (localized text).
+- Redirect first-time visitors to the storefront language that matches their browser preferences (optional).
 - Yandex Metrika tracking includes `user_id` for segmentation via `userParams` when available.
 - Synchronize Unitheme price filters from a CSV file via CLI cron with insert/update support, float-aware rounding values, and detailed debug logging.
 
