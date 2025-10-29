@@ -19,6 +19,7 @@
     "mwl_xlsx.shortnum_billion": '{__("mwl_xlsx.shortnum_billion")|escape:"javascript"}',
     "mwl_xlsx.shortnum_million": '{__("mwl_xlsx.shortnum_million")|escape:"javascript"}',
     "mwl_xlsx.shortnum_thousand": '{__("mwl_xlsx.shortnum_thousand")|escape:"javascript"}',
+    "mwl_xlsx.price_hint_text": '{__("mwl_xlsx.price_hint_text")|escape:"javascript"}',
     "save": '{__("save")|escape:"javascript"}',
   });
 })(Tygh, Tygh.$);
@@ -32,6 +33,9 @@ Tygh.addons.mwl_xlsx = Tygh.addons.mwl_xlsx || {};
 Tygh.addons.mwl_xlsx.max_list_items = {$addons.mwl_xlsx.max_list_items|default:0};
 Tygh.addons.mwl_xlsx.compact_price_slider_labels = {if $addons.mwl_xlsx.compact_price_slider_labels == "Y"}true{else}false{/if};
 Tygh.addons.mwl_xlsx.linkify_feature_urls = {if $addons.mwl_xlsx.linkify_feature_urls == "Y"}true{else}false{/if};
+Tygh.addons.mwl_xlsx.format_feature_numbers = {if $addons.mwl_xlsx.format_feature_numbers == "Y"}true{else}false{/if};
+Tygh.addons.mwl_xlsx.show_price_hint = {if $addons.mwl_xlsx.show_price_hint == "Y"}true{else}false{/if};
+Tygh.addons.mwl_xlsx.auto_detect_language = {if $addons.mwl_xlsx.auto_detect_language == "Y"}true{else}false{/if};
 </script>
 <script>
   window.MWL_USER_ID = {$auth.user_id|default:0};

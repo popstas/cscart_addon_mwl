@@ -5,6 +5,156 @@
   var $addDialog = $('#mwl_xlsx_add_dialog');
   var ELEMENT_NODE = 1;
   var TEXT_NODE = 3;
+  var MWL_LANG_COOKIE = 'mwl_lang_set';
+
+  function findInContext(selector, context) {
+    var $context = context ? $(context) : $(document);
+    var $elements = $context.find(selector);
+
+    if (context && $context.is && $context.is(selector)) {
+      $elements = $elements.add($context);
+    } else if (!context) {
+      $elements = $(selector);
+    }
+
+    return $elements;
+  }
+
+  function getDocumentLocale() {
+    var html = document.documentElement || {};
+    if (html.lang) {
+      return html.lang;
+    }
+
+    if (typeof navigator !== 'undefined') {
+      return navigator.language || navigator.userLanguage || 'en';
+    }
+
+    return 'en';
+  }
+
+  function getCurrentLanguage() {
+    var lang = '';
+
+    try {
+      if (_ && _.cart_language) {
+        lang = _.cart_language;
+      } else if (typeof Tygh !== 'undefined' && Tygh.cart_language) {
+        lang = Tygh.cart_language;
+      }
+    } catch (e) {}
+
+    if (!lang) {
+      var html = document.documentElement || {};
+      if (html.lang) {
+        lang = html.lang;
+      }
+    }
+
+    if (!lang && typeof navigator !== 'undefined') {
+      lang = navigator.language || navigator.userLanguage || '';
+    }
+
+    return (lang || '').substr(0, 2).toLowerCase();
+  }
+
+  function formatFeatureNumbers(context) {
+    var locale = getDocumentLocale();
+    var $elements = findInContext('.ty-product-feature__value', context);
+
+    $elements.each(function() {
+      var $el = $(this);
+      if ($el.data('mwlFormattedNumber')) { return; }
+
+      var text = ($el.text() || '').replace(/\s+/g, '');
+      if (!/^\d+$/.test(text)) { return; }
+
+      var value = parseInt(text, 10);
+      if (!value || value < 1000) { return; }
+
+      try {
+        $el.text(value.toLocaleString(locale));
+      } catch (e) {
+        $el.text(value.toLocaleString());
+      }
+
+      $el.data('mwlFormattedNumber', '1');
+    });
+  }
+
+  function addPriceHints(context) {
+    var hintText = _.tr ? _.tr('mwl_xlsx.price_hint_text') : '';
+    if (!hintText) { return; }
+
+    var $prices = findInContext('.ty-price', context);
+
+    $prices.each(function() {
+      var $price = $(this);
+      if ($price.data('mwlPriceHintAdded')) { return; }
+      if ($price.next('.ty-price-hint').length) {
+        $price.data('mwlPriceHintAdded', true);
+        return;
+      }
+
+      var $hint = $('<span/>', {
+        'class': 'ty-price-hint cm-tooltip ty-icon-help-circle',
+        title: hintText,
+        text: '',
+        css: {
+          'margin-left': '10px',
+          cursor: 'help'
+        }
+      });
+
+      $price.after($hint);
+      $price.data('mwlPriceHintAdded', true);
+    });
+  }
+
+  function setLanguageFromBrowser() {
+    if (!_.addons || !_.addons.mwl_xlsx || !_.addons.mwl_xlsx.auto_detect_language) { return; }
+
+    if (document.cookie && document.cookie.indexOf(MWL_LANG_COOKIE + '=1') !== -1) { return; }
+    if (window.location.search && /(^|&)sl=/.test(window.location.search.replace('?', '&'))) { return; }
+
+    var browserLang = (typeof navigator !== 'undefined' && (navigator.language || navigator.userLanguage)) || '';
+    browserLang = (browserLang || '').substr(0, 2).toLowerCase();
+    if (!browserLang) { return; }
+
+    var currentLang = getCurrentLanguage();
+    if (browserLang === currentLang) { return; }
+
+    var redirects = {
+      ru: '?sl=ru',
+      en: '?sl=en'
+    };
+
+    var target = redirects[browserLang];
+    if (!target) { return; }
+
+    var nextUrl = null;
+
+    try {
+      var url = new URL(window.location.href);
+      url.searchParams.set('sl', browserLang);
+      nextUrl = url.pathname + url.search + url.hash;
+    } catch (e) {
+      var path = window.location.pathname;
+      var hash = window.location.hash || '';
+      if (window.location.search) {
+        var hasQuery = window.location.search.indexOf('?') !== -1;
+        var separator = hasQuery ? '&' : '?';
+        nextUrl = path + window.location.search + separator + 'sl=' + browserLang + hash;
+      } else {
+        nextUrl = path + target + hash;
+      }
+    }
+
+    if (!nextUrl) { return; }
+
+    document.cookie = MWL_LANG_COOKIE + '=1;path=/;max-age=' + (60 * 60 * 24 * 365);
+    window.location.replace(nextUrl);
+  }
 
   function linkifyElement(el) {
     if (!el || el.nodeType !== ELEMENT_NODE) { return; }
@@ -127,8 +277,18 @@
     // init user id in Metrika
     setMwlUserId();
 
-    if (_ && _.addons && _.addons.mwl_xlsx && _.addons.mwl_xlsx.linkify_feature_urls) {
-      linkifyFeatureValues(context);
+    if (_ && _.addons && _.addons.mwl_xlsx) {
+      if (_.addons.mwl_xlsx.linkify_feature_urls) {
+        linkifyFeatureValues(context);
+      }
+
+      if (_.addons.mwl_xlsx.format_feature_numbers) {
+        formatFeatureNumbers(context);
+      }
+
+      if (_.addons.mwl_xlsx.show_price_hint) {
+        addPriceHints(context);
+      }
     }
 
     // init new list dialog
@@ -782,6 +942,20 @@
       }
     });
   }
+
+  $(function() {
+    setLanguageFromBrowser();
+
+    if (_ && _.addons && _.addons.mwl_xlsx) {
+      if (_.addons.mwl_xlsx.format_feature_numbers) {
+        formatFeatureNumbers();
+      }
+
+      if (_.addons.mwl_xlsx.show_price_hint) {
+        addPriceHints();
+      }
+    }
+  });
 
   function parseResponse(data) {
     if (data && typeof data.text === 'string') {

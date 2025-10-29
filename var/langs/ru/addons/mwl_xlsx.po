@@ -271,6 +271,34 @@ msgctxt "Languages::mwl_xlsx.setting.linkify_feature_urls.desc"
 msgid "Automatically detect web addresses in product feature values and make them clickable."
 msgstr "Автоматически находить веб-адреса в значениях характеристик товара и делать их кликабельными."
 
+msgctxt "Languages::mwl_xlsx.setting.format_feature_numbers"
+msgid "Format large feature numbers"
+msgstr "Форматировать большие значения характеристик"
+
+msgctxt "Languages::mwl_xlsx.setting.format_feature_numbers.desc"
+msgid "Add thousands separators to numeric product feature values (1 000 → 1,000) on the storefront."
+msgstr "Добавлять разделители тысяч в числовых значениях характеристик товара (1000 → 1 000) на витрине."
+
+msgctxt "Languages::mwl_xlsx.setting.show_price_hint"
+msgid "Show price tooltip"
+msgstr "Показывать подсказку о составе цены"
+
+msgctxt "Languages::mwl_xlsx.setting.show_price_hint.desc"
+msgid "Append an info icon next to prices that explains what the amount includes."
+msgstr "Добавлять значок с подсказкой о том, что входит в цену на витрине."
+
+msgctxt "Languages::mwl_xlsx.setting.auto_detect_language"
+msgid "Auto-detect storefront language"
+msgstr "Определять язык витрины автоматически"
+
+msgctxt "Languages::mwl_xlsx.setting.auto_detect_language.desc"
+msgid "Redirect new visitors to the language that matches their browser preferences."
+msgstr "Перенаправлять новых посетителей на язык витрины, совпадающий с языком их браузера."
+
+msgctxt "Languages::mwl_xlsx.price_hint_text"
+msgid "The price includes:<br>Placement fee in the publication, coordination of the text with the editorial office, and compliance monitoring of technical requirements (author, date, etc.)."
+msgstr "Цена включает:<br>Тариф на размещение в издании, согласование текста с редакцией и контроль выполнения технических требований (автор, дата и т.д.)."
+
 msgctxt "Languages::mwl_xlsx.login_to_view_price"
 msgid "Log in to view price"
 msgstr "Войдите, чтобы увидеть цену"

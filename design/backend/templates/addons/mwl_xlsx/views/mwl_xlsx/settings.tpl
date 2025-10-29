@@ -58,6 +58,33 @@
             </div>
         </div>
 
+        <div class="control-group">
+            <label class="control-label" for="elm_format_feature_numbers">{__("mwl_xlsx.setting.format_feature_numbers")}:</label>
+            <div class="controls">
+                <input type="hidden" name="mwl_xlsx[format_feature_numbers]" value="N" />
+                <input type="checkbox" name="mwl_xlsx[format_feature_numbers]" id="elm_format_feature_numbers" value="Y" {if $mwl_xlsx.format_feature_numbers == 'Y'}checked="checked"{/if} />
+                <p class="muted description">{__("mwl_xlsx.setting.format_feature_numbers.desc")}</p>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label" for="elm_show_price_hint">{__("mwl_xlsx.setting.show_price_hint")}:</label>
+            <div class="controls">
+                <input type="hidden" name="mwl_xlsx[show_price_hint]" value="N" />
+                <input type="checkbox" name="mwl_xlsx[show_price_hint]" id="elm_show_price_hint" value="Y" {if $mwl_xlsx.show_price_hint == 'Y'}checked="checked"{/if} />
+                <p class="muted description">{__("mwl_xlsx.setting.show_price_hint.desc")}</p>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label" for="elm_auto_detect_language">{__("mwl_xlsx.setting.auto_detect_language")}:</label>
+            <div class="controls">
+                <input type="hidden" name="mwl_xlsx[auto_detect_language]" value="N" />
+                <input type="checkbox" name="mwl_xlsx[auto_detect_language]" id="elm_auto_detect_language" value="Y" {if $mwl_xlsx.auto_detect_language == 'Y'}checked="checked"{/if} />
+                <p class="muted description">{__("mwl_xlsx.setting.auto_detect_language.desc")}</p>
+            </div>
+        </div>
+
         <div class="buttons-container">
             {include file="buttons/save_changes.tpl" but_name="dispatch[mwl_xlsx.settings]"}
         </div>
