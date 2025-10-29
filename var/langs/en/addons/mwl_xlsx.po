@@ -273,6 +273,14 @@ msgctxt "Languages::mwl_xlsx.allowed_usergroups"
 msgid "User groups allowed for media lists"
 msgstr "User groups allowed for media lists"
 
+msgctxt "Languages::mwl_xlsx.setting.linkify_feature_urls"
+msgid "Convert URLs in feature values to links"
+msgstr "Convert URLs in feature values to links"
+
+msgctxt "Languages::mwl_xlsx.setting.linkify_feature_urls.desc"
+msgid "Automatically detect web addresses in product feature values and make them clickable."
+msgstr "Automatically detect web addresses in product feature values and make them clickable."
+
 msgctxt "Languages::mwl_xlsx.login_to_view_price"
 msgid "Log in to view price"
 msgstr "Log in to view price"

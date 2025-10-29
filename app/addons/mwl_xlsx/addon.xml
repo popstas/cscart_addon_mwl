@@ -182,6 +182,8 @@
                 <value id="mwl_xlsx.max_list_items">Maximum items per list</value>
                 <value id="mwl_xlsx.setting.compact_price_slider_labels">Compact price slider labels</value>
                 <value id="mwl_xlsx.setting.compact_price_slider_labels.desc">Show min/max slider labels in a compact format without affecting filter values.</value>
+                <value id="mwl_xlsx.setting.linkify_feature_urls">Convert URLs in feature values to links</value>
+                <value id="mwl_xlsx.setting.linkify_feature_urls.desc">Automatically detect web addresses in product feature values and make them clickable.</value>
                 <value id="mwl_xlsx.shortnum_thousand"> K</value>
                 <value id="mwl_xlsx.shortnum_million"> M</value>
                 <value id="mwl_xlsx.shortnum_billion"> B</value>
@@ -241,6 +243,8 @@
                 <value id="mwl_xlsx.max_list_items">Максимальное число товаров в подборке</value>
                 <value id="mwl_xlsx.setting.compact_price_slider_labels">Компактные подписи ценового слайдера</value>
                 <value id="mwl_xlsx.setting.compact_price_slider_labels.desc">Показывать min/max у слайдера в коротком формате, не влияя на значения фильтра.</value>
+                <value id="mwl_xlsx.setting.linkify_feature_urls">Преобразовывать URL в ссылку в значениях характеристик</value>
+                <value id="mwl_xlsx.setting.linkify_feature_urls.desc">Автоматически находить веб-адреса в значениях характеристик товара и делать их кликабельными.</value>
                 <value id="mwl_xlsx.shortnum_thousand"> тыс.</value>
                 <value id="mwl_xlsx.shortnum_million"> млн.</value>
                 <value id="mwl_xlsx.shortnum_billion"> млрд.</value>
@@ -346,6 +350,10 @@
                     </item>
                     <item id="compact_price_slider_labels" type="checkbox">
                         <name>mwl_xlsx.setting.compact_price_slider_labels</name>
+                        <value>Y</value>
+                    </item>
+                    <item id="linkify_feature_urls" type="checkbox">
+                        <name>mwl_xlsx.setting.linkify_feature_urls</name>
                         <value>Y</value>
                     </item>
                 </items>
