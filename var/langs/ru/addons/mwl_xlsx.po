@@ -712,3 +712,43 @@ msgctxt "Languages::mwl_xlsx.publish_down_limit_exceeded"
 msgid "Too many stale products ([count]) to publish down. Limit is [limit]."
 msgstr "Слишком много устаревших товаров ([count]) для отключения. Ограничение — [limit]."
 
+msgctxt "Languages::mwl_xlsx.delete_unused_products_table_missing"
+msgid "Skipping [table]: table not found."
+msgstr "Пропускаем [table]: таблица не найдена."
+
+msgctxt "Languages::mwl_xlsx.delete_unused_products_empty"
+msgid "Products table is empty, nothing to delete."
+msgstr "Таблица товаров пустая, удалять нечего."
+
+msgctxt "Languages::mwl_xlsx.delete_unused_products_summary"
+msgid "Unused products scan — total: [total], referenced: [referenced], candidates: [candidates]."
+msgstr "Проверка неиспользуемых товаров — всего: [total], задействованы: [referenced], кандидаты: [candidates]."
+
+msgctxt "Languages::mwl_xlsx.delete_unused_products_none"
+msgid "No unused products detected."
+msgstr "Неиспользуемые товары не найдены."
+
+msgctxt "Languages::mwl_xlsx.delete_unused_products_skip"
+msgid "Product #[product_id] is still referenced in [sources]."
+msgstr "Товар #[product_id] всё ещё связан в [sources]."
+
+msgctxt "Languages::mwl_xlsx.delete_unused_products_deleted"
+msgid "Product #[product_id] deleted."
+msgstr "Товар #[product_id] удалён."
+
+msgctxt "Languages::mwl_xlsx.delete_unused_products_error"
+msgid "Failed to delete product #[product_id]."
+msgstr "Не удалось удалить товар #[product_id]."
+
+msgctxt "Languages::mwl_xlsx.delete_unused_products_result"
+msgid "Deletion results — deleted: [deleted], skipped: [skipped], errors: [errors]."
+msgstr "Итог удаления — удалено: [deleted], пропущено: [skipped], ошибок: [errors]."
+
+msgctxt "Languages::mwl_xlsx.delete_unused_products_deleted_list"
+msgid "Deleted product IDs: [ids]."
+msgstr "Удалённые ID товаров: [ids]."
+
+msgctxt "Languages::mwl_xlsx.delete_unused_products_errors_list"
+msgid "Failed product IDs: [ids]."
+msgstr "ID товаров с ошибками: [ids]."
+
