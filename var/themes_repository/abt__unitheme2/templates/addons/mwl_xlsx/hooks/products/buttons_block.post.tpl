@@ -31,7 +31,7 @@
             </button>
 
             {if $view_layout == "products_without_options"}
-                <span class="ty-price-hint cm-tooltip ty-icon-help-circle" title="{__("mwl_xlsx.tooltip")}">
+                <span class="xlsx-hint cm-tooltip ty-icon-help-circle" title="{__("mwl_xlsx.tooltip")}">
                 </span>
             {/if}
         </div>
