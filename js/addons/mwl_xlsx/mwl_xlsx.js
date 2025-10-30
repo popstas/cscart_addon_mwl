@@ -425,7 +425,8 @@
     // If Add dialog is already open, do nothing
     if ($addDialog && $addDialog.length && $addDialog.is(':visible')) { return; }
 
-    var active = _.doc.activeElement;
+    var doc = _.doc && _.doc[0] ? _.doc[0] : document;
+    var active = doc ? doc.activeElement : null;
     if (active) {
       var $active = $(active);
       if (
