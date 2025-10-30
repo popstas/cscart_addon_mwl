@@ -145,6 +145,7 @@ if ($mode === 'publish_down_missing_products') {
 }
 
 if ($mode === 'delete_unused_products') {
+    echo 'delete_unused_products: check tables...' . PHP_EOL;
     $dry_run = false;
 
     if (defined('MWL_XLSX_DELETE_UNUSED_PRODUCTS_DRY_RUN')) {
@@ -157,6 +158,10 @@ if ($mode === 'delete_unused_products') {
     }
 
     $critical_tables = [
+        '?:discussion' => [
+            'columns' => ['object_id'],
+            'condition' => "object_type = 'P'",
+        ],
         '?:mwl_xlsx_list_products' => [
             'columns' => ['product_id'],
         ],
@@ -172,27 +177,20 @@ if ($mode === 'delete_unused_products') {
         '?:rma_return_products' => [
             'columns' => ['product_id'],
         ],
-        '?:wishlist_products' => [
-            'columns' => ['product_id'],
-        ],
         '?:user_session_products' => [
             'columns' => ['product_id'],
         ],
         '?:product_subscriptions' => [
             'columns' => ['product_id'],
         ],
-        '?:discussion_posts' => [
-            'columns' => ['object_id'],
-            'condition' => "object_type = 'P'",
-        ],
     ];
 
     $existing_tables = [];
     $referenced_product_ids = [];
-    $db_prefix = (string) Registry::get('config.db_prefix');
+    $table_prefix = (string) Registry::get('config.table_prefix') ?? '';
 
     foreach ($critical_tables as $table => $columns) {
-        $table_name = str_replace('?:', $db_prefix, $table);
+        $table_name = str_replace('?:', $table_prefix, $table);
         $table_exists = (bool) db_get_field('SHOW TABLES LIKE ?l', $table_name);
 
         if (!$table_exists) {
@@ -230,7 +228,7 @@ if ($mode === 'delete_unused_products') {
         }
     }
 
-    $all_product_ids = array_map('intval', db_get_fields('SELECT product_id FROM ?:products WHERE status = ?s', 'D'));
+    $all_product_ids = array_map('intval', db_get_fields('SELECT product_id FROM ?:products WHERE product_type = ?s AND status = ?s', 'P', 'D'));
 
     if (!$all_product_ids) {
         $message = __('mwl_xlsx.delete_unused_products_empty');
@@ -343,7 +341,8 @@ if ($mode === 'delete_unused_products') {
         $deleted = fn_delete_product($product_id);
 
         if ($deleted) {
-            db_query('DELETE FROM ?:seo_names WHERE object_type = ?s AND object_id = ?i', 'p', $product_id);
+            // seo_names deletes automatically when product is deleted
+            // db_query('DELETE FROM ?:seo_names WHERE type = ?s AND object_id = ?i', 'p', $product_id);
 
             $deleted_message = __('mwl_xlsx.delete_unused_products_deleted', ['[product_id]' => $product_id]);
             echo '[deleted] ' . $deleted_message . PHP_EOL;
