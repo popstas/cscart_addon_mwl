@@ -1026,12 +1026,15 @@ function fn_mwl_xlsx_exim_import_images_pre(
     $main_pair = fn_get_image_pairs($object_id, 'product', 'M', true, true);
     if (!empty($main_pair)) {
         $perform_import = false;
+        echo 'image_exists' . PHP_EOL;
 
         return;
     }
 
-    $additional_pairs = fn_get_image_pairs($object_id, 'product', 'A', true, true);
-    if (!empty($additional_pairs)) {
-        $perform_import = false;
-    }
+    echo 'image_import' . PHP_EOL;
+    // $additional_pairs = fn_get_image_pairs($object_id, 'product', 'A', true, true);
+    // if (!empty($additional_pairs)) {
+    //     error_log(print_r($additional_pairs, true));
+    //     $perform_import = false;
+    // }
 }
