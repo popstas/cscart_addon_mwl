@@ -228,7 +228,14 @@ if ($mode === 'delete_unused_products') {
         }
     }
 
-    $all_product_ids = array_map('intval', db_get_fields('SELECT product_id FROM ?:products WHERE product_type = ?s AND status = ?s', 'P', 'D'));
+    $all_product_ids = array_map(
+        'intval',
+        db_get_fields(
+            'SELECT product_id FROM ?:products WHERE product_type IN(?a) AND status = ?s',
+            ['P', 'V'],
+            'D'
+        )
+    );
 
     if (!$all_product_ids) {
         $message = __('mwl_xlsx.delete_unused_products_empty');
