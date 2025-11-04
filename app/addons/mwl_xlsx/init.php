@@ -31,6 +31,7 @@ fn_register_hooks(
     // 'get_product_filters_post',
     'get_current_filters_post',
     'get_product_features_post',
+    'dispatch_before_display',
     'init_templater_post',
     'change_order_status_post',
     'exim_import_images_pre'
@@ -41,12 +42,50 @@ Tygh::$app['event.transports.mwl'] = static function ($app) {
 };
 
 function fn_mwl_xlsx_get_product_features_post(&$data, $params, $has_ungroupped) {
-    // unset feature with value_int = -1.00
+    // unset feature with value_int = -1.00 at product page
     foreach ($data as $key => $feature) {
         if (isset($feature['value_int']) && $feature['value_int'] === '-1.00') {
             unset($data[$key]);
         }
     }
+}
+
+// replace variant = '-1' with '?' in variations select at product page
+// TODO: find more general hook for override variants at all pages
+function fn_mwl_xlsx_dispatch_before_display()
+{
+    // Only process product pages in frontend
+    if (Registry::get('runtime.controller') !== 'products' || Registry::get('runtime.mode') !== 'view') {
+        return;
+    }
+
+    /** @var \Tygh\SmartyEngine\Core $view */
+    $view = Tygh::$app['view'];
+    
+    $product = $view->getTemplateVars('product');
+    
+    if (empty($product) || empty($product['variation_features_variants'])) {
+        return;
+    }
+
+    // Replace variant = '-1' with '?' in variation_features_variants
+    foreach ($product['variation_features_variants'] as $feature_id => &$feature) {
+        if (empty($feature['variants'])) {
+            continue;
+        }
+
+        foreach ($feature['variants'] as $variant_id => &$variant) {
+            // Replace variant if its value is '-1'
+            if (isset($variant['variant']) && $variant['variant'] === '-1') {
+                $variant['variant'] = '?';
+            }
+        }
+        unset($variant);
+    }
+    unset($feature);
+
+    // Update the product variable in Smarty
+    $view->assign('product', $product);
 }
 
 function fn_mwl_xlsx_before_dispatch(&$controller, &$mode, &$action, &$dispatch_extra, &$area)
