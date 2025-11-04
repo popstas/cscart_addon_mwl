@@ -28,6 +28,8 @@ fn_register_hooks(
     // 'init_user_session_data_post',
     'before_dispatch',
     'get_product_filter_fields',
+    // 'get_product_filters_post',
+    'get_current_filters_post',
     'init_templater_post',
     'change_order_status_post',
     'exim_import_images_pre'
@@ -52,6 +54,29 @@ function fn_mwl_xlsx_before_dispatch(&$controller, &$mode, &$action, &$dispatch_
         $mode       = 'view';
     }
 }
+
+function fn_mwl_xlsx_get_current_filters_post(&$params, $filters, $selected_filters, $area, $lang_code, $variant_values, &$range_values, $field_variant_values, $field_range_values)
+{
+    // Iterate through range values and set min to '0.00' where min < 0
+    if (!empty($range_values) && is_array($range_values)) {
+        foreach ($range_values as $filter_id => &$range) {
+            if (isset($range['min']) && (float)$range['min'] < 0) {
+                $range['min'] = '0.00';
+            }
+        }
+        unset($range); // Break the reference
+    }
+
+    // unset($range_values[123]);
+}
+
+/* function fn_mwl_xlsx_get_product_filters_post(&$filters, $params, $lang_code)
+{
+    var_dump('get_product_filters_post');
+    var_dump($filters);
+    var_dump($params);
+    var_dump($lang_code);
+} */
 
 // Remove price filter if user can't access prices, removes from results, not from form
 function fn_mwl_xlsx_get_product_filter_fields(&$filters)

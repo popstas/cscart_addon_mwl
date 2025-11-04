@@ -1031,6 +1031,12 @@ function fn_mwl_xlsx_exim_import_images_pre(
         return;
     }
 
+    if (!$detailed_file) {
+        $perform_import = false;
+        echo 'no_image' . PHP_EOL;
+        return;
+    }
+
     echo 'image_import' . PHP_EOL;
     // $additional_pairs = fn_get_image_pairs($object_id, 'product', 'A', true, true);
     // if (!empty($additional_pairs)) {
