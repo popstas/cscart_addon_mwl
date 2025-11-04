@@ -30,6 +30,7 @@ fn_register_hooks(
     'get_product_filter_fields',
     // 'get_product_filters_post',
     'get_current_filters_post',
+    'get_product_features_post',
     'init_templater_post',
     'change_order_status_post',
     'exim_import_images_pre'
@@ -38,6 +39,15 @@ fn_register_hooks(
 Tygh::$app['event.transports.mwl'] = static function ($app) {
     return new MwlTransport();
 };
+
+function fn_mwl_xlsx_get_product_features_post(&$data, $params, $has_ungroupped) {
+    // unset feature with value_int = -1.00
+    foreach ($data as $key => $feature) {
+        if (isset($feature['value_int']) && $feature['value_int'] === '-1.00') {
+            unset($data[$key]);
+        }
+    }
+}
 
 function fn_mwl_xlsx_before_dispatch(&$controller, &$mode, &$action, &$dispatch_extra, &$area)
 {
