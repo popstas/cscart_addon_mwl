@@ -177,6 +177,7 @@
                 <value id="mwl_xlsx.google_credentials">Google credentials (JSON)</value>
                 <value id="mwl_xlsx.google_drive_folder_id">Google Drive folder ID (optional, Shared Drive supported)</value>
                 <value id="mwl_xlsx.hide_price_for_guests">Hide price for unauthorized</value>
+                <value id="mwl_xlsx.hide_features">Hide product features for unauthorized</value>
                 <value id="mwl_xlsx.list_limit_reached">You cannot add more than [limit] items to a media list</value>
                 <value id="mwl_xlsx.login_to_view_price">Log in to view price</value>
                 <value id="mwl_xlsx.max_list_items">Maximum items per list</value>
@@ -245,6 +246,7 @@
                 <value id="mwl_xlsx.google_credentials">Учетные данные Google (JSON)</value>
                 <value id="mwl_xlsx.google_drive_folder_id">ID папки Google Диска (необязательно, поддерживаются Общие диски)</value>
                 <value id="mwl_xlsx.hide_price_for_guests">Скрывать цену для неавторизованных</value>
+                <value id="mwl_xlsx.hide_features">Скрывать характеристики для неавторизованных</value>
                 <value id="mwl_xlsx.list_limit_reached">Нельзя добавить более [limit] товаров в подборку</value>
                 <value id="mwl_xlsx.login_to_view_price">Войдите, чтобы увидеть цену</value>
                 <value id="mwl_xlsx.max_list_items">Максимальное число товаров в подборке</value>
@@ -318,6 +320,10 @@
                     <item id="authorized_usergroups" type="selectbox" multiple="true">
                         <name>mwl_xlsx.authorized_usergroups</name>
                         <variants_function>fn_get_usergroups</variants_function>
+                    </item>
+                    <item id="hide_features" type="selectbox" multiple="true">
+                        <name>mwl_xlsx.hide_features</name>
+                        <value></value>
                     </item>
                     <item id="show_extra_button" type="checkbox">
                         <name>mwl_xlsx.show_extra_button</name>

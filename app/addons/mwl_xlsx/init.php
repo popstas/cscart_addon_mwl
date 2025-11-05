@@ -30,6 +30,7 @@ fn_register_hooks(
     'get_product_filter_fields',
     // 'get_product_filters_post',
     'get_current_filters_post',
+    'get_product_features',
     'get_product_features_post',
     'dispatch_before_display',
     'init_templater_post',
@@ -68,9 +69,18 @@ function fn_mwl_xlsx_dispatch_before_display()
         return;
     }
 
+    $hide_features = fn_mwl_xlsx_should_hide_features();
+    $hidden_feature_ids = fn_mwl_xlsx_get_hidden_feature_ids();
+
     // Replace variant = '-1' with '?' in variation_features_variants
     foreach ($product['variation_features_variants'] as $feature_id => &$feature) {
         if (empty($feature['variants'])) {
+            continue;
+        }
+
+        // Hide feature if it is related to hidden features
+        if ($hide_features && in_array($feature_id, $hidden_feature_ids)) {
+            $feature['variants'] = [];
             continue;
         }
 
@@ -80,7 +90,6 @@ function fn_mwl_xlsx_dispatch_before_display()
                 $variant['variant'] = '?';
             }
         }
-        unset($variant);
     }
     unset($feature);
 
@@ -104,8 +113,20 @@ function fn_mwl_xlsx_before_dispatch(&$controller, &$mode, &$action, &$dispatch_
     }
 }
 
-function fn_mwl_xlsx_get_current_filters_post(&$params, $filters, $selected_filters, $area, $lang_code, $variant_values, &$range_values, $field_variant_values, $field_range_values)
+function fn_mwl_xlsx_get_current_filters_post($params, $filters, $selected_filters, $area, $lang_code, &$variant_values, &$range_values, $field_variant_values, $field_range_values)
 {
+    // Hide filters related to hidden features, clear their variant_values
+    if (fn_mwl_xlsx_should_hide_features()) {
+        $feature_ids = fn_mwl_xlsx_get_hidden_feature_ids();
+        if (!empty($feature_ids) && is_array($variant_values)) {
+            foreach ($filters as $filter_id => $filter_data) {
+                if (isset($filter_data['feature_id']) && in_array($filter_data['feature_id'], $feature_ids)) {
+                    $variant_values[$filter_id] = [];
+                }
+            }
+        }
+    }
+
     // Iterate through range values and set min to '0.00' where min < 0
     if (!empty($range_values) && is_array($range_values)) {
         foreach ($range_values as $filter_id => &$range) {
@@ -115,17 +136,7 @@ function fn_mwl_xlsx_get_current_filters_post(&$params, $filters, $selected_filt
         }
         unset($range); // Break the reference
     }
-
-    // unset($range_values[123]);
 }
-
-/* function fn_mwl_xlsx_get_product_filters_post(&$filters, $params, $lang_code)
-{
-    var_dump('get_product_filters_post');
-    var_dump($filters);
-    var_dump($params);
-    var_dump($lang_code);
-} */
 
 // Remove price filter if user can't access prices, removes from results, not from form
 function fn_mwl_xlsx_get_product_filter_fields(&$filters)

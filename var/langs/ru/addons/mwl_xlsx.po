@@ -251,6 +251,10 @@ msgctxt "Languages::mwl_xlsx.hide_price_for_guests"
 msgid "Hide price for unauthorized"
 msgstr "Скрывать цену для неавторизованных"
 
+msgctxt "Languages::mwl_xlsx.hide_features"
+msgid "Hide product features for unauthorized"
+msgstr "Скрывать характеристики для неавторизованных"
+
 msgctxt "Languages::mwl_xlsx.authorized_usergroups"
 msgid "Authorized user groups"
 msgstr "Группы пользователей авторизованных"

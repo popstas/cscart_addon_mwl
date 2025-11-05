@@ -41,6 +41,17 @@
         </div>
 
         <div class="control-group">
+            <label class="control-label" for="elm_hide_features">{__("mwl_xlsx.hide_features")}:</label>
+            <div class="controls">
+                <select id="elm_hide_features" name="mwl_xlsx[hide_features][]" multiple="multiple" size="10">
+                    {foreach from=$product_features item=feature}
+                        <option value="{$feature.feature_id}" {if $feature.feature_id|in_array:$mwl_xlsx.hide_features}selected="selected"{/if}>{$feature.description}</option>
+                    {/foreach}
+                </select>
+            </div>
+        </div>
+
+        <div class="control-group">
             <label class="control-label" for="elm_compact_price_slider_labels">{__("mwl_xlsx.setting.compact_price_slider_labels")}:</label>
             <div class="controls">
                 <input type="hidden" name="mwl_xlsx[compact_price_slider_labels]" value="N" />
