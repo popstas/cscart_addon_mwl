@@ -5,6 +5,10 @@ This project implements a CS-Cart Multivendor add-on for the `abt__unitheme2` th
 ## Glossary
 - "Media list" / "подборка": **media list**
 
+# Pull request naming
+Create name using angular commit message format.
+`feat:` and `fix:` are using in CHANGELOG.md. It's a release notes for developers. Name your PRs in a way that it's easy to understand what was changed. Forbidden to use `feat:` and `fix:` prefixes for chore tasks that don't add new features or fix bugs.
+
 ## Core Features
 - Add a single product to a media list
 - Add all selected products to a media list (configurable limit, default 50 items)
