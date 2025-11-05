@@ -434,6 +434,90 @@ function fn_mwl_xlsx_access_service(): AccessService
     return $service;
 }
 
+/**
+ * @return int[]
+ */
+function fn_mwl_xlsx_get_hidden_feature_ids(): array
+{
+    $setting = Registry::get('addons.mwl_xlsx.hide_features');
+
+    if (is_array($setting)) {
+        $ids = $setting;
+    } elseif ($setting === null || $setting === '') {
+        $ids = [];
+    } else {
+        $ids = explode(',', (string) $setting);
+    }
+
+    $ids = array_map('intval', $ids);
+    $ids = array_filter($ids, static function ($value) {
+        return $value > 0;
+    });
+
+    return array_values(array_unique($ids));
+}
+
+function fn_mwl_xlsx_should_hide_features(?array $auth = null, ?array $feature_ids = null): bool
+{
+    if ($feature_ids === null) {
+        $feature_ids = fn_mwl_xlsx_get_hidden_feature_ids();
+    }
+
+    if (!$feature_ids) {
+        return false;
+    }
+
+    if ($auth === null) {
+        $auth = [];
+        $session = Tygh::$app['session'] ?? [];
+        if ($session instanceof \ArrayAccess) {
+            $auth = $session['auth'] ?? [];
+        } elseif (is_array($session)) {
+            $auth = $session['auth'] ?? [];
+        }
+    }
+
+    $access_service = fn_mwl_xlsx_access_service();
+
+    return !$access_service->canViewPrice($auth);
+}
+
+function fn_mwl_xlsx_get_filters_products_count_before_select_filters(&$sf_fields, &$sf_join, &$condition, &$sf_sorting, $params)
+{
+    if (AREA !== 'C') {
+        return;
+    }
+
+    $feature_ids = fn_mwl_xlsx_get_hidden_feature_ids();
+    if (!$feature_ids) {
+        return;
+    }
+
+    if (!fn_mwl_xlsx_should_hide_features(null, $feature_ids)) {
+        return;
+    }
+
+    $condition .= db_quote(' AND ?:product_filters.feature_id NOT IN (?n)', $feature_ids);
+}
+
+function fn_mwl_xlsx_get_product_features(&$fields, &$join, &$condition, $params)
+{
+    if (AREA !== 'C') {
+        return;
+    }
+
+    $feature_ids = fn_mwl_xlsx_get_hidden_feature_ids();
+    if (!$feature_ids) {
+        return;
+    }
+
+    if (!fn_mwl_xlsx_should_hide_features(null, $feature_ids)) {
+        return;
+    }
+
+    $condition .= db_quote(' AND pf.feature_id NOT IN (?n)', $feature_ids);
+}
+
 function fn_mwl_xlsx_list_repository(): ListRepository
 {
     static $repository;

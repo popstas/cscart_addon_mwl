@@ -417,9 +417,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'settings') {
 
     foreach ($settings as $name => $value) {
         if (is_array($value)) {
+            $value = array_filter(array_map('intval', $value));
+            $value = array_unique($value);
             $value = implode(',', $value);
         }
-        \Tygh\Settings::instance()->updateValue($name, $value, 'mwl_xlsx');
+
+        \Tygh\Settings::instance()->updateValue($name, (string) $value, 'mwl_xlsx');
     }
 
     fn_set_notification('N', __('notice'), __('mwl_xlsx.settings_saved'));
@@ -512,12 +515,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'planfix_bind_task') {
 
 if ($mode === 'settings') {
     $settings = Registry::get('addons.mwl_xlsx');
-    foreach (['authorized_usergroups', 'allowed_usergroups'] as $field) {
-        $settings[$field] = $settings[$field] ? explode(',', $settings[$field]) : [];
+    foreach (['authorized_usergroups', 'allowed_usergroups', 'hide_features'] as $field) {
+        $settings[$field] = $settings[$field] ? array_map('intval', explode(',', $settings[$field])) : [];
     }
 
     \Tygh::$app['view']->assign('mwl_xlsx', $settings);
     \Tygh::$app['view']->assign('usergroups', fn_get_usergroups(['type' => 'C'], CART_LANGUAGE));
+
+    [$features] = fn_get_product_features([
+        'exclude_group' => true,
+        'plain'         => true,
+        'status'        => 'A',
+    ], 0, DESCR_SL);
+
+    $feature_options = [];
+    foreach ($features as $feature) {
+        if (empty($feature['feature_id'])) {
+            continue;
+        }
+
+        $feature_options[] = [
+            'feature_id'  => (int) $feature['feature_id'],
+            'description' => (string) ($feature['description'] ?? ''),
+        ];
+    }
+
+    usort($feature_options, static function (array $a, array $b) {
+        return strcmp($a['description'], $b['description']);
+    });
+
+    \Tygh::$app['view']->assign('product_features', $feature_options);
 }
 
 if ($mode === 'backup_settings') {
