@@ -321,7 +321,7 @@
                         <name>mwl_xlsx.authorized_usergroups</name>
                         <variants_function>fn_get_usergroups</variants_function>
                     </item>
-                    <item id="hide_features" type="input">
+                    <item id="hide_features" type="selectbox" multiple="true">
                         <name>mwl_xlsx.hide_features</name>
                         <value></value>
                     </item>

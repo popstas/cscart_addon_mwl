@@ -482,7 +482,8 @@ function fn_mwl_xlsx_should_hide_features(?array $auth = null, ?array $feature_i
     return !$access_service->canViewPrice($auth);
 }
 
-function fn_mwl_xlsx_get_filters_products_count_before_select_filters(&$sf_fields, &$sf_join, &$condition, &$sf_sorting, $params)
+// TODO: remove this hook, it uses static cache, user independent
+/* function fn_mwl_xlsx_get_filters_products_count_before_select_filters(&$sf_fields, &$sf_join, &$condition, &$sf_sorting, $params)
 {
     if (AREA !== 'C') {
         return;
@@ -498,7 +499,7 @@ function fn_mwl_xlsx_get_filters_products_count_before_select_filters(&$sf_field
     }
 
     $condition .= db_quote(' AND ?:product_filters.feature_id NOT IN (?n)', $feature_ids);
-}
+} */
 
 function fn_mwl_xlsx_get_product_features(&$fields, &$join, &$condition, $params)
 {
