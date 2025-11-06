@@ -51,15 +51,17 @@ if ($mode === 'filters_sync') {
     $report = $service->syncPriceFilters($rows);
 
     $summary = $report->getSummary();
-    $summary_message = __('mwl_xlsx.filters_sync_summary', [
-        '[created]' => $summary['created'],
-        '[updated]' => $summary['updated'],
-        '[skipped]' => $summary['skipped'],
-        '[errors]' => $summary['errors'],
-    ]);
 
-    echo $summary_message . PHP_EOL;
+    // Output metrics in new format
+    $metrics = [
+        'created' => $summary['created'],
+        'updated' => $summary['updated'],
+        'skipped' => $summary['skipped'],
+        'errors' => $summary['errors'],
+    ];
+    fn_mwl_xlsx_output_metrics($mode, $metrics);
 
+    // Log detailed errors and skips for debugging
     foreach ($report->getErrors() as $error) {
         echo '[error] ' . $error . PHP_EOL;
     }
@@ -68,7 +70,8 @@ if ($mode === 'filters_sync') {
         echo '[skip] ' . $skip . PHP_EOL;
     }
 
-    fn_mwl_xlsx_append_log($summary_message . ' | ' . json_encode($report->toArray(), JSON_UNESCAPED_UNICODE));
+    // Append to log file
+    fn_mwl_xlsx_append_log(sprintf('[%s] Metrics: %s', $mode, json_encode($metrics, JSON_UNESCAPED_UNICODE)));
 
     return [CONTROLLER_STATUS_NO_CONTENT];
 }
@@ -101,24 +104,33 @@ if ($mode === 'publish_down_missing_products') {
         ]);
 
         echo '[error] ' . $error_message . PHP_EOL;
+
+        // Output metrics even when aborted
+        $metrics = [
+            'candidates' => $publish_summary['candidates'],
+            'outdated_total' => $publish_summary['outdated_total'],
+            'disabled' => count($publish_summary['disabled']),
+            'errors' => count($publish_summary['errors']),
+            'aborted_by_limit' => 1,
+        ];
+        fn_mwl_xlsx_output_metrics($mode, $metrics);
+
         fn_mwl_xlsx_append_log('[error] ' . $error_message);
 
         exit(1);
     }
 
-    $summary_message = __('mwl_xlsx.publish_down_summary', [
-        '[candidates]' => $publish_summary['candidates'],
-        '[disabled]' => count($publish_summary['disabled']),
-        '[period]' => $period_seconds,
-    ]);
+    // Output metrics in new format
+    $metrics = [
+        'candidates' => $publish_summary['candidates'],
+        'outdated_total' => $publish_summary['outdated_total'],
+        'disabled' => count($publish_summary['disabled']),
+        'errors' => count($publish_summary['errors']),
+        'aborted_by_limit' => $publish_summary['aborted_by_limit'] ? 1 : 0,
+    ];
+    fn_mwl_xlsx_output_metrics($mode, $metrics);
 
-    echo $summary_message . PHP_EOL;
-
-    foreach ($publish_summary['disabled'] as $product_id) {
-        $line = __('mwl_xlsx.publish_down_disabled_entry', ['[product_id]' => $product_id]);
-        echo '[disabled] ' . $line . PHP_EOL;
-    }
-
+    // Log detailed errors for debugging
     foreach ($publish_summary['errors'] as $error) {
         echo '[error] ' . $error . PHP_EOL;
         fn_mwl_xlsx_append_log('[error] ' . $error);
@@ -130,16 +142,14 @@ if ($mode === 'publish_down_missing_products') {
         fn_mwl_xlsx_append_log('[info] ' . $limit_message);
     }
 
-    $log_payload = [
-        'disabled' => $publish_summary['disabled'],
-        'errors' => $publish_summary['errors'],
+    // Append to log file
+    $log_payload = array_merge($metrics, [
+        'disabled_product_ids' => $publish_summary['disabled'],
+        'error_messages' => $publish_summary['errors'],
         'period_seconds' => $period_seconds,
         'limit' => $limit,
-        'candidates' => $publish_summary['candidates'],
-        'outdated_total' => $publish_summary['outdated_total'],
-    ];
-
-    fn_mwl_xlsx_append_log($summary_message . ' | ' . json_encode($log_payload, JSON_UNESCAPED_UNICODE));
+    ]);
+    fn_mwl_xlsx_append_log(sprintf('[%s] Metrics: %s', $mode, json_encode($log_payload, JSON_UNESCAPED_UNICODE)));
 
     return [CONTROLLER_STATUS_NO_CONTENT];
 }
@@ -269,6 +279,7 @@ if ($mode === 'delete_unused_products') {
         }
     }
 
+    // Output initial summary for context
     $summary_message = __('mwl_xlsx.delete_unused_products_summary', [
         '[disabled_total]' => count($all_product_ids),
         '[referenced_disabled]' => $referenced_disabled_count,
@@ -276,7 +287,6 @@ if ($mode === 'delete_unused_products') {
     ]);
 
     echo $summary_message . PHP_EOL;
-    fn_mwl_xlsx_append_log('[delete_unused] ' . $summary_message);
 
     if ($dry_run) {
         $dry_run_message = __('mwl_xlsx.delete_unused_products_dry_run_enabled');
@@ -287,6 +297,17 @@ if ($mode === 'delete_unused_products') {
     if (!$unused_product_ids) {
         $message = __('mwl_xlsx.delete_unused_products_none');
         echo '[info] ' . $message . PHP_EOL;
+
+        // Output metrics even when there are no candidates
+        $metrics = [
+            'disabled' => count($all_product_ids),
+            'referenced_disabled' => $referenced_disabled_count,
+            'deleted' => 0,
+            'skipped' => 0,
+            'errors' => 0,
+        ];
+        fn_mwl_xlsx_output_metrics($mode, $metrics);
+
         fn_mwl_xlsx_append_log('[delete_unused] ' . $message);
 
         return [CONTROLLER_STATUS_NO_CONTENT];
@@ -367,40 +388,40 @@ if ($mode === 'delete_unused_products') {
         $errors[] = $product_id;
     }
 
-    if ($dry_run) {
-        $result_message = __('mwl_xlsx.delete_unused_products_dry_run_result', [
-            '[planned]' => count($planned_products),
-            '[skipped]' => count($skipped_products),
-            '[errors]' => count($errors),
-        ]);
-    } else {
-        $result_message = __('mwl_xlsx.delete_unused_products_result', [
-            '[deleted]' => count($deleted_products),
-            '[skipped]' => count($skipped_products),
-            '[errors]' => count($errors),
-        ]);
-    }
+    // Output metrics in new format
+    $metrics = [
+        'disabled' => count($all_product_ids),
+        'referenced_disabled' => $referenced_disabled_count,
+        'deleted' => count($deleted_products),
+        'skipped' => count($skipped_products),
+        'errors' => count($errors),
+    ];
+    fn_mwl_xlsx_output_metrics($mode, $metrics);
 
-    echo $result_message . PHP_EOL;
-    fn_mwl_xlsx_append_log('[delete_unused] ' . $result_message);
-
+    // Log detailed info for debugging
     if ($dry_run && $planned_products) {
         $planned_message = __('mwl_xlsx.delete_unused_products_dry_run_list', ['[ids]' => implode(', ', $planned_products)]);
         echo '[info] ' . $planned_message . PHP_EOL;
-        fn_mwl_xlsx_append_log('[delete_unused] ' . $planned_message);
-    }
-
-    if (!$dry_run && $deleted_products) {
-        $ids_message = __('mwl_xlsx.delete_unused_products_deleted_list', ['[ids]' => implode(', ', $deleted_products)]);
-        echo '[info] ' . $ids_message . PHP_EOL;
-        fn_mwl_xlsx_append_log('[delete_unused] ' . $ids_message);
     }
 
     if ($errors) {
         $errors_message = __('mwl_xlsx.delete_unused_products_errors_list', ['[ids]' => implode(', ', $errors)]);
         echo '[error] ' . $errors_message . PHP_EOL;
-        fn_mwl_xlsx_append_log('[delete_unused] ' . $errors_message);
     }
+
+    // Append to log file
+    $log_payload = [
+        'disabled' => count($all_product_ids),
+        'referenced_disabled' => $referenced_disabled_count,
+        'deleted' => count($deleted_products),
+        'skipped' => count($skipped_products),
+        'errors' => count($errors),
+        'dry_run' => $dry_run,
+        'deleted_product_ids' => $deleted_products,
+        'skipped_product_ids' => $skipped_products,
+        'error_product_ids' => $errors,
+    ];
+    fn_mwl_xlsx_append_log(sprintf('[%s] Metrics: %s', $mode, json_encode($log_payload, JSON_UNESCAPED_UNICODE)));
 
     return [CONTROLLER_STATUS_NO_CONTENT];
 }

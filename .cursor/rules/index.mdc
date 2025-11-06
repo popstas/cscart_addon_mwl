@@ -28,6 +28,11 @@ alwaysApply: true
 - Commits: Use imperative mood and Conventional Commits when possible (e.g., `feat(addons/my_addon): add vendor rating sync`). Keep changes scoped.
 - PRs: Include purpose, linked issues, steps to reproduce/verify, and screenshots for UI changes. Note config or DB migrations. Mention cache clear if required.
 
+# Cron tasks
+Rules for backend cron modes: publish_down_missing_products, delete_unused_products, filters_sync and other similar tasks:
+- Don't use .po files for cron tasks. Use hardcoded english messages
+- Remove existing messages from .po files, change to hardcoded messages
+
 ## Security & Configuration Tips
 - Do not commit secrets. Treat `config.local.php` as sensitive; rotate any exposed credentials.
 - Prefer least-privileged DB users; restrict admin access by IP in web server if possible.

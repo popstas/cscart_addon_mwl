@@ -163,6 +163,57 @@ function fn_mwl_xlsx_append_log(string $message): void
 }
 
 /**
+ * Output a metric line for cron tasks.
+ *
+ * @param string $mode Task name (e.g., 'filters_sync', 'delete_unused_products')
+ * @param string $name Metric name (e.g., 'created', 'updated', 'deleted')
+ * @param int $value Metric value
+ */
+function fn_mwl_xlsx_output_metric(string $mode, string $name, int $value): void
+{
+    echo sprintf('[%s] %s: %d', $mode, $name, $value) . PHP_EOL;
+}
+
+/**
+ * Output a JSON summary line for cron tasks.
+ *
+ * @param string $mode Task name (e.g., 'filters_sync', 'delete_unused_products')
+ * @param array<string, mixed> $metrics Associative array of metrics
+ */
+function fn_mwl_xlsx_output_json(string $mode, array $metrics): void
+{
+    echo sprintf('[%s] json: %s', $mode, json_encode($metrics, JSON_UNESCAPED_UNICODE)) . PHP_EOL;
+}
+
+/**
+ * Output both individual metric lines and JSON summary for cron tasks.
+ * By default, all metrics are output. Metrics in $skip_zeros_metrics are skipped if their value is 0.
+ *
+ * @param string $mode Task name (e.g., 'filters_sync', 'delete_unused_products')
+ * @param array<string, int> $metrics Associative array of metrics (name => value)
+ * @param array<int, string> $skip_zeros_metrics Metric names to skip when value is 0 (default: ['errors'])
+ */
+function fn_mwl_xlsx_output_metrics(string $mode, array $metrics, array $skip_zeros_metrics = ['errors']): void
+{
+    $skip_zeros_map = array_flip($skip_zeros_metrics);
+    $json_metrics = $metrics;
+
+    foreach ($metrics as $name => $value) {
+        $value = (int) $value;
+        
+        // Skip if value = 0 AND it's in the skip_zeros_metrics list
+        if ($value === 0 && isset($skip_zeros_map[$name])) {
+            unset($json_metrics[$name]);
+            continue;
+        }
+        
+        fn_mwl_xlsx_output_metric($mode, $name, $value);
+    }
+
+    fn_mwl_xlsx_output_json($mode, $json_metrics);
+}
+
+/**
  * @return array{rows: array<int, array<string, mixed>>, errors: array<int, string>}
  */
 function fn_mwl_xlsx_read_filters_csv(string $path): array

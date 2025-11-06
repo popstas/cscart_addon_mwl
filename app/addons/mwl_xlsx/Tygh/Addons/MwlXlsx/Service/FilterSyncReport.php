@@ -84,19 +84,6 @@ class FilterSyncReport
         ];
     }
 
-    public function getSummaryLine(): string
-    {
-        $summary = $this->getSummary();
-
-        return sprintf(
-            'created: %d, updated: %d, skipped: %d, errors: %d',
-            $summary['created'],
-            $summary['updated'],
-            $summary['skipped'],
-            $summary['errors']
-        );
-    }
-
     public function toArray(): array
     {
         return [

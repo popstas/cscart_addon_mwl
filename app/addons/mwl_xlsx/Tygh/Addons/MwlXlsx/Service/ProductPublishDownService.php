@@ -65,19 +65,22 @@ class ProductPublishDownService
             ];
         }
 
-        $this->logDebug(sprintf('[publish_down] Starting run: period=%d seconds, cutoff=%d, limit=%s',
+        $this->logDebug(sprintf('[publish_down] Starting run: period=%d seconds, cutoff=%s, limit=%s',
             $period_seconds,
-            $cutoff,
+            date('Y-m-d H:i', $cutoff),
             $limit > 0 ? (string) $limit : 'none'
         ));
 
         $rows = $this->db->getArray(
-            'SELECT p.product_id, p.status,'
-            . ' CASE WHEN p.updated_timestamp > 0 THEN p.updated_timestamp ELSE p.timestamp END AS updated_at'
+            'SELECT p.product_id, p.product_code, p.status,'
+            . ' CASE WHEN p.updated_timestamp > 0 THEN p.updated_timestamp ELSE p.timestamp END AS updated_at,'
+            . ' pd.product'
             . ' FROM ?:products AS p'
+            . ' INNER JOIN ?:product_descriptions AS pd ON pd.product_id = p.product_id AND pd.lang_code = ?s'
             . ' WHERE (CASE WHEN p.updated_timestamp > 0 THEN p.updated_timestamp ELSE p.timestamp END) < ?i'
             . '   AND p.status IN (?a)'
             . ' ORDER BY (CASE WHEN p.updated_timestamp > 0 THEN p.updated_timestamp ELSE p.timestamp END) ASC ?p',
+            'en',
             $cutoff,
             ['A', 'H', 'P'],
             $limit_clause
@@ -96,15 +99,20 @@ class ProductPublishDownService
                 continue;
             }
 
+            $product_code = (string) ($row['product_code'] ?? '');
             $status = (string) ($row['status'] ?? '');
             $updated_at = (int) ($row['updated_at'] ?? 0);
+            $product_name = (string) ($row['product'] ?? '');
+            $updated_at_formatted = date('Y-m-d H:i', $updated_at);
 
-            $this->logDebug(sprintf('[publish_down] #%d/%d: product_id=%d status=%s updated_at=%d',
+            $this->logDebug(sprintf('[publish_down] #%d/%d: id=%d code=%s name=%s status=%s updated_at=%s',
                 $index + 1,
                 $total_candidates,
                 $product_id,
+                $product_code,
+                $product_name,
                 $status,
-                $updated_at
+                $updated_at_formatted
             ));
 
             if ($this->disableProduct($product_id, $status, $updated_at)) {
@@ -134,11 +142,11 @@ class ProductPublishDownService
 
         $this->db->query('UPDATE ?:products SET status = ?s WHERE product_id = ?i', 'D', $product_id);
 
-        $this->logDebug(sprintf('[publish_down] Disabled product #%d (previous_status=%s, updated_at=%d)',
+        /* $this->logDebug(sprintf('[publish_down] Disabled product #%d (previous_status=%s, updated_at=%d)',
             $product_id,
             $previous_status,
             $updated_at
-        ));
+        )); */
 
         return true;
     }
