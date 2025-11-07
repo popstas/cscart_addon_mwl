@@ -77,16 +77,6 @@ if ($mode === 'filters_sync') {
 }
 
 if ($mode === 'publish_down_missing_products_outdated') {
-    $enabled = (string) Registry::get('addons.mwl_xlsx.publish_down_missing_products_outdated') === 'Y';
-
-    if (!$enabled) {
-        $message = __('mwl_xlsx.publish_down_disabled');
-        echo $message . PHP_EOL;
-        fn_mwl_xlsx_append_log($message);
-
-        return [CONTROLLER_STATUS_NO_CONTENT];
-    }
-
     $service = fn_mwl_xlsx_publish_down_service();
 
     $period_setting = (int) Registry::get('addons.mwl_xlsx.publish_down_period');
@@ -148,6 +138,154 @@ if ($mode === 'publish_down_missing_products_outdated') {
         'error_messages' => $publish_summary['errors'],
         'period_seconds' => $period_seconds,
         'limit' => $limit,
+    ]);
+    fn_mwl_xlsx_append_log(sprintf('[%s] Metrics: %s', $mode, json_encode($log_payload, JSON_UNESCAPED_UNICODE)));
+
+    return [CONTROLLER_STATUS_NO_CONTENT];
+}
+
+if ($mode === 'publish_down_missing_products_csv') {
+    $csv_path = Registry::get('config.dir.root') . '/var/files/products.csv';
+
+    if (!file_exists($csv_path)) {
+        $message = "CSV file not found: {$csv_path}";
+        echo '[error] ' . $message . PHP_EOL;
+        fn_mwl_xlsx_append_log('[publish_down_csv] ' . $message);
+
+        return [CONTROLLER_STATUS_NO_CONTENT];
+    }
+
+    echo 'publish_down_missing_products_csv: reading CSV...' . PHP_EOL;
+
+    $result = fn_mwl_xlsx_read_products_csv($csv_path);
+
+    if (!empty($result['errors'])) {
+        foreach ($result['errors'] as $error) {
+            echo '[error] ' . $error . PHP_EOL;
+            fn_mwl_xlsx_append_log('[publish_down_csv] ' . $error);
+        }
+
+        return [CONTROLLER_STATUS_NO_CONTENT];
+    }
+
+    $rows = $result['rows'];
+
+    if (!$rows) {
+        $message = 'CSV file is empty or has no valid rows';
+        echo '[error] ' . $message . PHP_EOL;
+        fn_mwl_xlsx_append_log('[publish_down_csv] ' . $message);
+
+        return [CONTROLLER_STATUS_NO_CONTENT];
+    }
+
+    echo 'publish_down_missing_products_csv: processing ' . count($rows) . ' CSV rows...' . PHP_EOL;
+
+    // Build lookup: variation_group_code => [product_code1, product_code2, ...]
+    $csv_groups = [];
+    foreach ($rows as $row) {
+        $group_code = $row['variation_group_code'];
+        $product_code = $row['product_code'];
+
+        if (!isset($csv_groups[$group_code])) {
+            $csv_groups[$group_code] = [];
+        }
+
+        $csv_groups[$group_code][] = $product_code;
+    }
+
+    $groups_processed = 0;
+    $products_checked = 0;
+    $disabled_product_ids = [];
+    $errors = [];
+
+    echo 'publish_down_missing_products_csv: found ' . count($csv_groups) . ' unique variation groups...' . PHP_EOL;
+
+    foreach ($csv_groups as $group_code => $csv_product_codes) {
+        // Query variation group ID by code
+        $group_id = db_get_field(
+            'SELECT id FROM ?:product_variation_groups WHERE code = ?s',
+            $group_code
+        );
+
+        if (!$group_id) {
+            $warning = "Variation group not found in database: {$group_code}";
+            echo '[info] ' . $warning . PHP_EOL;
+            fn_mwl_xlsx_append_log('[publish_down_csv] ' . $warning);
+            continue;
+        }
+
+        // Get all product IDs in this variation group
+        $group_product_ids = db_get_fields(
+            'SELECT product_id FROM ?:product_variation_group_products WHERE group_id = ?i',
+            $group_id
+        );
+
+        if (!$group_product_ids) {
+            continue;
+        }
+
+        // Get product_code for all products in this group
+        $db_products = db_get_hash_array(
+            'SELECT product_id, product_code FROM ?:products WHERE product_id IN (?n)',
+            'product_id',
+            $group_product_ids
+        );
+
+        $products_checked += count($db_products);
+
+        // Identify products to disable: those in DB but NOT in CSV
+        $csv_product_codes_map = array_flip($csv_product_codes);
+
+        foreach ($db_products as $product_id => $product) {
+            $product_code = $product['product_code'];
+
+            // If product_code is NOT in CSV, disable it
+            if (!isset($csv_product_codes_map[$product_code])) {
+                // Check current status before disabling
+                $current_status = db_get_field(
+                    'SELECT status FROM ?:products WHERE product_id = ?i',
+                    $product_id
+                );
+
+                // Only disable if not already disabled
+                if ($current_status !== 'D') {
+                    $updated = db_query(
+                        'UPDATE ?:products SET status = ?s WHERE product_id = ?i',
+                        'D',
+                        $product_id
+                    );
+
+                    if ($updated) {
+                        $disabled_product_ids[] = (int) $product_id;
+                        echo "[disabled] Product ID: {$product_id}, Code: {$product_code}, Group: {$group_code}" . PHP_EOL;
+                        fn_mwl_xlsx_append_log("[publish_down_csv] Disabled product {$product_id} (code: {$product_code}, group: {$group_code})");
+                    } else {
+                        $error_msg = "Failed to disable product {$product_id} (code: {$product_code})";
+                        $errors[] = $error_msg;
+                        echo '[error] ' . $error_msg . PHP_EOL;
+                        fn_mwl_xlsx_append_log('[publish_down_csv] ' . $error_msg);
+                    }
+                }
+            }
+        }
+
+        $groups_processed++;
+    }
+
+    // Output metrics
+    $metrics = [
+        'groups_in_csv' => count($csv_groups),
+        'groups_processed' => $groups_processed,
+        'products_checked' => $products_checked,
+        'disabled' => count($disabled_product_ids),
+        'errors' => count($errors),
+    ];
+    fn_mwl_xlsx_output_metrics($mode, $metrics);
+
+    // Append summary to log
+    $log_payload = array_merge($metrics, [
+        'disabled_product_ids' => $disabled_product_ids,
+        'error_messages' => $errors,
     ]);
     fn_mwl_xlsx_append_log(sprintf('[%s] Metrics: %s', $mode, json_encode($log_payload, JSON_UNESCAPED_UNICODE)));
 

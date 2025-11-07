@@ -93,6 +93,24 @@ This prevents accidental overwriting of existing product images during updates.
   * **Publish down period (seconds)** defines how old the `cscart_products.updated_timestamp` may become before the product is disabled (default `3600` seconds = 1 hour).
 * **Behaviour**: Each run queries `cscart_products` for entries with `status` in `A/H/P` whose `updated_timestamp` (falling back to `timestamp` when empty) is older than the configured period. The matching products are disabled (via `fn_tools_update_status` when available) until the optional limit is reached. Actions, disabled IDs, limit hits, and errors are printed to STDOUT and recorded in `var/log/mwl_xlsx.log`.
 
+### Publish down missing products from CSV
+
+* **Entry point**: `php admin.php --dispatch=mwl_xlsx.publish_down_missing_products_csv` (intended for cron/CLI).
+* **CSV location**: `$project_root/var/files/products.csv`
+* **CSV format**: Must contain two columns: `Variation group code` and `Product code`. The CSV should list all products that should remain active within each variation group.
+* **Behaviour**: 
+  1. Reads the CSV file and builds a lookup of variation group codes and their associated product codes.
+  2. For each unique variation group code in the CSV:
+     - Queries `cscart_product_variation_groups` to find the group by its `code`.
+     - Retrieves all products in that group from `cscart_product_variation_group_products`.
+     - Fetches the `product_code` for each product from `cscart_products`.
+     - Identifies products whose `product_code` is **not** present in the CSV.
+     - Disables those products by setting their status to `D` (Disabled).
+  3. Outputs metrics: `groups_in_csv`, `groups_processed`, `products_checked`, `disabled`, `errors`.
+  4. All actions, disabled product IDs, and errors are printed to STDOUT and logged to `var/log/mwl_xlsx.log`.
+* **Performance**: Optimized for large datasets (100K+ products) using indexed queries and batch processing per variation group.
+* **Failure handling**: Missing CSV file, empty CSV, parsing errors, or non-existent variation groups are logged and reported to STDOUT without modifying the database.
+
 ### Delete unused products
 
 * **Entry point**: `php admin.php --dispatch=mwl_xlsx.delete_unused_products` (CLI/cron only).

@@ -415,6 +415,128 @@ function fn_mwl_xlsx_normalize_csv_header_value(string $column, bool $is_first_c
     return mb_strtolower(trim($column), 'UTF-8');
 }
 
+/**
+ * Read products CSV file for publish_down_missing_products_csv mode.
+ * Expected columns: "Variation group code", "Product code"
+ *
+ * @param string $path Path to CSV file
+ * @return array{rows: array<array{variation_group_code: string, product_code: string}>, errors: array<string>}
+ */
+function fn_mwl_xlsx_read_products_csv(string $path): array
+{
+    $rows = [];
+    $errors = [];
+
+    if (!file_exists($path)) {
+        return [
+            'rows' => $rows,
+            'errors' => ["File not found: {$path}"],
+        ];
+    }
+
+    if (!is_readable($path)) {
+        return [
+            'rows' => $rows,
+            'errors' => ["File not readable: {$path}"],
+        ];
+    }
+
+    $handle = fopen($path, 'rb');
+
+    if ($handle === false) {
+        return [
+            'rows' => $rows,
+            'errors' => ["Failed to open file: {$path}"],
+        ];
+    }
+
+    $first_line = fgets($handle);
+
+    if ($first_line === false) {
+        fclose($handle);
+
+        return [
+            'rows' => $rows,
+            'errors' => ['CSV file is empty'],
+        ];
+    }
+
+    $delimiter = fn_mwl_xlsx_detect_csv_delimiter($first_line);
+    rewind($handle);
+
+    $header = fgetcsv($handle, 0, $delimiter);
+
+    if ($header === false) {
+        fclose($handle);
+
+        return [
+            'rows' => $rows,
+            'errors' => ['Failed to read CSV header'],
+        ];
+    }
+
+    $normalized_header = [];
+
+    foreach ($header as $index => $column) {
+        $normalized_header[$index] = fn_mwl_xlsx_normalize_csv_header_value((string) $column, $index === 0);
+    }
+
+    $header_map = array_flip($normalized_header);
+
+    // Check for required columns
+    $required_columns = ['variation group code', 'product code'];
+    $missing_columns = [];
+
+    foreach ($required_columns as $required_column) {
+        if (!isset($header_map[$required_column])) {
+            $missing_columns[] = $required_column;
+        }
+    }
+
+    if ($missing_columns) {
+        fclose($handle);
+
+        return [
+            'rows' => [],
+            'errors' => ['Missing required columns: ' . implode(', ', $missing_columns)],
+        ];
+    }
+
+    $variation_group_code_index = $header_map['variation group code'];
+    $product_code_index = $header_map['product code'];
+
+    $line_number = 1;
+
+    while (($data = fgetcsv($handle, 0, $delimiter)) !== false) {
+        $line_number++;
+
+        if (count($data) < max($variation_group_code_index, $product_code_index) + 1) {
+            $errors[] = "Line {$line_number}: insufficient columns";
+            continue;
+        }
+
+        $variation_group_code = trim((string) ($data[$variation_group_code_index] ?? ''));
+        $product_code = trim((string) ($data[$product_code_index] ?? ''));
+
+        if ($variation_group_code === '' || $product_code === '') {
+            // Skip empty rows
+            continue;
+        }
+
+        $rows[] = [
+            'variation_group_code' => $variation_group_code,
+            'product_code' => $product_code,
+        ];
+    }
+
+    fclose($handle);
+
+    return [
+        'rows' => $rows,
+        'errors' => $errors,
+    ];
+}
+
 function fn_mwl_planfix_webhook_handler(bool $force_reload = false): WebhookHandler
 {
     static $handler;
