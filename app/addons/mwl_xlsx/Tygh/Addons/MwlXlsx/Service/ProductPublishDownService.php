@@ -32,6 +32,7 @@ class ProductPublishDownService
     public function publishDownOutdated(int $period_seconds, int $limit = 0): array
     {
         $period_seconds = max(0, $period_seconds);
+        // Calculate cutoff timestamp in UTC (time() always returns UTC Unix timestamp)
         $cutoff = time() - $period_seconds;
 
         $limit = (int) $limit;
@@ -65,9 +66,11 @@ class ProductPublishDownService
             ];
         }
 
-        $this->logDebug(sprintf('[publish_down] Starting run: period=%d seconds, cutoff=%s, limit=%s',
+        $this->logDebug(sprintf('[publish_down] Starting run: period=%d seconds, cutoff_timestamp=%d, cutoff=%s UTC, current_time=%s UTC, limit=%s',
             $period_seconds,
-            date('Y-m-d H:i', $cutoff),
+            $cutoff,
+            gmdate('Y-m-d H:i', $cutoff),
+            gmdate('Y-m-d H:i'),
             $limit > 0 ? (string) $limit : 'none'
         ));
 
@@ -103,9 +106,9 @@ class ProductPublishDownService
             $status = (string) ($row['status'] ?? '');
             $updated_at = (int) ($row['updated_at'] ?? 0);
             $product_name = (string) ($row['product'] ?? '');
-            $updated_at_formatted = date('Y-m-d H:i', $updated_at);
+            $updated_at_formatted = gmdate('Y-m-d H:i', $updated_at);
 
-            $this->logDebug(sprintf('[publish_down] #%d/%d: id=%d code=%s name=%s status=%s updated_at=%s',
+            $this->logDebug(sprintf('[publish_down] #%d/%d: id=%d code=%s name=%s status=%s updated_at=%s UTC',
                 $index + 1,
                 $total_candidates,
                 $product_id,

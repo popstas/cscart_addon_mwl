@@ -76,8 +76,8 @@ if ($mode === 'filters_sync') {
     return [CONTROLLER_STATUS_NO_CONTENT];
 }
 
-if ($mode === 'publish_down_missing_products') {
-    $enabled = (string) Registry::get('addons.mwl_xlsx.publish_down_missing_products') === 'Y';
+if ($mode === 'publish_down_missing_products_outdated') {
+    $enabled = (string) Registry::get('addons.mwl_xlsx.publish_down_missing_products_outdated') === 'Y';
 
     if (!$enabled) {
         $message = __('mwl_xlsx.publish_down_disabled');

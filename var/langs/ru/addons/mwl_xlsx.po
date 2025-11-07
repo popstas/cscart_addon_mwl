@@ -671,11 +671,11 @@ msgctxt "Languages::mwl_xlsx.filters_sync_error_missing_column"
 msgid "Missing required column \"[column]\" in the CSV header."
 msgstr "В заголовке CSV отсутствует обязательный столбец \"[column]\"."
 
-msgctxt "Languages::mwl_xlsx.publish_down_missing_products"
+msgctxt "Languages::mwl_xlsx.publish_down_missing_products_outdated"
 msgid "Publish down stale products"
 msgstr "Отключать устаревшие товары"
 
-msgctxt "Languages::mwl_xlsx.publish_down_missing_products.desc"
+msgctxt "Languages::mwl_xlsx.publish_down_missing_products_outdated.desc"
 msgid "When enabled, the cron mode disables products whose updated timestamp is older than the selected period."
 msgstr "При включении крон будет отключать товары с устаревшим полем updated_timestamp."
 

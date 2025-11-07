@@ -86,7 +86,7 @@ This prevents accidental overwriting of existing product images during updates.
 
 ### Publish down stale products
 
-* **Entry point**: `php admin.php --dispatch=mwl_xlsx.publish_down_missing_products` (intended for cron/CLI).
+* **Entry point**: `php admin.php --dispatch=mwl_xlsx.publish_down_missing_products_outdated` (intended for cron/CLI).
 * **Settings**:
   * **Publish down stale products** toggles the feature.
   * **Publish down limit** caps the number of products disabled per run. Set to `0` to disable the cap.

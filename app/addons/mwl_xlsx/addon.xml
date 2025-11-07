@@ -345,8 +345,8 @@
                         <name>mwl_xlsx.filters_csv_path</name>
                         <value></value>
                     </item>
-                    <item id="publish_down_missing_products" type="checkbox">
-                        <name>mwl_xlsx.publish_down_missing_products</name>
+                    <item id="publish_down_missing_products_outdated" type="checkbox">
+                        <name>mwl_xlsx.publish_down_missing_products_outdated</name>
                         <value>N</value>
                     </item>
                     <item id="publish_down_limit" type="input">
