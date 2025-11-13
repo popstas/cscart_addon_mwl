@@ -1628,16 +1628,8 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
             // Сохраняем в статическое хранилище для import_post
             fn_mwl_xlsx_set_groups_to_fix($group_id_key, $manually_added_features, false);
             
-            // Сохраняем product_features для manually added features тоже
-            $products_features_map = [];
-            foreach ($new_product_ids as $pid) {
-                if (isset($products[$pid]['variation_features'])) {
-                    $products_features_map[$pid] = $products[$pid]['variation_features'];
-                }
-            }
-            fn_mwl_xlsx_set_products_features($group_id_key, $products_features_map);
-            
-            echo '  → Saved to static storage for post-processing' . PHP_EOL;
+            // NOTE: product_features будут сохранены в update_product_features_value_pre
+            echo '  → Saved to static storage (features will be saved in update_product_features_value_pre)' . PHP_EOL;
         }
         
         // ДОПОЛНИТЕЛЬНО: Если это ОБНОВЛЕНИЕ существующих продуктов (а не создание новых),
@@ -1662,15 +1654,9 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
             // потому что Registry сбрасывается между хуками
             fn_mwl_xlsx_set_groups_to_fix($group_id_key, $all_variation_features, true);
             
-            // Сохраняем также product_features из импорта для import_post
-            $products_features_map = [];
-            foreach ($new_product_ids as $pid) {
-                if (isset($products[$pid]['variation_features'])) {
-                    $products_features_map[$pid] = $products[$pid]['variation_features'];
-                }
-            }
-            fn_mwl_xlsx_set_products_features($group_id_key, $products_features_map);
-            echo '  → Saved products features map for ' . count($products_features_map) . ' products' . PHP_EOL;
+            // NOTE: product_features теперь сохраняются в хуке update_product_features_value_pre
+            // который вызывается РАНЬШЕ и содержит исходные значения до синхронизации CS-Cart
+            echo '  → Saved to static storage (features will be saved in update_product_features_value_pre)' . PHP_EOL;
         }
         
         // ЗАЩИТА: Если features в БД пусты, а в группе есть - кто-то уже удалил!
@@ -2069,35 +2055,46 @@ function fn_mwl_xlsx_update_product_features_value_pre($product_id, &$product_fe
         return; // Не в группе вариаций
     }
     
-    // Проверяем обновляли ли мы features этой группы
-    $registry_key = 'mwl_xlsx.group_' . $group_id . '_features_updated';
-    $was_updated = \Tygh\Registry::get($registry_key);
+    // НОВАЯ ЛОГИКА: Сохраняем ВСЕ исходные feature values ДО того как CS-Cart их синхронизирует
+    // Это нужно для import_post чтобы восстановить правильные значения после синхронизации
+    //
+    // NOTE: Этот хук вызывается ДО variation_group_add_products_to_group, 
+    // поэтому мы ещё не знаем какие группы требуют обработки.
+    // Сохраняем ВСЕ features для ВСЕХ продуктов в variation groups.
     
-    if (!$was_updated) {
-        return; // Мы не обновляли features этой группы
+    static $saved_count = [];
+    if (!isset($saved_count[$group_id])) {
+        $saved_count[$group_id] = 0;
+        echo '[MWL_XLSX] ========================================' . PHP_EOL;
+        echo '[MWL_XLSX] Hook update_product_features_value_pre for group #' . $group_id . PHP_EOL;
     }
+    $saved_count[$group_id]++;
     
-    $new_feature_ids = \Tygh\Registry::get('mwl_xlsx.group_' . $group_id . '_new_feature_ids');
+    echo '  - Saving original feature values for product #' . $product_id . PHP_EOL;
+    echo '    Available product_features (' . count($product_features) . '): ' . implode(', ', array_keys($product_features)) . PHP_EOL;
     
-    if (empty($new_feature_ids)) {
-        return; // Нет новых features
-    }
-    
-    echo '[MWL_XLSX] Hook update_product_features_value_pre for product #' . $product_id . PHP_EOL;
-    echo '  - Group #' . $group_id . ' was updated with new features: ' . implode(', ', $new_feature_ids) . PHP_EOL;
-    echo '  - Current product_features to save: ' . implode(', ', array_keys($product_features)) . PHP_EOL;
-    
-    // Проверяем какие из новых features есть в product_features
-    $new_features_to_save = array_intersect($new_feature_ids, array_keys($product_features));
-    
-    if (!empty($new_features_to_save)) {
-        echo '  - New variation features in save list: ' . implode(', ', $new_features_to_save) . PHP_EOL;
-        echo '  → Marking these features to NOT be filtered by ProductsHookHandler' . PHP_EOL;
+    // Конвертируем $product_features в формат который использует import_post
+    // $product_features имеет формат: feature_id => variant_id
+    $converted_features = [];
+    foreach ($product_features as $feature_id => $variant_id) {
+        $converted_features[$feature_id] = [
+            'variant_id' => $variant_id,
+            'value' => $variant_id
+        ];
         
-        // Сохраняем в Registry для использования в ProductsHookHandler
-        \Tygh\Registry::set('runtime.mwl_xlsx_allow_variation_features', true);
-        \Tygh\Registry::set('runtime.mwl_xlsx_allow_variation_feature_ids_for_product_' . $product_id, $new_features_to_save);
+        // Debug: показываем feature name и variant
+        $feature_name = db_get_field("SELECT description FROM ?:product_features_descriptions WHERE feature_id = ?i AND lang_code = 'en'", $feature_id);
+        $variant_name = db_get_field("SELECT variant FROM ?:product_feature_variant_descriptions WHERE variant_id = ?i AND lang_code = 'en'", $variant_id);
+        echo '      * Feature #' . $feature_id . ' (' . ($feature_name ?: 'unknown') . '): variant_id=' . $variant_id . ' (' . ($variant_name ?: 'unknown') . ')' . PHP_EOL;
     }
+    
+    // Сохраняем в статическое хранилище (объединяем с уже сохраненными)
+    $existing_map = fn_mwl_xlsx_get_products_features($group_id) ?: [];
+    $existing_map[$product_id] = $converted_features;
+    fn_mwl_xlsx_set_products_features($group_id, $existing_map);
+    
+    echo '    → Saved ' . count($converted_features) . ' features to static storage' . PHP_EOL;
+    echo '    → Total products in storage for group #' . $group_id . ': ' . count($existing_map) . PHP_EOL;
 }
 
 /**
