@@ -39,7 +39,7 @@
 - Redirect first-time visitors to the storefront language that matches their browser preferences (optional).
 - Yandex Metrika tracking includes `user_id` for segmentation via `userParams` when available.
 - Synchronize Unitheme price filters from a CSV file via CLI cron with insert/update support, float-aware rounding values, and detailed debug logging.
-- Automatically handle product variation group conflicts during import: remove old features, auto-remove duplicate products, and fix new feature values that CS-Cart filters during import process.
+- Automatically handle product variation group conflicts during import: detect update scenarios, preserve original feature values before CS-Cart synchronization (using `update_product_features_value_pre` hook), fix feature values in `import_post` hook after synchronization, auto-remove duplicate products from groups, and support manual feature additions before import.
 
 ### Shortcuts
 - Press "a" on a product page to open the "Add to media list" dialog.
