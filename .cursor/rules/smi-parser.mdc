@@ -1,0 +1,18 @@
+---
+alwaysApply: true
+---
+В /d/projects/expertizeme/smi-parser содержится скрипт для парсинга SMI.
+
+Команды:
+- `npm run sync-shop` - запускает синхронизацию данных с cscart
+
+Правила:
+- При запуске скрипта sync-shop, всегда читай лог последней синхронизации из файла `data/cscart/logs/last.log`
+- Не сохраняй изменения в last.log, они будут автоматически сохранены при завершении синхронизации
+- Запрещено запускать скрипты с `tee -a data/cscart/logs/last.log`
+- Запрещено читать вывод запуска cscart-import, sync-shop, всегда предпочитай лог последней синхронизации из файла `data/cscart/logs/last.log`
+- Запрещено запускать cscart-import, всегда предпочитай запуск sync-shop
+- При изменении init.php fn_register_hooks, всегда запускай `bash /d/projects/expertizeme/smi-parser/data/cscart-clear-cache.sh`
+
+Важные файлы:
+- `data/cscart/logs/last.log` - лог последней синхронизации sync-shop

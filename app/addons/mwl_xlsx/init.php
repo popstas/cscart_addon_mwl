@@ -35,7 +35,11 @@ fn_register_hooks(
     'dispatch_before_display',
     'init_templater_post',
     'change_order_status_post',
-    'exim_import_images_pre'
+    'exim_import_images_pre',
+    'variation_group_add_products_to_group',
+    'variation_group_save_group',
+    'update_product_features_value_pre',
+    'import_post'
 );
 
 Tygh::$app['event.transports.mwl'] = static function ($app) {

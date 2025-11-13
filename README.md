@@ -39,6 +39,7 @@
 - Redirect first-time visitors to the storefront language that matches their browser preferences (optional).
 - Yandex Metrika tracking includes `user_id` for segmentation via `userParams` when available.
 - Synchronize Unitheme price filters from a CSV file via CLI cron with insert/update support, float-aware rounding values, and detailed debug logging.
+- Automatically handle product variation group conflicts during import: remove old features, auto-remove duplicate products, and fix new feature values that CS-Cart filters during import process.
 
 ### Shortcuts
 - Press "a" on a product page to open the "Add to media list" dialog.
@@ -66,6 +67,216 @@ When importing products via CSV with "Detailed image" field:
 - If product has no images → import images from CSV
 
 This prevents accidental overwriting of existing product images during updates.
+
+### Product Variation Groups - Auto-update Features
+
+**Problem**: When importing products with product variations, CS-Cart doesn't automatically update the variation group's feature list:
+- Adding new features: If a group has features A and B, and you import products with A, B, and C, feature C is ignored
+- Removing features: If you remove a feature from products but it remains in the group, you get "exact same combination" errors
+- Duplicate combinations: When re-importing products with changed product codes but same feature values, you get "exact same combination" errors
+
+**Solution**: The add-on automatically handles all three scenarios:
+1. **Removing features**: Automatically removes features from variation group when they're no longer present in products ✅
+2. **Duplicate combinations**: Automatically removes old products with duplicate feature combinations before adding new ones ✅
+3. **Adding features**: Two-step process with automatic fix:
+   - Features must exist in group BEFORE import (add manually or via SQL)
+   - Hook detects new features and marks them in Registry
+   - `import_post` hook fixes feature values that were filtered by CS-Cart ✅
+
+**How it works**:
+- Hook: `variation_group_add_products_to_group` intercepts products being added to an existing variation group
+- Detection: Compares available features on products against the group's current features
+- Duplicate removal: **Automatically removes existing products** with duplicate combinations before adding new ones
+  - Compares import data (new products) against DB (existing products)
+  - Only removes truly existing products (not those being updated)
+  - Prevents "exact same combination of feature values" errors
+  - Automatically disables removed products (status='D') to prevent orphaned active products
+- Feature removal: When features are removed from products, automatically updates the variation group:
+  1. Detects removed features by comparing available vs current
+  2. Deletes all features from `cscart_product_variation_group_features` for the group
+  3. Inserts the updated feature list (excluding removed features)
+  4. Reloads the group object with updated features using PHP Reflection
+- Feature addition limitation: **Cannot automatically add new features** during import
+  - CS-Cart's ProductsHookHandler filters variation features during save
+  - New features must be added to the group manually BEFORE import
+  - Hook will detect and warn about new features that need manual addition
+- Safety: 
+  - Collects features from **all new products** being imported (not just first one)
+  - Excludes products being updated from duplicate check (compares only new vs truly existing)
+  - Displays detailed debug output for troubleshooting
+- Additional hook: `variation_group_save_group` provides post-save diagnostics showing all products and their feature combinations
+
+**Example scenarios**:
+
+**Adding features (SEMI-AUTOMATIC):**
+1. Group exists: Products with "Days" and "Special Date" features (2 features)
+2. **BEFORE import**: Add "Print" feature to variation group via SQL:
+```sql
+INSERT INTO cscart_product_variation_group_features (group_id, feature_id, purpose)
+SELECT g.id, 84, 'group_variation_catalog_item'
+FROM cscart_product_variation_groups g
+WHERE g.code = 'marketingnews-ru';
+```
+3. Import products with "Days", "Special Date", and "Print"
+4. Hook detects new feature → marks in Registry → `import_post` fixes values ✅
+5. Result: All three feature values are saved correctly (No and Yes) ✅
+
+**Why this two-step process:**
+- CS-Cart's `ProductsHookHandler` removes variation features from save list during import
+- If feature not in group before import → CS-Cart won't save its values
+- If feature added to group but not updated → sync copies parent values to children
+- Solution: Feature must exist in group BEFORE import, then `import_post` hook fixes values after sync
+
+**Debug output shows the process:**
+```
+[Hook add_products_to_group]:
+⚠ New features detected: 84
+→ Will fix feature values in import_post hook
+→ Saved to Registry for post-processing
+
+[Hook import_post]:
+Found 1 groups with new features
+- Fixing product #18997 feature values...
+  * Feature #84: will update to variant_id=5585
+  → Updated 2 rows in DB
+- Verifying: Product #18997: Yes (vid:5585) ✓
+```
+
+**Removing features:**
+1. Initial state: Group has features A, B, and C
+2. Products updated: Only features A and B remain on products (C removed)
+3. Import: Group automatically updated to only A and B ✅
+4. Result: No "exact same combination" errors, variations work correctly
+
+**Handling duplicate combinations during import:**
+
+The hook successfully handles the common scenario where new products have the same feature combinations as old products:
+
+1. **Import batch duplicates**: Detects if two products in the same import have identical combinations → Warning (CS-Cart will reject)
+2. **Against existing products**: Compares new products against existing products in DB → **Automatically removes old duplicates**
+3. **Update scenario safety**: Excludes products being updated from duplicate check (only removes truly old products)
+
+**How duplicate removal works:**
+- New products are compared against existing products (from DB)
+- If match found → old product automatically:
+  1. Removed from variation group via `$group->detachProductById()`
+  2. Disabled (status set to 'D') to prevent orphaned active products
+- Import proceeds successfully with new product
+- Disabled product can be deleted later by cleanup cron (`delete_unused_products`)
+
+**Example:**
+- Group has: Product #100 (Days=30, Special=No, status=A)
+- Import: Product #200 (Days=30, Special=No) - same combination!
+- Hook actions:
+  1. Detaches Product #100 from variation group ✓
+  2. Sets Product #100 status to 'D' (disabled) ✓
+- Result: Product #200 added successfully, no "exact same combination" error
+- Cleanup: Product #100 can be deleted by `delete_unused_products` cron
+
+**Troubleshooting**:
+
+The hook provides detailed debug output during import. Look for `[MWL_XLSX]` messages in the console or import log:
+
+**Debug messages**:
+- `Hook variation_group_add_products_to_group called` - Hook triggered, shows product count and group info
+- `Hook skipped: ...` - Hook skipped with reason
+- `Products in DB for group #...` - Shows all products currently in the variation group
+- `Product IDs collected` - Shows new, existing, and total products being processed
+- `Collecting available features from ALL new products...` - Scanning each new product for features
+  - `Product #... has N variation features` - Feature count per product
+  - `Added feature #...: ...` - New feature found and added to collection
+  - `No features from new products, checking existing...` - Fallback to existing products if new have no features
+- `Checking feature values of new products...` - Shows features from import data and current DB state
+  - `features from import data` - What the import file specifies (correct new values)
+  - `features from DB` - Current database state (may be old values, not yet updated)
+- `Available features found: N` - Total unique features collected from all products
+- `Features comparison` - Shows current vs available features, **features to add AND remove**
+- `⚠ New features detected: ...` - New features found
+  - `→ Will fix feature values in import_post hook` - Values will be fixed after import
+  - `→ Saved to Registry for post-processing` - Marked for import_post processing
+- `Checking for duplicate combinations...` - Looking for conflicts with existing and within import batch
+  - `New product #... combination: ...` - Feature combination from import data
+  - `NO variation_features in import data` - Product will use DB values (update scenario)
+  - `Checking existing products (excluding new): ...` - Lists product IDs being checked for duplicates
+  - `Existing product #... combination: ...` - Combination from DB (old product)
+  - `⚠ Product #... has SAME combination as new product #...` - Duplicate found!
+  - `→ Will remove existing product #... from group` - Old product will be removed
+  - `Removing N existing products with duplicate combinations...` - Cleanup in progress
+  - `Detached product #... from group` - Old product removed from variation group
+  - `Disabled product #... (status=D)` - Old product disabled to prevent orphaned products
+  - `No duplicate combinations with existing products` - No duplicates with old products
+  - `⚠ WARNING: Duplicate in import batch!` - Two products in same import have identical combinations
+  - `✓ All new products have unique combinations within import batch` - No duplicates in import
+  - `No existing products to check (or all are being updated)` - All products being updated, no old ones to compare
+- `No changes in features` - No additions or removals detected, only duplicate check performed
+- `Features are up to date, finishing` - No feature list update needed
+- `Will update group "..." (ID:...)` - Feature list will be updated
+  - `Adding features: ...` - New features being added to group
+  - `Removing features: ...` - Old features being removed from group
+- `Updating DB: deleting old features...` - Database cleanup started
+- `Features inserted to DB successfully` - Feature list update complete
+- `Reloading group from DB...` - Group reload started
+- `✓ Successfully updated group features via Reflection` - Group object updated successfully
+- `Group saved: "..." (ID:...)` - Post-save diagnostics (from `variation_group_save_group` hook)
+  - Shows final products and features in group
+  - Lists all feature combinations from DB (reflects actual saved state)
+  - `⚠ DUPLICATE COMBINATION detected!` - Post-save duplicate warning
+- `Hook import_post called` - Post-import processing (from `import_post` hook)
+  - `Found N groups with new features` - Groups that need feature value fixes
+  - `Processing group #... with new features: ...` - Fixing specific group
+  - `Searching for products in import_data...` - Finding products in import data
+  - `Found product #... at import_data[N]` - Product found in import
+  - `Fixing product #... feature values...` - Applying fixes
+  - `Feature #...: will update to variant_id=...` - Specific feature being fixed
+  - `→ Updated N rows in DB` - DB update result
+  - `Verifying fixed feature values from DB:` - Final verification
+  - `Product #...: Yes (vid:5585)` - Confirmed fixed value
+- `✗ ERROR: ...` / `✗ EXCEPTION: ...` - Error details with stack trace
+
+**SQL queries for troubleshooting**:
+```sql
+-- Check group features in DB
+SELECT gf.*, pfd.description 
+FROM cscart_product_variation_group_features gf
+LEFT JOIN cscart_product_features_descriptions pfd 
+  ON gf.feature_id = pfd.feature_id AND pfd.lang_code = 'en'
+WHERE gf.group_id = <your_group_id>;
+
+-- Check if hook is registered
+SELECT hooks FROM cscart_addons 
+WHERE addon = 'mwl_xlsx';
+-- Look for 'variation_group_add_products_to_group' in the hooks field
+
+-- Check product features
+SELECT pfv.*, pfd.description 
+FROM cscart_product_features_values pfv
+LEFT JOIN cscart_product_features_descriptions pfd 
+  ON pfv.feature_id = pfd.feature_id AND pfd.lang_code = 'en'
+WHERE pfv.product_id = <your_product_id> 
+  AND pfv.lang_code = 'en';
+```
+
+**Common issues**:
+- No `[MWL_XLSX]` messages → Hook not called, check `hooks` field in `cscart_addons`, reinstall addon if needed
+- "Hook skipped: no available features" → Product has no features with correct types (TEXT_SELECTBOX/NUMBER_SELECTBOX) and purpose
+- "No changes in features" → Features match, duplicate check still runs, working as expected
+- **"doesn't have the required features to become a variation"** → New feature added to products but not in group:
+  - Look for `⚠ New features detected:` in import log
+  - Check if feature was added to group before import via SQL
+  - Look for `Hook import_post called` - should fix feature values
+  - If no import_post messages → Registry not saved, add feature to group and re-import
+  - **Solution**: Add feature to group via SQL BEFORE import (see example above), then import will auto-fix values
+- "exact same combination of feature values" error → Check debug output:
+  - Look for `Checking existing products (excluding new):` - should list products to check
+  - Look for `⚠ Product #... has SAME combination` - should detect duplicates
+  - Look for `Detached product #... from group` - should remove old product
+  - Look for `Disabled product #... (status=D)` - should disable old product
+  - If duplicate detected but error persists → may be duplicate within import batch (unfixable)
+  - Check `⚠ WARNING: Duplicate in import batch!` - indicates two new products have same combination
+- Orphaned active products after import → Old products should be automatically disabled when removed from group, check debug for "Disabled product" messages
+- Reflection errors → Check PHP version supports ReflectionClass  
+- Features have wrong `purpose` → Verify `purpose` in `cscart_product_features` table (must be `group_catalog_item` or `group_variation_catalog_item`)
+- Old product not removed despite duplicate → Check that old product ID is in "truly existing" list (not in new_product_ids)
 
 ### Price filter sync
 
