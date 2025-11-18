@@ -1513,14 +1513,73 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
         $available_features = [];
         
         foreach ($new_product_ids as $check_product_id) {
+            // Сначала пытаемся получить features из БД (через findAvailableFeatures)
             $product_features = $product_repository->findAvailableFeatures($check_product_id);
-            echo '  - Product #' . $check_product_id . ' has ' . count($product_features) . ' variation features' . PHP_EOL;
+            echo '  - Product #' . $check_product_id . ' has ' . count($product_features) . ' variation features from DB' . PHP_EOL;
             
-            // Объединяем features (избегаем дубликатов через array_key merge)
+            // Объединяем features из БД
             foreach ($product_features as $feature_id => $feature) {
                 if (!isset($available_features[$feature_id])) {
                     $available_features[$feature_id] = $feature;
                     echo '    * Added feature #' . $feature_id . ': ' . ($feature['description'] ?? 'unknown') . PHP_EOL;
+                }
+            }
+            
+            // ВАЖНО: Также собираем features из import_data, которые могут ещё не быть в БД
+            // Это нужно потому что findAvailableFeatures вызывается ДО сохранения feature values в БД
+            if (isset($products[$check_product_id]['variation_features'])) {
+                foreach ($products[$check_product_id]['variation_features'] as $fid => $feature_data) {
+                    if (!isset($available_features[$fid])) {
+                        // Загружаем информацию о feature из БД
+                        $feature_info = db_get_row(
+                            "SELECT f.feature_id, fd.description, f.feature_type, f.purpose " .
+                            "FROM ?:product_features f " .
+                            "LEFT JOIN ?:product_features_descriptions fd ON f.feature_id = fd.feature_id AND fd.lang_code = 'en' " .
+                            "WHERE f.feature_id = ?i",
+                            $fid
+                        );
+                        
+                        if ($feature_info) {
+                            $available_features[$fid] = [
+                                'feature_id' => $feature_info['feature_id'],
+                                'description' => $feature_info['description'],
+                                'internal_name' => $feature_info['description'],
+                                'feature_type' => $feature_info['feature_type'],
+                                'purpose' => $feature_info['purpose'] ?: 'group_variation_catalog_item'
+                            ];
+                            echo '    * Added feature #' . $fid . ' from import_data: ' . ($feature_info['description'] ?? 'unknown') . PHP_EOL;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // ВАЖНО: Также добавляем features, которые уже есть в группе, но не были найдены для новых продуктов
+        // Это нужно потому что новые продукты могут не иметь всех features в variation_features,
+        // если они еще не были добавлены в группу
+        if (!empty($current_feature_ids)) {
+            echo '[MWL_XLSX] Also checking features already in group...' . PHP_EOL;
+            foreach ($current_feature_ids as $fid) {
+                if (!isset($available_features[$fid])) {
+                    // Загружаем информацию о feature из БД
+                    $feature_info = db_get_row(
+                        "SELECT f.feature_id, fd.description, f.feature_type, f.purpose " .
+                        "FROM ?:product_features f " .
+                        "LEFT JOIN ?:product_features_descriptions fd ON f.feature_id = fd.feature_id AND fd.lang_code = 'en' " .
+                        "WHERE f.feature_id = ?i AND f.purpose = 'group_variation_catalog_item'",
+                        $fid
+                    );
+                    
+                    if ($feature_info) {
+                        $available_features[$fid] = [
+                            'feature_id' => $feature_info['feature_id'],
+                            'description' => $feature_info['description'],
+                            'internal_name' => $feature_info['description'],
+                            'feature_type' => $feature_info['feature_type'],
+                            'purpose' => $feature_info['purpose']
+                        ];
+                        echo '    * Added feature #' . $fid . ' from group: ' . ($feature_info['description'] ?? 'unknown') . PHP_EOL;
+                    }
                 }
             }
         }
@@ -2074,9 +2133,20 @@ function fn_mwl_xlsx_update_product_features_value_pre($product_id, &$product_fe
     echo '    Available product_features (' . count($product_features) . '): ' . implode(', ', array_keys($product_features)) . PHP_EOL;
     
     // Конвертируем $product_features в формат который использует import_post
-    // $product_features имеет формат: feature_id => variant_id
+    // $product_features имеет формат: feature_id => variant_id (или массив для множественных)
     $converted_features = [];
     foreach ($product_features as $feature_id => $variant_id) {
+        // Обрабатываем множественные features (тип M) - они приходят как массив
+        if (is_array($variant_id)) {
+            // Для множественных features берем первый элемент (или все, если нужно)
+            // В variation groups обычно используется только один variant
+            $variant_id = !empty($variant_id) ? reset($variant_id) : null;
+        }
+        
+        if ($variant_id === null) {
+            continue; // Пропускаем пустые значения
+        }
+        
         $converted_features[$feature_id] = [
             'variant_id' => $variant_id,
             'value' => $variant_id
@@ -2085,7 +2155,7 @@ function fn_mwl_xlsx_update_product_features_value_pre($product_id, &$product_fe
         // Debug: показываем feature name и variant
         $feature_name = db_get_field("SELECT description FROM ?:product_features_descriptions WHERE feature_id = ?i AND lang_code = 'en'", $feature_id);
         $variant_name = db_get_field("SELECT variant FROM ?:product_feature_variant_descriptions WHERE variant_id = ?i AND lang_code = 'en'", $variant_id);
-        echo '      * Feature #' . $feature_id . ' (' . ($feature_name ?: 'unknown') . '): variant_id=' . $variant_id . ' (' . ($variant_name ?: 'unknown') . ')' . PHP_EOL;
+        echo '      * Feature #' . $feature_id . ' (' . ($feature_name ?: 'unknown') . '): variant_id=' . (is_array($variant_id) ? '[' . implode(',', $variant_id) . ']' : $variant_id) . ' (' . ($variant_name ?: 'unknown') . ')' . PHP_EOL;
     }
     
     // Сохраняем в статическое хранилище (объединяем с уже сохраненными)
@@ -2168,56 +2238,69 @@ function fn_mwl_xlsx_import_post($pattern, $import_data, $options, $result, $pro
             continue;
         }
         
-        $product_ids = $group->getProductIds();
-        echo '  - Products in group: ' . implode(', ', $product_ids) . PHP_EOL;
-        
-        if (empty($product_ids)) {
-            echo '  - No products in group, skipping' . PHP_EOL;
-            continue;
-        }
-        
-        // Ищем эти продукты в import_data чтобы получить правильные feature values из CSV
-        echo '  - Searching for products in import_data (total rows: ' . count($import_data) . ')...' . PHP_EOL;
-        
-        // DEBUG: Показываем структуру первой строки
-        if (!empty($import_data)) {
-            $first_row = reset($import_data);
-            echo '  - DEBUG: import_data structure:' . PHP_EOL;
-            echo '    * First row keys: ' . implode(', ', array_keys($first_row)) . PHP_EOL;
-            $first_inner = reset($first_row);
-            if (is_array($first_inner)) {
-                echo '    * Inner keys: ' . implode(', ', array_keys($first_inner)) . PHP_EOL;
-                if (isset($first_inner['product_id'])) {
-                    echo '    * product_id value: ' . ($first_inner['product_id'] ?: 'EMPTY') . PHP_EOL;
-                }
-                if (isset($first_inner['product_code'])) {
-                    echo '    * product_code value: ' . $first_inner['product_code'] . PHP_EOL;
-                }
+        // В update_scenario используем ВСЕ features группы из БД, а не только из статического хранилища
+        // потому что features могут быть добавлены в разных вызовах хука
+        if ($is_update_scenario) {
+            $all_group_features = db_get_fields(
+                "SELECT feature_id FROM ?:product_variation_group_features WHERE group_id = ?i ORDER BY feature_id",
+                $group_id
+            );
+            if (!empty($all_group_features)) {
+                $new_feature_ids = $all_group_features;
+                echo '  → Using ALL group features from DB: ' . implode(', ', $new_feature_ids) . PHP_EOL;
             }
         }
         
-        // Получаем product_code для всех продуктов группы
+        $product_ids = $group->getProductIds();
+        echo '  - Products currently in group: ' . (empty($product_ids) ? 'none' : implode(', ', $product_ids)) . PHP_EOL;
+        
+        // ВАЖНО: Ищем ВСЕ продукты из import_data с этим variation_group_code,
+        // а не только те, которые уже в группе
+        // Это нужно потому что продукты могут не быть добавлены в группу из-за отсутствия required features
+        $group_code = $group->getCode();
+        echo '  - Searching for products with variation_group_code="' . $group_code . '" in import_data (total rows: ' . count($import_data) . ')...' . PHP_EOL;
+        
+        $products_to_fix = [];
+        $product_codes_to_find = [];
+        
+        // Сначала собираем все product_code из import_data с нужным variation_group_code
+        foreach ($import_data as $idx => $import_row) {
+            $row = reset($import_row);
+            $row_group_code = isset($row['variation_group_code']) ? $row['variation_group_code'] : (isset($row['Variation group code']) ? $row['Variation group code'] : null);
+            $row_product_code = isset($row['product_code']) ? $row['product_code'] : null;
+            
+            if ($row_group_code === $group_code && $row_product_code) {
+                $product_codes_to_find[] = $row_product_code;
+            }
+        }
+        
+        if (empty($product_codes_to_find)) {
+            echo '  - No products with variation_group_code="' . $group_code . '" in import data' . PHP_EOL;
+            continue;
+        }
+        
+        echo '  - Found ' . count($product_codes_to_find) . ' product codes with this group code: ' . implode(', ', $product_codes_to_find) . PHP_EOL;
+        
+        // Получаем product_id для всех найденных product_code
         $product_codes_map = db_get_hash_single_array(
-            "SELECT product_id, product_code FROM ?:products WHERE product_id IN (?a)",
-            ['product_id', 'product_code'],
-            $product_ids
+            "SELECT product_id, product_code FROM ?:products WHERE product_code IN (?a)",
+            ['product_code', 'product_id'],
+            $product_codes_to_find
         );
-        echo '  - Product codes in group: ' . implode(', ', array_map(function($pid, $code) {
+        
+        echo '  - Product IDs found: ' . implode(', ', array_map(function($code, $pid) {
             return '#' . $pid . '=' . $code;
         }, array_keys($product_codes_map), $product_codes_map)) . PHP_EOL;
         
-        $products_to_fix = [];
+        // Теперь находим соответствующие строки в import_data
         foreach ($import_data as $idx => $import_row) {
             $row = reset($import_row);
             $row_product_code = isset($row['product_code']) ? $row['product_code'] : null;
             
-            if ($row_product_code) {
-                // Ищем product_id по product_code
-                $found_pid = array_search($row_product_code, $product_codes_map);
-                if ($found_pid !== false) {
-                    $products_to_fix[$found_pid] = $row;
-                    echo '    * Found product #' . $found_pid . ' (code: ' . $row_product_code . ') at import_data[' . $idx . ']' . PHP_EOL;
-                }
+            if ($row_product_code && isset($product_codes_map[$row_product_code])) {
+                $found_pid = $product_codes_map[$row_product_code];
+                $products_to_fix[$found_pid] = $row;
+                echo '    * Found product #' . $found_pid . ' (code: ' . $row_product_code . ') at import_data[' . $idx . ']' . PHP_EOL;
             }
         }
         
@@ -2230,16 +2313,43 @@ function fn_mwl_xlsx_import_post($pattern, $import_data, $options, $result, $pro
         
         // Получаем product_features из статического хранилища
         $products_features_map = fn_mwl_xlsx_get_products_features($group_id);
-        if (empty($products_features_map)) {
-            echo '  - No products features map found in static storage for group #' . $group_id . PHP_EOL;
-            continue;
+        echo '  - Products features map contains ' . (empty($products_features_map) ? '0' : count($products_features_map)) . ' products' . PHP_EOL;
+        
+        // Для продуктов, которых нет в статическом хранилище, получаем features из БД
+        // Это нужно для продуктов, которые ещё не в группе
+        $missing_pids = array_diff(array_keys($products_to_fix), array_keys($products_features_map ?: []));
+        if (!empty($missing_pids)) {
+            echo '  - Products not in static storage (will load from DB): ' . implode(', ', $missing_pids) . PHP_EOL;
+            
+            // Загружаем features из БД для этих продуктов
+            $db_features = db_get_array(
+                "SELECT product_id, feature_id, variant_id " .
+                "FROM ?:product_features_values " .
+                "WHERE product_id IN (?a) AND feature_id IN (?a) AND lang_code = 'en'",
+                $missing_pids, $new_feature_ids
+            );
+            
+            foreach ($db_features as $row) {
+                $pid = $row['product_id'];
+                $fid = $row['feature_id'];
+                $vid = $row['variant_id'];
+                
+                if (!isset($products_features_map[$pid])) {
+                    $products_features_map[$pid] = [];
+                }
+                $products_features_map[$pid][$fid] = [
+                    'variant_id' => $vid,
+                    'value' => $vid
+                ];
+            }
+            
+            echo '  - Loaded ' . count($db_features) . ' features from DB for missing products' . PHP_EOL;
         }
-        echo '  - Products features map contains ' . count($products_features_map) . ' products' . PHP_EOL;
         
         // Для каждого продукта обновляем feature values для новых features
         foreach ($products_to_fix as $pid => $import_row) {
             if (!isset($products_features_map[$pid])) {
-                echo '  - Product #' . $pid . ': NO product_features in static storage' . PHP_EOL;
+                echo '  - Product #' . $pid . ': NO product_features available (not in storage and not in DB)' . PHP_EOL;
                 continue;
             }
             
@@ -2269,15 +2379,44 @@ function fn_mwl_xlsx_import_post($pattern, $import_data, $options, $result, $pro
                     
                     echo '    * Feature #' . $new_fid . ' (' . ($feature_name ?: 'unknown') . '): will update to variant_id=' . $variant_id . ' (' . ($variant_name ?: 'unknown') . ')' . PHP_EOL;
                     
-                    // Обновляем feature value для всех языков
-                    $updated = db_query(
-                        "UPDATE ?:product_features_values " .
-                        "SET variant_id = ?i " .
-                        "WHERE product_id = ?i AND feature_id = ?i",
-                        $variant_id, $pid, $new_fid
-                    );
+                    // Обновляем или создаем feature value для всех языков
+                    $lang_codes = db_get_fields("SELECT lang_code FROM ?:languages WHERE status = 'A'");
+                    $total_updated = 0;
                     
-                    echo '      → Updated ' . ($updated ? $updated : '0') . ' rows in DB' . PHP_EOL;
+                    foreach ($lang_codes as $lang) {
+                        // Проверяем существование записи и текущее значение
+                        $current = db_get_row(
+                            "SELECT variant_id FROM ?:product_features_values WHERE product_id = ?i AND feature_id = ?i AND lang_code = ?s",
+                            $pid, $new_fid, $lang
+                        );
+                        
+                        if ($current) {
+                            // Запись существует
+                            if ($current['variant_id'] == $variant_id) {
+                                // Значение уже правильное, пропускаем
+                                continue;
+                            }
+                            // Обновляем существующую запись
+                            $updated = db_query(
+                                "UPDATE ?:product_features_values SET variant_id = ?i WHERE product_id = ?i AND feature_id = ?i AND lang_code = ?s",
+                                $variant_id, $pid, $new_fid, $lang
+                            );
+                            if ($updated) {
+                                $total_updated++;
+                            }
+                        } else {
+                            // Создаем новую запись
+                            $updated = db_query(
+                                "INSERT INTO ?:product_features_values (product_id, feature_id, variant_id, lang_code) VALUES (?i, ?i, ?i, ?s)",
+                                $pid, $new_fid, $variant_id, $lang
+                            );
+                            if ($updated) {
+                                $total_updated++;
+                            }
+                        }
+                    }
+                    
+                    echo '      → Updated/Inserted ' . $total_updated . ' rows in DB (' . count($lang_codes) . ' languages)' . PHP_EOL;
                 } else {
                     echo '    * Feature #' . $new_fid . ': NOT in product_features map' . PHP_EOL;
                 }
@@ -2285,14 +2424,16 @@ function fn_mwl_xlsx_import_post($pattern, $import_data, $options, $result, $pro
         }
         
         // Проверяем итоговое состояние feature values
-        echo '  - Verifying fixed feature values from DB:' . PHP_EOL;
+        // Используем все найденные продукты, а не только те, что уже в группе
+        $all_product_ids = array_keys($products_to_fix);
+        echo '  - Verifying fixed feature values from DB (products: ' . implode(', ', $all_product_ids) . '):' . PHP_EOL;
         $verification = db_get_array(
             "SELECT pfv.product_id, pfv.feature_id, pfv.variant_id, pfvd.variant " .
             "FROM ?:product_features_values pfv " .
             "LEFT JOIN ?:product_feature_variant_descriptions pfvd ON pfv.variant_id = pfvd.variant_id AND pfvd.lang_code = 'en' " .
             "WHERE pfv.product_id IN (?a) AND pfv.feature_id IN (?a) AND pfv.lang_code = 'en' " .
             "ORDER BY pfv.product_id, pfv.feature_id",
-            $product_ids, $new_feature_ids
+            $all_product_ids, $new_feature_ids
         );
         
         $by_prod = [];
@@ -2311,4 +2452,175 @@ function fn_mwl_xlsx_import_post($pattern, $import_data, $options, $result, $pro
     
     echo '[MWL_XLSX] Post-import feature values fix completed' . PHP_EOL;
     echo '[MWL_XLSX] ========================================' . PHP_EOL;
+}
+
+/**
+ * Парсит строку features из CSV и возвращает массив feature_name => feature_type
+ * 
+ * Формат: "Genre: S[Interview]; URL: T[https://techbullion.com]; Author: S[Journalist's full name]; ..."
+ * 
+ * @param string $features_string Строка features из CSV
+ * @return array<string, string> Массив ['feature_name' => 'feature_type'] (например, ['Genre' => 'S', 'URL' => 'T'])
+ */
+function fn_mwl_xlsx_parse_features_from_csv_row(string $features_string): array
+{
+    $result = [];
+    
+    if (empty($features_string)) {
+        return $result;
+    }
+    
+    // Убираем кавычки если есть
+    $features_string = trim($features_string, '"\'');
+    
+    // Разбиваем по точке с запятой
+    $parts = explode(';', $features_string);
+    
+    foreach ($parts as $part) {
+        $part = trim($part);
+        if (empty($part)) {
+            continue;
+        }
+        
+        // Формат: "Feature Name: TYPE[value]"
+        // Ищем двоеточие
+        $colon_pos = strpos($part, ':');
+        if ($colon_pos === false) {
+            continue;
+        }
+        
+        $feature_name = trim(substr($part, 0, $colon_pos));
+        $feature_value_part = trim(substr($part, $colon_pos + 1));
+        
+        // Определяем тип: S[...], T[...], N[...]
+        if (preg_match('/^([STN])\[/', $feature_value_part, $matches)) {
+            $feature_type = $matches[1];
+            $result[$feature_name] = $feature_type;
+        }
+    }
+    
+    return $result;
+}
+
+/**
+ * Находит feature_id по названию feature
+ * 
+ * @param string $feature_name Название feature (например, "Genre")
+ * @param string $lang_code Код языка (по умолчанию 'en')
+ * @return int|null feature_id или null если не найдено
+ */
+function fn_mwl_xlsx_find_feature_id_by_name(string $feature_name, string $lang_code = 'en'): ?int
+{
+    $feature_id = db_get_field(
+        "SELECT f.feature_id " .
+        "FROM ?:product_features f " .
+        "INNER JOIN ?:product_features_descriptions fd ON f.feature_id = fd.feature_id " .
+        "WHERE fd.description = ?s AND fd.lang_code = ?s AND f.purpose = 'group_variation_catalog_item' " .
+        "LIMIT 1",
+        $feature_name, $lang_code
+    );
+    
+    return $feature_id ? (int) $feature_id : null;
+}
+
+/**
+ * Синхронизирует features группы вариаций на основе данных из CSV
+ * 
+ * @param int $group_id ID группы вариаций
+ * @param array<string, string> $csv_features Массив ['feature_name' => 'feature_type'] из CSV
+ * @param bool $debug Флаг отладки (по умолчанию false)
+ * @return array{added: array<int>, removed: array<int>, errors: array<string>, warnings: array<string>} Результат синхронизации
+ */
+function fn_mwl_xlsx_sync_group_features_from_csv(int $group_id, array $csv_features, bool $debug = false): array
+{
+    $result = [
+        'added' => [],
+        'removed' => [],
+        'errors' => [],
+        'warnings' => []
+    ];
+    
+    // Получаем текущие features группы из БД
+    $current_db_features = db_get_array(
+        "SELECT feature_id FROM ?:product_variation_group_features WHERE group_id = ?i ORDER BY feature_id",
+        $group_id
+    );
+    $current_feature_ids = empty($current_db_features) ? [] : array_column($current_db_features, 'feature_id');
+    
+    if ($debug) {
+        echo "  - Current features in group: " . (empty($current_feature_ids) ? 'none' : implode(', ', $current_feature_ids)) . PHP_EOL;
+    }
+    
+    // Находим feature_id для каждой feature из CSV
+    $csv_feature_ids = [];
+    foreach ($csv_features as $feature_name => $feature_type) {
+        $feature_id = fn_mwl_xlsx_find_feature_id_by_name($feature_name);
+        if ($feature_id === null) {
+            // Это не ошибка, а предупреждение - feature не является variation feature
+            $result['warnings'][] = "Feature '{$feature_name}' not found in database (not a variation feature)";
+            if ($debug) {
+                echo "  - [debug] Feature '{$feature_name}' not found in database (not a variation feature)" . PHP_EOL;
+            }
+            continue;
+        }
+        $csv_feature_ids[$feature_id] = $feature_name;
+    }
+    
+    if ($debug) {
+        $features_list = [];
+        foreach ($csv_feature_ids as $fid => $name) {
+            $features_list[] = "{$name} (#{$fid})";
+        }
+        echo "  - [debug] Features from CSV: " . (empty($features_list) ? 'none' : implode(', ', $features_list)) . PHP_EOL;
+    }
+    
+    // Определяем features для добавления (есть в CSV, нет в группе)
+    $features_to_add = array_diff(array_keys($csv_feature_ids), $current_feature_ids);
+    
+    // Определяем features для удаления (есть в группе, нет в CSV)
+    $features_to_remove = array_diff($current_feature_ids, array_keys($csv_feature_ids));
+    
+    if ($debug) {
+        echo "  - [debug] Features to add: " . (empty($features_to_add) ? 'none' : implode(', ', $features_to_add)) . PHP_EOL;
+        echo "  - [debug] Features to remove: " . (empty($features_to_remove) ? 'none' : implode(', ', $features_to_remove)) . PHP_EOL;
+    }
+    
+    // Добавляем новые features
+    foreach ($features_to_add as $feature_id) {
+        $inserted = db_query(
+            "INSERT INTO ?:product_variation_group_features (group_id, feature_id, purpose) VALUES (?i, ?i, ?s)",
+            $group_id, $feature_id, 'group_variation_catalog_item'
+        );
+        
+        if ($inserted) {
+            $result['added'][] = $feature_id;
+            $feature_name = $csv_feature_ids[$feature_id] ?? "Feature #{$feature_id}";
+            if ($debug) {
+                echo "  - [debug] ✓ Added feature #{$feature_id} ({$feature_name})" . PHP_EOL;
+            }
+        } else {
+            $result['errors'][] = "Failed to add feature #{$feature_id}";
+            echo "  - [error] Failed to add feature #{$feature_id}" . PHP_EOL;
+        }
+    }
+    
+    // Удаляем features, которых нет в CSV
+    foreach ($features_to_remove as $feature_id) {
+        $deleted = db_query(
+            "DELETE FROM ?:product_variation_group_features WHERE group_id = ?i AND feature_id = ?i",
+            $group_id, $feature_id
+        );
+        
+        if ($deleted) {
+            $result['removed'][] = $feature_id;
+            if ($debug) {
+                echo "  - [debug] ✓ Removed feature #{$feature_id}" . PHP_EOL;
+            }
+        } else {
+            $result['errors'][] = "Failed to remove feature #{$feature_id}";
+            echo "  - [error] Failed to remove feature #{$feature_id}" . PHP_EOL;
+        }
+    }
+    
+    return $result;
 }

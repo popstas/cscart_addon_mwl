@@ -16,3 +16,4 @@ alwaysApply: true
 
 Важные файлы:
 - `data/cscart/logs/last.log` - лог последней синхронизации sync-shop
+- `data/cscart/last_products.csv` - файл последнего импорта продуктов в cscart

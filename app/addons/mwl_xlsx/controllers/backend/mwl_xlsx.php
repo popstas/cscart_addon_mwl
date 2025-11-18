@@ -851,3 +851,326 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'send_recover_to_users') 
     return [CONTROLLER_STATUS_OK, 'profiles.manage'];
 }
 
+if ($mode === 'check_group_features') {
+    $group_id = null;
+    $group_code = $_REQUEST['group_code'] ?? null;
+    
+    if ($group_code) {
+        // Ищем группу по коду
+        $group_id = db_get_field(
+            "SELECT id FROM ?:product_variation_groups WHERE code = ?s LIMIT 1",
+            $group_code
+        );
+        if ($group_id) {
+            echo "Checking features for variation group '{$group_code}' (ID: {$group_id}):\n\n";
+        } else {
+            echo "Group '{$group_code}' not found\n";
+            return [CONTROLLER_STATUS_NO_CONTENT];
+        }
+    } else {
+        $group_id = (int) ($_REQUEST['group_id'] ?? 20968);
+        echo "Checking features for variation group #{$group_id}:\n\n";
+    }
+    
+    $features = db_get_array(
+        "SELECT pvgf.feature_id, pfd.description " .
+        "FROM ?:product_variation_group_features pvgf " .
+        "LEFT JOIN ?:product_features_descriptions pfd ON pvgf.feature_id = pfd.feature_id AND pfd.lang_code = 'en' " .
+        "WHERE pvgf.group_id = ?i " .
+        "ORDER BY pvgf.feature_id",
+        $group_id
+    );
+    
+    if (empty($features)) {
+        echo "No features found in group #{$group_id}\n";
+    } else {
+        echo "Features in group #{$group_id}:\n";
+        foreach ($features as $feature) {
+            echo "  - Feature #{$feature['feature_id']}: {$feature['description']}\n";
+        }
+    }
+    
+    // Также проверяем features из CSV
+    echo "\n\nFeatures mentioned in CSV (for comparison):\n";
+    $csv_features = [
+        'Genre',
+        'URL',
+        'Author',
+        'Special Date',
+        'Text Limit Size',
+        'Title Limit Size',
+        'Images'
+    ];
+    
+    foreach ($csv_features as $csv_feature) {
+        $feature_id = db_get_field(
+            "SELECT feature_id FROM ?:product_features_descriptions WHERE description = ?s AND lang_code = 'en' LIMIT 1",
+            $csv_feature
+        );
+        if ($feature_id) {
+            $in_group = db_get_field(
+                "SELECT 1 FROM ?:product_variation_group_features WHERE group_id = ?i AND feature_id = ?i",
+                $group_id, $feature_id
+            );
+            $status = $in_group ? '[IN GROUP]' : '[NOT IN GROUP]';
+            echo "  - {$csv_feature} (Feature #{$feature_id}) {$status}\n";
+        } else {
+            echo "  - {$csv_feature}: NOT FOUND in DB\n";
+        }
+    }
+    
+    return [CONTROLLER_STATUS_NO_CONTENT];
+}
+
+if ($mode === 'import_prepare') {
+    // Получаем флаг отладки
+    $debug = isset($_REQUEST['debug']) ? (bool) $_REQUEST['debug'] : false;
+    
+    if ($debug) {
+        echo '[MWL_XLSX] ========================================' . PHP_EOL;
+        echo '[MWL_XLSX] Import prepare: syncing variation group features from CSV' . PHP_EOL;
+    }
+    
+    // Получаем путь к CSV файлу
+    $csv_path = Registry::get('config.dir.root') . '/var/files/products.csv';
+    if (isset($_REQUEST['csv_path'])) {
+        $csv_path = trim((string) $_REQUEST['csv_path']);
+    }
+    
+    if ($debug) {
+        echo "  - [debug] CSV file path: {$csv_path}" . PHP_EOL;
+    }
+    
+    if (!file_exists($csv_path)) {
+        $message = "CSV file not found: {$csv_path}";
+        echo "[error] {$message}" . PHP_EOL;
+        fn_mwl_xlsx_append_log($message);
+        return [CONTROLLER_STATUS_NO_CONTENT];
+    }
+    
+    if (!is_readable($csv_path)) {
+        $message = "CSV file not readable: {$csv_path}";
+        echo "[error] {$message}" . PHP_EOL;
+        fn_mwl_xlsx_append_log($message);
+        return [CONTROLLER_STATUS_NO_CONTENT];
+    }
+    
+    // Читаем CSV файл
+    $handle = fopen($csv_path, 'rb');
+    if ($handle === false) {
+        $message = "Failed to open CSV file: {$csv_path}";
+        echo "[error] {$message}" . PHP_EOL;
+        fn_mwl_xlsx_append_log($message);
+        return [CONTROLLER_STATUS_NO_CONTENT];
+    }
+    
+    $first_line = fgets($handle);
+    if ($first_line === false) {
+        fclose($handle);
+        $message = "CSV file is empty: {$csv_path}";
+        echo "[error] {$message}" . PHP_EOL;
+        fn_mwl_xlsx_append_log($message);
+        return [CONTROLLER_STATUS_NO_CONTENT];
+    }
+    
+    $delimiter = fn_mwl_xlsx_detect_csv_delimiter($first_line);
+    rewind($handle);
+    
+    $header = fgetcsv($handle, 0, $delimiter);
+    if ($header === false) {
+        fclose($handle);
+        $message = "Failed to read CSV header";
+        echo "[error] {$message}" . PHP_EOL;
+        fn_mwl_xlsx_append_log($message);
+        return [CONTROLLER_STATUS_NO_CONTENT];
+    }
+    
+    // Нормализуем заголовки
+    $normalized_header = [];
+    foreach ($header as $index => $column) {
+        $normalized_header[$index] = fn_mwl_xlsx_normalize_csv_header_value((string) $column, $index === 0);
+    }
+    
+    $header_map = array_flip($normalized_header);
+    
+    // Проверяем наличие необходимых колонок
+    $required_columns = ['variation group code', 'features'];
+    $missing_columns = [];
+    foreach ($required_columns as $required_column) {
+        if (!isset($header_map[$required_column])) {
+            $missing_columns[] = $required_column;
+        }
+    }
+    
+    if (!empty($missing_columns)) {
+        fclose($handle);
+        $message = "Missing required columns: " . implode(', ', $missing_columns);
+        echo "[error] {$message}" . PHP_EOL;
+        fn_mwl_xlsx_append_log($message);
+        return [CONTROLLER_STATUS_NO_CONTENT];
+    }
+    
+    $variation_group_code_index = $header_map['variation group code'];
+    $features_index = $header_map['features'];
+    
+    // Собираем данные по группам
+    $groups_data = []; // ['group_code' => ['features' => [...]]]
+    
+    $line_number = 1;
+    while (($data = fgetcsv($handle, 0, $delimiter)) !== false) {
+        $line_number++;
+        
+        if (count($data) < max($variation_group_code_index, $features_index) + 1) {
+            if ($debug) {
+                echo "[debug] Line {$line_number}: insufficient columns" . PHP_EOL;
+            }
+            continue;
+        }
+        
+        $variation_group_code = trim((string) ($data[$variation_group_code_index] ?? ''));
+        $features_string = trim((string) ($data[$features_index] ?? ''));
+        
+        if ($variation_group_code === '' || $features_string === '') {
+            // Пропускаем пустые строки
+            continue;
+        }
+        
+        // Парсим features из строки
+        $features = fn_mwl_xlsx_parse_features_from_csv_row($features_string);
+        
+        if (empty($features)) {
+            continue;
+        }
+        
+        // Добавляем features в группу (объединяем все features из всех продуктов группы)
+        if (!isset($groups_data[$variation_group_code])) {
+            $groups_data[$variation_group_code] = ['features' => []];
+        }
+        
+        // Объединяем features (используем union, чтобы не было дубликатов)
+        $groups_data[$variation_group_code]['features'] = array_merge(
+            $groups_data[$variation_group_code]['features'],
+            $features
+        );
+    }
+    
+    fclose($handle);
+    
+    // Убираем дубликаты features для каждой группы (сохраняем последнее значение)
+    foreach ($groups_data as $group_code => &$group_data) {
+        // Для ассоциативных массивов используем array_unique по ключам
+        $unique_features = [];
+        foreach ($group_data['features'] as $name => $type) {
+            $unique_features[$name] = $type;
+        }
+        $group_data['features'] = $unique_features;
+    }
+    unset($group_data);
+    
+    if ($debug) {
+        echo "  - [debug] Found " . count($groups_data) . " variation groups in CSV" . PHP_EOL;
+    }
+    
+    if (empty($groups_data)) {
+        if ($debug) {
+            echo "  - [debug] No variation groups found in CSV" . PHP_EOL;
+        }
+        return [CONTROLLER_STATUS_NO_CONTENT];
+    }
+    
+    $total_added = 0;
+    $total_removed = 0;
+    $total_errors = 0;
+    $total_warnings = 0;
+    
+    // Синхронизируем features для каждой группы
+    foreach ($groups_data as $group_code => $group_data) {
+        if ($debug) {
+            echo PHP_EOL . "[debug] Processing group: {$group_code}" . PHP_EOL;
+        }
+        
+        // Находим группу по коду через SQL (метод findGroupByCode не существует)
+        $group_id = db_get_field(
+            "SELECT id FROM ?:product_variation_groups WHERE code = ?s LIMIT 1",
+            $group_code
+        );
+        
+        if (!$group_id) {
+            // Это реальная ошибка - группа должна существовать
+            echo "  - [info] Group '{$group_code}' not found, skipping" . PHP_EOL;
+            $total_errors++;
+            continue;
+        }
+        
+        if ($debug) {
+            echo "  - [debug] Group ID: {$group_id}" . PHP_EOL;
+        }
+        
+        // Синхронизируем features
+        $sync_result = fn_mwl_xlsx_sync_group_features_from_csv($group_id, $group_data['features'], $debug);
+        
+        $total_added += count($sync_result['added']);
+        $total_removed += count($sync_result['removed']);
+        $total_errors += count($sync_result['errors']);
+        $total_warnings += count($sync_result['warnings']);
+    }
+    
+    // Выводим итоговую статистику (всегда, не только в debug)
+    echo PHP_EOL . "[MWL_XLSX] Import prepare completed:" . PHP_EOL;
+    echo "  - Groups processed: " . count($groups_data) . PHP_EOL;
+    echo "  - Features added: {$total_added}" . PHP_EOL;
+    echo "  - Features removed: {$total_removed}" . PHP_EOL;
+    if ($total_errors > 0) {
+        echo "  - Errors: {$total_errors}" . PHP_EOL;
+    }
+    if ($debug && $total_warnings > 0) {
+        echo "  - [debug] Warnings: {$total_warnings} (features not found - not variation features)" . PHP_EOL;
+    }
+    if ($debug) {
+        echo '[MWL_XLSX] ========================================' . PHP_EOL;
+    }
+    
+    return [CONTROLLER_STATUS_NO_CONTENT];
+}
+
+if ($mode === 'check_feature_63') {
+    $pids = [20743, 20744, 20746, 20747, 20748];
+    
+    echo "Checking Feature #63 (Text Limit Size) for products:\n\n";
+    
+    foreach ($pids as $pid) {
+        $exists = db_get_field(
+            "SELECT 1 FROM ?:product_features_values WHERE product_id = ?i AND feature_id = 63 AND lang_code = 'en'",
+            $pid
+        );
+        $purpose = db_get_field("SELECT purpose FROM ?:product_features WHERE feature_id = 63");
+        $variant_id = db_get_field(
+            "SELECT variant_id FROM ?:product_features_values WHERE product_id = ?i AND feature_id = 63 AND lang_code = 'en'",
+            $pid
+        );
+        
+        echo "Product #{$pid}:\n";
+        echo "  - Feature #63 exists: " . ($exists ? 'YES' : 'NO') . "\n";
+        echo "  - Feature purpose: {$purpose}\n";
+        if ($variant_id) {
+            $variant_name = db_get_field(
+                "SELECT variant FROM ?:product_feature_variant_descriptions WHERE variant_id = ?i AND lang_code = 'en'",
+                $variant_id
+            );
+            echo "  - Variant ID: {$variant_id} ({$variant_name})\n";
+        }
+        echo "\n";
+    }
+    
+    // Проверяем, что возвращает findAvailableFeatures
+    echo "\nChecking findAvailableFeatures for Product #20743:\n";
+    $product_repository = \Tygh\Addons\ProductVariations\ServiceProvider::getProductRepository();
+    $features = $product_repository->findAvailableFeatures(20743);
+    echo "Found " . count($features) . " features:\n";
+    foreach ($features as $fid => $feat) {
+        echo "  - Feature #{$fid}: " . ($feat['description'] ?? 'unknown') . " (purpose: " . ($feat['purpose'] ?? 'unknown') . ")\n";
+    }
+    
+    return [CONTROLLER_STATUS_NO_CONTENT];
+}
+
