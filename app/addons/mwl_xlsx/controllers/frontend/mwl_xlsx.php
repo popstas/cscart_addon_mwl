@@ -392,16 +392,25 @@ if ($mode === 'request_price_check' /* && $_SERVER['REQUEST_METHOD'] === 'POST' 
     $company_id = fn_get_runtime_company_id();
     $user_id    = $_SESSION['auth']['user_id'] ?? 0;
     $user_name  = $_SESSION['auth']['user_id'] ? fn_get_user_name($user_id) : __('guest');
+    $user_data  = $user_id ? fn_get_user_info($user_id) : [];
+    $user_company = trim((string) ($user_data['company'] ?? ''));
+    $user_company = $user_company !== '' ? $user_company : '-';
+
     $storefront = fn_url('', 'C');
     $product_url = fn_url('products.view?product_id=' . (int) $item_id, 'C');
+
+    $currency_code = defined('CART_SECONDARY_CURRENCY') ? CART_SECONDARY_CURRENCY : CART_PRIMARY_CURRENCY;
+    $currencies = Registry::get('currencies');
+    $currency_symbol = $currencies[$currency_code]['symbol'] ?? $currency_code;
 
     // Сообщение, которое уйдёт в Telegram/email
     $text = "Запрос проверки цены\n"
           . "— URL: {$product_url}\n"
         //   . "— Элемент: {$item_id}\n"
         //   . "— Поле: {$field}\n"
-          . "— Текущая цена: {$value}\n"
+          . "— Текущая цена: {$value} {$currency_symbol}\n"
           . "— Пользователь: {$user_name} (ID {$user_id})\n"
+          . "— Компания: {$user_company}\n"
           . "— Время: " . date('Y-m-d H:i:s');
 
     $ok = true;
