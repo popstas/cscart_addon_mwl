@@ -24,6 +24,11 @@ class CsvHelper
 
     public static function normalizeHeaderValue(string $column, bool $is_first_column = false): string
     {
+        // Strip UTF-8 BOM from first column if present
+        if ($is_first_column && substr($column, 0, 3) === "\xEF\xBB\xBF") {
+            $column = substr($column, 3);
+        }
+        
         $column = trim(mb_strtolower($column));
 
         if ($is_first_column && $column === '' && !extension_loaded('mbstring')) {
