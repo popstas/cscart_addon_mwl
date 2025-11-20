@@ -18,11 +18,39 @@ use Tygh\Addons\MwlXlsx\Telegram\TelegramService;
 use Tygh\Registry;
 use Tygh\Storage;
 use Tygh\Tygh;
+use Tygh\Enum\YesNo;
 use Google\Service\Sheets;
 use Google\Service\Sheets\ValueRange;
 use Google\Service\Sheets\BatchUpdateSpreadsheetRequest;
 
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
+
+/**
+ * Log info message (for changes/important events)
+ * Always logs - used for important changes that should be visible
+ * 
+ * @param string $message Message to log
+ * @return void
+ */
+function fn_mwl_xlsx_log_info($message)
+{
+    error_log('[MWL_XLSX] ' . $message);
+}
+
+/**
+ * Log debug message (for detailed debugging)
+ * Only logs when debug is enabled via $_REQUEST['debug']
+ * 
+ * @param string $message Message to log
+ * @return void
+ */
+function fn_mwl_xlsx_log_debug($message)
+{
+    $debug = isset($_REQUEST['debug']) ? (bool) $_REQUEST['debug'] : false;
+    if ($debug) {
+        error_log('[MWL_XLSX] [DEBUG] ' . $message);
+    }
+}
 
 /**
  * Статическое хранилище для передачи данных между хуками
@@ -1438,24 +1466,24 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
     $current_call = $call_counter[$group_id_key];
     
     // Debug: хук вызван
-    echo '[MWL_XLSX] ========================================' . PHP_EOL;
-    echo '[MWL_XLSX] Hook variation_group_add_products_to_group called (call #' . $current_call . ' for group #' . $group_id_key . ')' . PHP_EOL;
-    echo '  - Products count: ' . count($products) . PHP_EOL;
-    echo '  - Has group: ' . ($group ? 'yes' : 'no') . PHP_EOL;
-    echo '  - Group ID: ' . ($group ? $group->getId() : 'null') . PHP_EOL;
+    fn_mwl_xlsx_log_debug('========================================');
+    fn_mwl_xlsx_log_debug('Hook variation_group_add_products_to_group called (call #' . $current_call . ' for group #' . $group_id_key . ')');
+    fn_mwl_xlsx_log_debug('Products count: ' . count($products));
+    fn_mwl_xlsx_log_debug('Has group: ' . ($group ? 'yes' : 'no'));
+    fn_mwl_xlsx_log_debug('Group ID: ' . ($group ? $group->getId() : 'null'));
 
     if (empty($products) || !$group || !$group->getId()) {
-        echo '[MWL_XLSX] Hook skipped: empty products or invalid group' . PHP_EOL;
+        fn_mwl_xlsx_log_debug('Hook skipped: empty products or invalid group');
         return;
     }
 
     try {
-        echo '[MWL_XLSX] Starting group features update check' . PHP_EOL;
-        echo '  - Group ID: ' . $group->getId() . PHP_EOL;
-        echo '  - Group code: ' . $group->getCode() . PHP_EOL;
+        fn_mwl_xlsx_log_debug('Starting group features update check');
+        fn_mwl_xlsx_log_debug('Group ID: ' . $group->getId());
+        fn_mwl_xlsx_log_debug('Group code: ' . $group->getCode());
         
         $current_feature_ids = $group->getFeatureIds();
-        echo '  - Current feature IDs (from object): ' . (empty($current_feature_ids) ? 'EMPTY!' : implode(', ', $current_feature_ids)) . PHP_EOL;
+        fn_mwl_xlsx_log_debug('Current feature IDs (from object): ' . (empty($current_feature_ids) ? 'EMPTY!' : implode(', ', $current_feature_ids)));
         
         // ЗАЩИТА: Если объект группы пустой, загружаем features из БД
         if (empty($current_feature_ids)) {
@@ -1464,13 +1492,13 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
                 $group->getId()
             );
             if (!empty($db_features_check)) {
-                echo '  ⚠ Group object has no features, but DB has: ' . implode(', ', array_column($db_features_check, 'feature_id')) . PHP_EOL;
-                echo '  → Group object not fully loaded, reloading from DB...' . PHP_EOL;
+                fn_mwl_xlsx_log_debug('⚠ Group object has no features, but DB has: ' . implode(', ', array_column($db_features_check, 'feature_id')));
+                fn_mwl_xlsx_log_debug('→ Group object not fully loaded, reloading from DB...');
                 
                 $fresh_group = $group_repository->findGroupById($group->getId());
                 if ($fresh_group) {
                     $current_feature_ids = $fresh_group->getFeatureIds();
-                    echo '  → Reloaded features: ' . implode(', ', $current_feature_ids) . PHP_EOL;
+                    fn_mwl_xlsx_log_debug('→ Reloaded features: ' . implode(', ', $current_feature_ids));
                 }
             }
         }
@@ -1485,14 +1513,14 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
         $all_product_ids = array_merge($existing_product_ids, $new_product_ids);
         
         if (empty($all_product_ids)) {
-            echo '[MWL_XLSX] Hook skipped: no product IDs found' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Hook skipped: no product IDs found');
             return;
         }
         
-        echo '[MWL_XLSX] Product IDs collected' . PHP_EOL;
-        echo '  - New product IDs: ' . implode(', ', $new_product_ids) . PHP_EOL;
-        echo '  - Existing product IDs: ' . implode(', ', $existing_product_ids) . PHP_EOL;
-        echo '  - Total products: ' . count($all_product_ids) . PHP_EOL;
+        fn_mwl_xlsx_log_debug('Product IDs collected');
+        fn_mwl_xlsx_log_debug('New product IDs: ' . implode(', ', $new_product_ids));
+        fn_mwl_xlsx_log_debug('Existing product IDs: ' . implode(', ', $existing_product_ids));
+        fn_mwl_xlsx_log_debug('Total products: ' . count($all_product_ids));
         
         // Debug: проверяем ВСЕ продукты в группе из БД с кодами
         $all_group_products_db = db_get_array(
@@ -1502,26 +1530,26 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
             "WHERE gp.group_id = ?i",
             $group->getId()
         );
-        echo '[MWL_XLSX] Products in DB for group #' . $group->getId() . ':' . PHP_EOL;
+        fn_mwl_xlsx_log_debug('Products in DB for group #' . $group->getId() . ':');
         foreach ($all_group_products_db as $gp) {
-            echo '  - Product #' . $gp['product_id'] . ' [' . $gp['product_code'] . '] (parent: ' . ($gp['parent_product_id'] ?: 'none') . ')' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Product #' . $gp['product_id'] . ' [' . $gp['product_code'] . '] (parent: ' . ($gp['parent_product_id'] ?: 'none') . ')');
         }
         
         // КРИТИЧЕСКИ ВАЖНО: Собираем features со ВСЕХ новых продуктов, а не только базового
         // Это гарантирует что новые features из импорта будут добавлены в группу
-        echo '[MWL_XLSX] Collecting available features from ALL new products...' . PHP_EOL;
+        fn_mwl_xlsx_log_debug('Collecting available features from ALL new products...');
         $available_features = [];
         
         foreach ($new_product_ids as $check_product_id) {
             // Сначала пытаемся получить features из БД (через findAvailableFeatures)
             $product_features = $product_repository->findAvailableFeatures($check_product_id);
-            echo '  - Product #' . $check_product_id . ' has ' . count($product_features) . ' variation features from DB' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Product #' . $check_product_id . ' has ' . count($product_features) . ' variation features from DB');
             
             // Объединяем features из БД
             foreach ($product_features as $feature_id => $feature) {
                 if (!isset($available_features[$feature_id])) {
                     $available_features[$feature_id] = $feature;
-                    echo '    * Added feature #' . $feature_id . ': ' . ($feature['description'] ?? 'unknown') . PHP_EOL;
+                    fn_mwl_xlsx_log_debug('  * Added feature #' . $feature_id . ': ' . ($feature['description'] ?? 'unknown'));
                 }
             }
             
@@ -1547,7 +1575,7 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
                                 'feature_type' => $feature_info['feature_type'],
                                 'purpose' => $feature_info['purpose'] ?: 'group_variation_catalog_item'
                             ];
-                            echo '    * Added feature #' . $fid . ' from import_data: ' . ($feature_info['description'] ?? 'unknown') . PHP_EOL;
+                            fn_mwl_xlsx_log_debug('  * Added feature #' . $fid . ' from import_data: ' . ($feature_info['description'] ?? 'unknown'));
                         }
                     }
                 }
@@ -1558,7 +1586,7 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
         // Это нужно потому что новые продукты могут не иметь всех features в variation_features,
         // если они еще не были добавлены в группу
         if (!empty($current_feature_ids)) {
-            echo '[MWL_XLSX] Also checking features already in group...' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Also checking features already in group...');
             foreach ($current_feature_ids as $fid) {
                 if (!isset($available_features[$fid])) {
                     // Загружаем информацию о feature из БД
@@ -1578,7 +1606,7 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
                             'feature_type' => $feature_info['feature_type'],
                             'purpose' => $feature_info['purpose']
                         ];
-                        echo '    * Added feature #' . $fid . ' from group: ' . ($feature_info['description'] ?? 'unknown') . PHP_EOL;
+                        fn_mwl_xlsx_log_debug('  * Added feature #' . $fid . ' from group: ' . ($feature_info['description'] ?? 'unknown'));
                     }
                 }
             }
@@ -1586,30 +1614,30 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
         
         // Если новых продуктов нет или нет новых features, проверяем существующие
         if (empty($available_features)) {
-            echo '[MWL_XLSX] No features from new products, checking existing...' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('No features from new products, checking existing...');
             $base_product_id = reset($all_product_ids);
             $available_features = $product_repository->findAvailableFeatures($base_product_id);
-            echo '  - Base product ID: ' . $base_product_id . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Base product ID: ' . $base_product_id);
         }
         
-        echo '[MWL_XLSX] Available features found: ' . count($available_features) . PHP_EOL;
+        fn_mwl_xlsx_log_debug('Available features found: ' . count($available_features));
         foreach ($available_features as $feature) {
             $name = $feature['description'] ?? $feature['internal_name'] ?? 'unknown';
             $purpose = $feature['purpose'] ?? 'unknown';
-            echo '  - Feature #' . $feature['feature_id'] . ': ' . $name . ' (purpose: ' . $purpose . ')' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Feature #' . $feature['feature_id'] . ': ' . $name . ' (purpose: ' . $purpose . ')');
         }
         
         // Debug: проверяем feature values ИМПОРТИРУЕМЫХ продуктов
-        echo '[MWL_XLSX] Checking feature values of new products...' . PHP_EOL;
+        fn_mwl_xlsx_log_debug('Checking feature values of new products...');
         foreach ($new_product_ids as $pid) {
             if (isset($products[$pid]['variation_features'])) {
-                echo '  - Product #' . $pid . ' features from import data:' . PHP_EOL;
+                fn_mwl_xlsx_log_debug('Product #' . $pid . ' features from import data:');
                 foreach ($products[$pid]['variation_features'] as $fid => $feature) {
                     $variant = $feature['variant'] ?? 'null';
-                    echo '    * Feature #' . $fid . ': ' . $variant . PHP_EOL;
+                    fn_mwl_xlsx_log_debug('  * Feature #' . $fid . ': ' . $variant);
                 }
             } else {
-                echo '  - Product #' . $pid . ': NO variation_features in import data' . PHP_EOL;
+                fn_mwl_xlsx_log_debug('Product #' . $pid . ': NO variation_features in import data');
             }
             
             // Проверяем feature values из БД для этого продукта
@@ -1621,17 +1649,17 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
             );
             
             if ($db_features) {
-                echo '  - Product #' . $pid . ' features from DB:' . PHP_EOL;
+                fn_mwl_xlsx_log_debug('Product #' . $pid . ' features from DB:');
                 foreach ($db_features as $db_feat) {
-                    echo '    * Feature #' . $db_feat['feature_id'] . ': variant_id=' . $db_feat['variant_id'] . ', value_int=' . $db_feat['value_int'] . PHP_EOL;
+                    fn_mwl_xlsx_log_debug('  * Feature #' . $db_feat['feature_id'] . ': variant_id=' . $db_feat['variant_id'] . ', value_int=' . $db_feat['value_int']);
                 }
             } else {
-                echo '  - Product #' . $pid . ': NO features in DB!' . PHP_EOL;
+                fn_mwl_xlsx_log_debug('Product #' . $pid . ': NO features in DB!');
             }
         }
         
         if (empty($available_features)) {
-            echo '[MWL_XLSX] Hook skipped: no available features for product #' . $base_product_id . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Hook skipped: no available features for product #' . $base_product_id);
             return;
         }
         
@@ -1642,27 +1670,31 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
         $added_feature_ids = array_diff($new_feature_ids, $current_feature_ids);
         $removed_feature_ids = array_diff($current_feature_ids, $new_feature_ids);
         
-        echo '[MWL_XLSX] Features comparison:' . PHP_EOL;
-        echo '  - Current features: ' . implode(', ', $current_feature_ids) . PHP_EOL;
-        echo '  - Available features: ' . implode(', ', $new_feature_ids) . PHP_EOL;
-        echo '  - Features to add: ' . (empty($added_feature_ids) ? 'none' : implode(', ', $added_feature_ids)) . PHP_EOL;
-        echo '  - Features to remove: ' . (empty($removed_feature_ids) ? 'none' : implode(', ', $removed_feature_ids)) . PHP_EOL;
+        fn_mwl_xlsx_log_debug('Features comparison:');
+        fn_mwl_xlsx_log_debug('Current features: ' . implode(', ', $current_feature_ids));
+        fn_mwl_xlsx_log_debug('Available features: ' . implode(', ', $new_feature_ids));
+        if (!empty($added_feature_ids)) {
+            fn_mwl_xlsx_log_info('Features to add: ' . implode(', ', $added_feature_ids));
+        }
+        if (!empty($removed_feature_ids)) {
+            fn_mwl_xlsx_log_info('Features to remove: ' . implode(', ', $removed_feature_ids));
+        }
         
         // КРИТИЧЕСКОЕ РЕШЕНИЕ: Обновляем features только при УДАЛЕНИИ, не при добавлении
         // Причина: CS-Cart фильтрует variation features при сохранении через ProductsHookHandler
         // Когда мы добавляем новую feature, CS-Cart не сохраняет её values → ошибка "required features"
         if (!empty($added_feature_ids)) {
-            echo '[MWL_XLSX] ⚠ New features detected: ' . implode(', ', $added_feature_ids) . PHP_EOL;
-            echo '  → Auto-adding features DISABLED due to CS-Cart import filtering' . PHP_EOL;
-            echo '  → Will fix feature values in import_post hook' . PHP_EOL;
-            echo '  → New features: ' . implode(', ', array_map(function($fid) use ($available_features) {
+            fn_mwl_xlsx_log_debug('⚠ New features detected: ' . implode(', ', $added_feature_ids));
+            fn_mwl_xlsx_log_debug('→ Auto-adding features DISABLED due to CS-Cart import filtering');
+            fn_mwl_xlsx_log_debug('→ Will fix feature values in import_post hook');
+            fn_mwl_xlsx_log_debug('→ New features: ' . implode(', ', array_map(function($fid) use ($available_features) {
                 $name = isset($available_features[$fid]['description']) ? $available_features[$fid]['description'] : 'Feature #' . $fid;
                 return $name . ' (ID: ' . $fid . ')';
-            }, $added_feature_ids)) . PHP_EOL;
+            }, $added_feature_ids)));
             
             // Сохраняем в Registry для обработки в import_post
             \Tygh\Registry::set('mwl_xlsx.group_' . $group_id_key . '_new_feature_ids', $added_feature_ids);
-            echo '  → Saved to Registry for post-processing' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('→ Saved to Registry for post-processing');
         }
         
         // Обновляем features только при удалении (безопасно)
@@ -1675,20 +1707,20 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
         );
         $current_db_feature_ids = empty($current_db_features) ? [] : array_column($current_db_features, 'feature_id');
         
-        echo '[MWL_XLSX] Current features in DB: ' . (empty($current_db_features) ? 'none (table is EMPTY!)' : implode(', ', $current_db_feature_ids)) . PHP_EOL;
+        fn_mwl_xlsx_log_debug('Current features in DB: ' . (empty($current_db_features) ? 'none (table is EMPTY!)' : implode(', ', $current_db_feature_ids)));
         
         // ВАЖНО: Проверяем features которые в БД но НЕ были в объекте группы
         // Это значит feature была добавлена вручную ПЕРЕД импортом
         $manually_added_features = array_diff($current_db_feature_ids, $current_feature_ids);
         if (!empty($manually_added_features)) {
-            echo '[MWL_XLSX] Features added manually before import: ' . implode(', ', $manually_added_features) . PHP_EOL;
-            echo '  → Will fix their values in import_post hook' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Features added manually before import: ' . implode(', ', $manually_added_features));
+            fn_mwl_xlsx_log_debug('→ Will fix their values in import_post hook');
             
             // Сохраняем в статическое хранилище для import_post
             fn_mwl_xlsx_set_groups_to_fix($group_id_key, $manually_added_features, false);
             
             // NOTE: product_features будут сохранены в update_product_features_value_pre
-            echo '  → Saved to static storage (features will be saved in update_product_features_value_pre)' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Saved to static storage (features will be saved in update_product_features_value_pre)');
         }
         
         // ДОПОЛНИТЕЛЬНО: Если это ОБНОВЛЕНИЕ существующих продуктов (а не создание новых),
@@ -1696,8 +1728,8 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
         $truly_new_ids = array_diff($new_product_ids, $existing_product_ids);
         if (empty($truly_new_ids) && !empty($current_db_feature_ids)) {
             // Все продукты обновляются (нет новых) → это update scenario
-            echo '[MWL_XLSX] Update scenario detected (no new products, all are being updated)' . PHP_EOL;
-            echo '  → Will verify/fix ALL variation feature values in import_post' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Update scenario detected (no new products, all are being updated)');
+            fn_mwl_xlsx_log_debug('Will verify/fix ALL variation feature values in import_post');
             
             // Сохраняем ВСЕ variation features для проверки
             $all_variation_features = array_unique(array_merge(
@@ -1705,9 +1737,9 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
                 $current_db_feature_ids
             ));
             
-            echo '  → Saving to STATIC variable for import_post:' . PHP_EOL;
-            echo '    * Group ID: ' . $group_id_key . PHP_EOL;
-            echo '    * Features to check: [' . implode(', ', $all_variation_features) . ']' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Saving to STATIC variable for import_post:');
+            fn_mwl_xlsx_log_debug('  Group ID: ' . $group_id_key);
+            fn_mwl_xlsx_log_debug('Features to check: [' . implode(', ', $all_variation_features) . ']');
             
             // Используем статическую переменную вместо Registry
             // потому что Registry сбрасывается между хуками
@@ -1715,14 +1747,14 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
             
             // NOTE: product_features теперь сохраняются в хуке update_product_features_value_pre
             // который вызывается РАНЬШЕ и содержит исходные значения до синхронизации CS-Cart
-            echo '  → Saved to static storage (features will be saved in update_product_features_value_pre)' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Saved to static storage (features will be saved in update_product_features_value_pre)');
         }
         
         // ЗАЩИТА: Если features в БД пусты, а в группе есть - кто-то уже удалил!
         if (empty($current_db_features) && !empty($current_feature_ids)) {
-            echo '[MWL_XLSX] ⚠ WARNING: Group object has features but DB is empty!' . PHP_EOL;
-            echo '  - Someone deleted features from DB before us' . PHP_EOL;
-            echo '  - Will restore features to DB' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('⚠ WARNING: Group object has features but DB is empty!');
+            fn_mwl_xlsx_log_debug('Someone deleted features from DB before us');
+            fn_mwl_xlsx_log_debug('Will restore features to DB');
             $has_feature_changes = true; // Принудительно обновляем
         }
         
@@ -1734,28 +1766,28 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
             sort($new_features_sorted);
             
             if ($prev_features == $new_features_sorted) {
-                echo '[MWL_XLSX] Features already updated in this request (call #' . $current_call . '), skipping' . PHP_EOL;
-                echo '  - Previously updated to: ' . implode(', ', $prev_features) . PHP_EOL;
+                fn_mwl_xlsx_log_debug('Features already updated in this request (call #' . $current_call . '), skipping');
+                fn_mwl_xlsx_log_debug('Previously updated to: ' . implode(', ', $prev_features));
                 $has_feature_changes = false;
             } else {
-                echo '[MWL_XLSX] Features changed since last update in this request' . PHP_EOL;
-                echo '  - Previous: ' . implode(', ', $prev_features) . PHP_EOL;
-                echo '  - New: ' . implode(', ', $new_features_sorted) . PHP_EOL;
+                fn_mwl_xlsx_log_debug('Features changed since last update in this request');
+                fn_mwl_xlsx_log_debug('Previous: ' . implode(', ', $prev_features));
+                fn_mwl_xlsx_log_debug('New: ' . implode(', ', $new_features_sorted));
             }
         }
         
         if (!$has_feature_changes) {
-            echo '[MWL_XLSX] No changes in features list' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('No changes in features list');
         } else {
             // КРИТИЧЕСКИ ВАЖНО: Обновляем features в БД СРАЗУ, до удаления дубликатов!
             // Если обновить после detach, группа может пересохраниться и features потеряются
-            echo '[MWL_XLSX] Will update group features BEFORE removing duplicates' . PHP_EOL;
-            echo '  - Adding features: ' . (!empty($added_feature_ids) ? implode(', ', $added_feature_ids) : 'none') . PHP_EOL;
-            echo '  - Removing features: ' . (!empty($removed_feature_ids) ? implode(', ', $removed_feature_ids) : 'none') . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Will update group features BEFORE removing duplicates');
+            fn_mwl_xlsx_log_debug('Adding features: ' . (!empty($added_feature_ids) ? implode(', ', $added_feature_ids) : 'none'));
+            fn_mwl_xlsx_log_debug('Removing features: ' . (!empty($removed_feature_ids) ? implode(', ', $removed_feature_ids) : 'none'));
             
-            echo '[MWL_XLSX] Updating DB: deleting old features (if any)...' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Updating DB: deleting old features (if any)...');
             $deleted_rows = db_query("DELETE FROM ?:product_variation_group_features WHERE group_id = ?i", $group->getId());
-            echo '  - Deleted rows: ' . ($deleted_rows ? $deleted_rows : '0') . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Deleted rows: ' . ($deleted_rows ? $deleted_rows : '0'));
             
             $insert_data = [];
             foreach ($available_features as $feature) {
@@ -1766,9 +1798,9 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
                 ];
             }
             
-            echo '[MWL_XLSX] Prepared ' . count($insert_data) . ' features for insertion:' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Prepared ' . count($insert_data) . ' features for insertion:');
             foreach ($insert_data as $idx => $feat_data) {
-                echo '  ' . ($idx+1) . '. Feature #' . $feat_data['feature_id'] . ' (purpose: ' . $feat_data['purpose'] . ')' . PHP_EOL;
+                fn_mwl_xlsx_log_debug('  ' . ($idx+1) . '. Feature #' . $feat_data['feature_id'] . ' (purpose: ' . $feat_data['purpose'] . ')');
             }
             
             if (!empty($insert_data)) {
@@ -1780,39 +1812,39 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
                             $data['group_id'], $data['feature_id'], $data['purpose']
                         );
                     }
-                    echo '[MWL_XLSX] ✓ Features inserted to DB (inserted ' . count($insert_data) . ' records)' . PHP_EOL;
+                    fn_mwl_xlsx_log_debug('✓ Features inserted to DB (inserted ' . count($insert_data) . ' records)');
                     
                     // Проверяем что features действительно в БД
                     $check_features = db_get_array(
                         "SELECT feature_id, purpose FROM ?:product_variation_group_features WHERE group_id = ?i ORDER BY feature_id",
                         $group->getId()
                     );
-                    echo '[MWL_XLSX] Verification: ' . count($check_features) . ' features in DB after insert:' . PHP_EOL;
+                    fn_mwl_xlsx_log_debug('Verification: ' . count($check_features) . ' features in DB after insert:');
                     if (empty($check_features)) {
-                        echo '  ✗ ERROR: Features not found in DB after INSERT!' . PHP_EOL;
-                        echo '  → INSERT may have failed silently or transaction rolled back' . PHP_EOL;
+                        fn_mwl_xlsx_log_debug('✗ ERROR: Features not found in DB after INSERT!');
+                        fn_mwl_xlsx_log_debug('→ INSERT may have failed silently or transaction rolled back');
                     } else {
                         foreach ($check_features as $cf) {
-                            echo '  - Feature #' . $cf['feature_id'] . ' (purpose: ' . $cf['purpose'] . ')' . PHP_EOL;
+                            fn_mwl_xlsx_log_debug('Feature #' . $cf['feature_id'] . ' (purpose: ' . $cf['purpose'] . ')');
                         }
                         // Запоминаем что обновили features для этой группы
                         $features_updated[$group_id_key] = $new_feature_ids;
-                        echo '[MWL_XLSX] Marked group #' . $group_id_key . ' as features-updated' . PHP_EOL;
+                        fn_mwl_xlsx_log_debug('Marked group #' . $group_id_key . ' as features-updated');
                     }
                 } catch (\Exception $db_error) {
-                    echo '[MWL_XLSX] ✗ ERROR inserting features to DB: ' . $db_error->getMessage() . PHP_EOL;
-                    echo '  Stack trace: ' . $db_error->getTraceAsString() . PHP_EOL;
+                    fn_mwl_xlsx_log_debug('✗ ERROR inserting features to DB: ' . $db_error->getMessage());
+                    fn_mwl_xlsx_log_debug('Stack trace: ' . $db_error->getTraceAsString());
                 }
             } else {
-                echo '[MWL_XLSX] ⚠ No features to insert!' . PHP_EOL;
+                fn_mwl_xlsx_log_debug('⚠ No features to insert!');
             }
             
             // Перезагружаем группу с обновленными features
-            echo '[MWL_XLSX] Reloading group from DB...' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Reloading group from DB...');
             $updated_group = $group_repository->findGroupById($group->getId());
             
             if ($updated_group) {
-                echo '[MWL_XLSX] Group reloaded, features: ' . implode(', ', $updated_group->getFeatureIds()) . PHP_EOL;
+                fn_mwl_xlsx_log_debug('Group reloaded, features: ' . implode(', ', $updated_group->getFeatureIds()));
                 
                 try {
                     $reflection = new \ReflectionClass($group);
@@ -1820,27 +1852,27 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
                     $features_property->setAccessible(true);
                     $features_property->setValue($group, $updated_group->getFeatures());
                     
-                    echo '[MWL_XLSX] ✓ Successfully updated group features via Reflection' . PHP_EOL;
-                    echo '  - Group features after reflection: ' . implode(', ', $group->getFeatureIds()) . PHP_EOL;
+                    fn_mwl_xlsx_log_debug('✓ Successfully updated group features via Reflection');
+                    fn_mwl_xlsx_log_debug('Group features after reflection: ' . implode(', ', $group->getFeatureIds()));
                     
                     // ВАЖНО: Если были добавлены новые features, нужно отключить автосинхронизацию для них
                     // чтобы CS-Cart не скопировал значения между вариациями
                     if (!empty($added_feature_ids)) {
-                        echo '[MWL_XLSX] Added features: ' . implode(', ', $added_feature_ids) . PHP_EOL;
-                        echo '  → These features should NOT be auto-synced between variations' . PHP_EOL;
-                        echo '  → CS-Cart sync service will run later and may overwrite values!' . PHP_EOL;
+                        fn_mwl_xlsx_log_debug('Added features: ' . implode(', ', $added_feature_ids));
+                        fn_mwl_xlsx_log_debug('→ These features should NOT be auto-synced between variations');
+                        fn_mwl_xlsx_log_debug('→ CS-Cart sync service will run later and may overwrite values!');
                     }
                     
                 } catch (\ReflectionException $e) {
-                    echo '[MWL_XLSX] ✗ Reflection ERROR: ' . $e->getMessage() . PHP_EOL;
+                    fn_mwl_xlsx_log_debug('✗ Reflection ERROR: ' . $e->getMessage());
                 }
             } else {
-                echo '[MWL_XLSX] ✗ ERROR: Failed to reload group from DB' . PHP_EOL;
+                fn_mwl_xlsx_log_debug('✗ ERROR: Failed to reload group from DB');
             }
         }
         
         // ТЕПЕРЬ проверяем и удаляем дубликаты (ПОСЛЕ обновления features)
-        echo '[MWL_XLSX] Checking for duplicate combinations...' . PHP_EOL;
+        fn_mwl_xlsx_log_debug('Checking for duplicate combinations...');
         
         // Получаем combinations новых продуктов из импортируемых данных
         $new_combinations = [];
@@ -1859,10 +1891,10 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
                         'key' => $combo_key,
                         'features' => $combo
                     ];
-                    echo '  - New product #' . $new_pid . ' combination: ' . $combo_key . PHP_EOL;
+                    fn_mwl_xlsx_log_debug('New product #' . $new_pid . ' combination: ' . $combo_key);
                 }
             } else {
-                echo '  - New product #' . $new_pid . ': NO variation_features in import data' . PHP_EOL;
+                fn_mwl_xlsx_log_debug('New product #' . $new_pid . ': NO variation_features in import data');
             }
         }
         
@@ -1871,7 +1903,7 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
         $truly_existing_ids = array_diff($existing_product_ids, $new_product_ids);
         
         if (!empty($truly_existing_ids) && !empty($new_feature_ids)) {
-            echo '[MWL_XLSX] Checking existing products (excluding new): ' . implode(', ', $truly_existing_ids) . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Checking existing products (excluding new): ' . implode(', ', $truly_existing_ids));
             
             $existing_features_db = db_get_array(
                 "SELECT product_id, feature_id, variant_id " .
@@ -1890,35 +1922,35 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
             foreach ($existing_combinations as $existing_pid => $combo) {
                 ksort($combo);
                 $combo_key = implode('_', $combo);
-                echo '  - Existing product #' . $existing_pid . ' combination: ' . $combo_key . PHP_EOL;
+                fn_mwl_xlsx_log_debug('Existing product #' . $existing_pid . ' combination: ' . $combo_key);
                 
                 // Сравниваем с новыми продуктами
                 foreach ($new_combinations as $new_pid => $new_combo_data) {
                     if ($combo_key === $new_combo_data['key']) {
                         $products_to_remove[] = $existing_pid;
-                        echo '  ⚠ Product #' . $existing_pid . ' has SAME combination as new product #' . $new_pid . PHP_EOL;
-                        echo '    → Will remove existing product #' . $existing_pid . ' from group' . PHP_EOL;
+                        fn_mwl_xlsx_log_debug('⚠ Product #' . $existing_pid . ' has SAME combination as new product #' . $new_pid);
+                        fn_mwl_xlsx_log_debug('→ Will remove existing product #' . $existing_pid . ' from group');
                     }
                 }
             }
             
             // Удаляем дубликаты
             if (!empty($products_to_remove)) {
-                echo '[MWL_XLSX] Removing ' . count($products_to_remove) . ' existing products with duplicate combinations...' . PHP_EOL;
+                fn_mwl_xlsx_log_debug('Removing ' . count($products_to_remove) . ' existing products with duplicate combinations...');
                 foreach ($products_to_remove as $pid_to_remove) {
                     $group->detachProductById($pid_to_remove);
-                    echo '  - Detached product #' . $pid_to_remove . ' from group' . PHP_EOL;
+                    fn_mwl_xlsx_log_debug('Detached product #' . $pid_to_remove . ' from group');
                     
                     // ВАЖНО: Отключаем продукт после удаления из группы
                     // чтобы он не остался "осиротевшим" активным продуктом
                     db_query("UPDATE ?:products SET status = 'D' WHERE product_id = ?i", $pid_to_remove);
-                    echo '  - Disabled product #' . $pid_to_remove . ' (status=D)' . PHP_EOL;
+                    fn_mwl_xlsx_log_debug('Disabled product #' . $pid_to_remove . ' (status=D)');
                 }
             } else {
-                echo '  - No duplicate combinations with existing products' . PHP_EOL;
+                fn_mwl_xlsx_log_debug('No duplicate combinations with existing products');
             }
         } else {
-            echo '  - No existing products to check (or all are being updated)' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('No existing products to check (or all are being updated)');
         }
         
         // Проверяем дубликаты ВНУТРИ импортируемой партии
@@ -1927,19 +1959,19 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
             $combo_key = $combo_data['key'];
             if (isset($seen_combinations[$combo_key])) {
                 $duplicate_pid = $seen_combinations[$combo_key];
-                echo '  ⚠ WARNING: Duplicate in import batch!' . PHP_EOL;
-                echo '    - Product #' . $duplicate_pid . ' and #' . $pid . ' both have: ' . $combo_key . PHP_EOL;
-                echo '    → CS-Cart will reject one of them' . PHP_EOL;
+                fn_mwl_xlsx_log_debug('⚠ WARNING: Duplicate in import batch!');
+                fn_mwl_xlsx_log_debug('Product #' . $duplicate_pid . ' and #' . $pid . ' both have: ' . $combo_key);
+                fn_mwl_xlsx_log_debug('→ CS-Cart will reject one of them');
             } else {
                 $seen_combinations[$combo_key] = $pid;
             }
         }
         
         if (count($new_combinations) === count($seen_combinations)) {
-            echo '  ✓ All new products have unique combinations within import batch' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('✓ All new products have unique combinations within import batch');
         }
         
-        echo '[MWL_XLSX] Duplicate check completed' . PHP_EOL;
+        fn_mwl_xlsx_log_debug('Duplicate check completed');
         
     } catch (\Exception $e) {
         // Логируем ошибку, но не прерываем процесс импорта
@@ -1947,8 +1979,8 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
         echo '  Trace: ' . $e->getTraceAsString() . PHP_EOL;
     }
     
-    echo '[MWL_XLSX] Hook variation_group_add_products_to_group finished (call #' . $current_call . ')' . PHP_EOL;
-    echo '[MWL_XLSX] ========================================' . PHP_EOL;
+    fn_mwl_xlsx_log_debug('Hook variation_group_add_products_to_group finished (call #' . $current_call . ')');
+    fn_mwl_xlsx_log_debug('========================================');
 }
 
 /**
@@ -1975,33 +2007,33 @@ function fn_mwl_xlsx_variation_group_save_group($service, $group, $events)
     $save_counter[$group_id]++;
     $save_num = $save_counter[$group_id];
     
-    echo '[MWL_XLSX] ========================================' . PHP_EOL;
-    echo '[MWL_XLSX] Group saved #' . $save_num . ': "' . $group->getCode() . '" (ID:' . $group->getId() . ')' . PHP_EOL;
-    echo '  - Products in group: ' . implode(', ', $group->getProductIds()) . PHP_EOL;
-    echo '  - Features in group (from object): ' . implode(', ', $group->getFeatureIds()) . PHP_EOL;
-    echo '  - Events count: ' . count($events) . PHP_EOL;
+    fn_mwl_xlsx_log_debug('========================================');
+    fn_mwl_xlsx_log_debug('Group saved #' . $save_num . ': "' . $group->getCode() . '" (ID:' . $group->getId() . ')');
+    fn_mwl_xlsx_log_debug('Products in group: ' . implode(', ', $group->getProductIds()));
+    fn_mwl_xlsx_log_debug('Features in group (from object): ' . implode(', ', $group->getFeatureIds()));
+    fn_mwl_xlsx_log_debug('Events count: ' . count($events));
     
     // Проверяем features в БД
     $db_features = db_get_array(
         "SELECT feature_id FROM ?:product_variation_group_features WHERE group_id = ?i ORDER BY feature_id",
         $group_id
     );
-    echo '  - Features in DB: ' . (empty($db_features) ? 'NONE (table is empty!)' : implode(', ', array_column($db_features, 'feature_id'))) . PHP_EOL;
+    fn_mwl_xlsx_log_debug('Features in DB: ' . (empty($db_features) ? 'NONE (table is empty!)' : implode(', ', array_column($db_features, 'feature_id'))));
     
     // Debug: показываем events
     if (!empty($events)) {
-        echo '[MWL_XLSX] Events triggered:' . PHP_EOL;
+        fn_mwl_xlsx_log_debug('Events triggered:');
         foreach ($events as $i => $event) {
             $event_class = get_class($event);
             $event_type = basename(str_replace('\\', '/', $event_class));
-            echo '  ' . ($i+1) . '. ' . $event_type . PHP_EOL;
+            fn_mwl_xlsx_log_debug('  ' . ($i+1) . '. ' . $event_type);
             
             // Показываем детали для ProductUpdatedEvent
             if (method_exists($event, 'getTo') && method_exists($event, 'getFrom')) {
                 $from = $event->getFrom();
                 $to = $event->getTo();
-                echo '     From: Product #' . $from->getProductId() . PHP_EOL;
-                echo '     To: Product #' . $to->getProductId() . PHP_EOL;
+                fn_mwl_xlsx_log_debug('     From: Product #' . $from->getProductId());
+                fn_mwl_xlsx_log_debug('     To: Product #' . $to->getProductId());
                 
                 if (method_exists($from, 'getFeatureValues') && method_exists($to, 'getFeatureValues')) {
                     $from_values = [];
@@ -2013,7 +2045,7 @@ function fn_mwl_xlsx_variation_group_save_group($service, $group, $events)
                         $to_values[$fv->getFeatureId()] = $fv->getVariantId();
                     }
                     if ($from_values != $to_values) {
-                        echo '     Feature changes: ' . json_encode($from_values) . ' → ' . json_encode($to_values) . PHP_EOL;
+                        fn_mwl_xlsx_log_debug('     Feature changes: ' . json_encode($from_values) . ' → ' . json_encode($to_values));
                     }
                 }
             }
@@ -2021,7 +2053,7 @@ function fn_mwl_xlsx_variation_group_save_group($service, $group, $events)
     }
     
     // Проверяем feature combinations всех продуктов в группе
-    echo '[MWL_XLSX] Checking feature combinations in saved group (from DB):' . PHP_EOL;
+    fn_mwl_xlsx_log_debug('Checking feature combinations in saved group (from DB):');
     $product_ids = $group->getProductIds();
     if (!empty($product_ids)) {
         // Сначала получаем product_code'ы
@@ -2053,14 +2085,14 @@ function fn_mwl_xlsx_variation_group_save_group($service, $group, $events)
         
         foreach ($by_product as $pid => $features) {
             $product_code = isset($product_codes[$pid]) ? $product_codes[$pid] : 'unknown';
-            echo '  - Product #' . $pid . ' [' . $product_code . ']: ' . implode(', ', $features);
+            $feature_list = implode(', ', $features);
             
             // Показываем детали
             $details = [];
             foreach ($by_product_detailed[$pid] as $fid => $info) {
                 $details[] = 'F' . $fid . '=' . $info['variant_id'] . '(' . ($info['variant'] ?? $info['value_int']) . ')';
             }
-            echo ' [' . implode(', ', $details) . ']' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Product #' . $pid . ' [' . $product_code . ']: ' . $feature_list . ' [' . implode(', ', $details) . ']');
         }
         
         // Проверяем дубликаты
@@ -2069,23 +2101,23 @@ function fn_mwl_xlsx_variation_group_save_group($service, $group, $events)
             ksort($features); // Сортируем для консистентности
             $combo_key = implode('_', $features);
             if (isset($combinations[$combo_key])) {
-                echo '[MWL_XLSX] ⚠ DUPLICATE COMBINATION detected in saved group!' . PHP_EOL;
-                echo '  - Product #' . $pid . ' has same combination as Product #' . $combinations[$combo_key] . PHP_EOL;
-                echo '  - Combination: ' . implode(', ', $features) . ' (key: ' . $combo_key . ')' . PHP_EOL;
-                echo '  → This should NOT happen! Check why feature values not updated correctly' . PHP_EOL;
+                fn_mwl_xlsx_log_debug('⚠ DUPLICATE COMBINATION detected in saved group!');
+                fn_mwl_xlsx_log_debug('Product #' . $pid . ' has same combination as Product #' . $combinations[$combo_key]);
+                fn_mwl_xlsx_log_debug('Combination: ' . implode(', ', $features) . ' (key: ' . $combo_key . ')');
+                fn_mwl_xlsx_log_debug('→ This should NOT happen! Check why feature values not updated correctly');
             } else {
                 $combinations[$combo_key] = $pid;
             }
         }
         
         if (count($by_product) === count($combinations)) {
-            echo '  ✓ All products in group have unique combinations' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('✓ All products in group have unique combinations');
         }
     } else {
-        echo '  - No products in group' . PHP_EOL;
+        fn_mwl_xlsx_log_debug('No products in group');
     }
     
-    echo '[MWL_XLSX] ========================================' . PHP_EOL;
+    fn_mwl_xlsx_log_debug('========================================');
 }
 
 /**
@@ -2124,13 +2156,13 @@ function fn_mwl_xlsx_update_product_features_value_pre($product_id, &$product_fe
     static $saved_count = [];
     if (!isset($saved_count[$group_id])) {
         $saved_count[$group_id] = 0;
-        echo '[MWL_XLSX] ========================================' . PHP_EOL;
-        echo '[MWL_XLSX] Hook update_product_features_value_pre for group #' . $group_id . PHP_EOL;
+        fn_mwl_xlsx_log_debug('========================================');
+        fn_mwl_xlsx_log_debug('Hook update_product_features_value_pre for group #' . $group_id);
     }
     $saved_count[$group_id]++;
     
-    echo '  - Saving original feature values for product #' . $product_id . PHP_EOL;
-    echo '    Available product_features (' . count($product_features) . '): ' . implode(', ', array_keys($product_features)) . PHP_EOL;
+    fn_mwl_xlsx_log_debug('  - Saving original feature values for product #' . $product_id);
+    fn_mwl_xlsx_log_debug('    Available product_features (' . count($product_features) . '): ' . implode(', ', array_keys($product_features)));
     
     // Конвертируем $product_features в формат который использует import_post
     // $product_features имеет формат: feature_id => variant_id (или массив для множественных)
@@ -2155,7 +2187,7 @@ function fn_mwl_xlsx_update_product_features_value_pre($product_id, &$product_fe
         // Debug: показываем feature name и variant
         $feature_name = db_get_field("SELECT description FROM ?:product_features_descriptions WHERE feature_id = ?i AND lang_code = 'en'", $feature_id);
         $variant_name = db_get_field("SELECT variant FROM ?:product_feature_variant_descriptions WHERE variant_id = ?i AND lang_code = 'en'", $variant_id);
-        echo '      * Feature #' . $feature_id . ' (' . ($feature_name ?: 'unknown') . '): variant_id=' . (is_array($variant_id) ? '[' . implode(',', $variant_id) . ']' : $variant_id) . ' (' . ($variant_name ?: 'unknown') . ')' . PHP_EOL;
+        fn_mwl_xlsx_log_debug('      * Feature #' . $feature_id . ' (' . ($feature_name ?: 'unknown') . '): variant_id=' . (is_array($variant_id) ? '[' . implode(',', $variant_id) . ']' : $variant_id) . ' (' . ($variant_name ?: 'unknown') . ')');
     }
     
     // Сохраняем в статическое хранилище (объединяем с уже сохраненными)
@@ -2163,8 +2195,8 @@ function fn_mwl_xlsx_update_product_features_value_pre($product_id, &$product_fe
     $existing_map[$product_id] = $converted_features;
     fn_mwl_xlsx_set_products_features($group_id, $existing_map);
     
-    echo '    → Saved ' . count($converted_features) . ' features to static storage' . PHP_EOL;
-    echo '    → Total products in storage for group #' . $group_id . ': ' . count($existing_map) . PHP_EOL;
+    fn_mwl_xlsx_log_debug('    → Saved ' . count($converted_features) . ' features to static storage');
+    fn_mwl_xlsx_log_debug('    → Total products in storage for group #' . $group_id . ': ' . count($existing_map));
 }
 
 /**
@@ -2184,38 +2216,38 @@ function fn_mwl_xlsx_update_product_features_value_pre($product_id, &$product_fe
  */
 function fn_mwl_xlsx_import_post($pattern, $import_data, $options, $result, $processed_data)
 {
-    echo '[MWL_XLSX] ========================================' . PHP_EOL;
-    echo '[MWL_XLSX] Hook import_post CALLED!' . PHP_EOL;
-    echo '  - Pattern section: ' . (isset($pattern['section']) ? $pattern['section'] : 'NOT SET') . PHP_EOL;
-    echo '  - Pattern pattern_id: ' . (isset($pattern['pattern_id']) ? $pattern['pattern_id'] : 'NOT SET') . PHP_EOL;
-    echo '  - Import data rows: ' . (is_array($import_data) ? count($import_data) : 'NOT ARRAY') . PHP_EOL;
+    fn_mwl_xlsx_log_debug('========================================');
+    fn_mwl_xlsx_log_debug('Hook import_post CALLED!');
+    fn_mwl_xlsx_log_debug('Pattern section: ' . (isset($pattern['section']) ? $pattern['section'] : 'NOT SET'));
+    fn_mwl_xlsx_log_debug('Pattern pattern_id: ' . (isset($pattern['pattern_id']) ? $pattern['pattern_id'] : 'NOT SET'));
+    fn_mwl_xlsx_log_debug('Import data rows: ' . (is_array($import_data) ? count($import_data) : 'NOT ARRAY'));
     
     // Проверяем что это импорт продуктов
     if (empty($pattern['pattern_id']) || $pattern['pattern_id'] !== 'products') {
-        echo '  - Not a products import, skipping (pattern_id=' . (isset($pattern['pattern_id']) ? $pattern['pattern_id'] : 'NULL') . ')' . PHP_EOL;
-        echo '[MWL_XLSX] ========================================' . PHP_EOL;
+        fn_mwl_xlsx_log_debug('Not a products import, skipping (pattern_id=' . (isset($pattern['pattern_id']) ? $pattern['pattern_id'] : 'NULL') . ')');
+        fn_mwl_xlsx_log_debug('========================================');
         return;
     }
     
-    echo '[MWL_XLSX] Products import confirmed, processing...' . PHP_EOL;
+    fn_mwl_xlsx_log_debug('Products import confirmed, processing...');
     
     // Получаем список групп из статического хранилища
     $groups_to_fix = fn_mwl_xlsx_get_groups_to_fix();
     
-    echo '  - Groups in static storage: ' . count($groups_to_fix) . PHP_EOL;
+    fn_mwl_xlsx_log_debug('Groups in static storage: ' . count($groups_to_fix));
     if (!empty($groups_to_fix)) {
         foreach ($groups_to_fix as $gid => $data) {
-            echo '    * Group #' . $gid . ': features=[' . implode(',', $data['feature_ids']) . '], update_scenario=' . ($data['is_update_scenario'] ? 'true' : 'false') . PHP_EOL;
+            fn_mwl_xlsx_log_debug('  Group #' . $gid . ': features=[' . implode(',', $data['feature_ids']) . '], update_scenario=' . ($data['is_update_scenario'] ? 'true' : 'false'));
         }
     }
     
     if (empty($groups_to_fix)) {
-        echo '[MWL_XLSX] No groups to fix found, skipping post-processing' . PHP_EOL;
-        echo '[MWL_XLSX] ========================================' . PHP_EOL;
+        fn_mwl_xlsx_log_debug('No groups to fix found, skipping post-processing');
+        fn_mwl_xlsx_log_debug('========================================');
         return;
     }
     
-    echo '[MWL_XLSX] Found ' . count($groups_to_fix) . ' groups to process' . PHP_EOL;
+    fn_mwl_xlsx_log_debug('Found ' . count($groups_to_fix) . ' groups to process');
     
     $group_repository = \Tygh\Addons\ProductVariations\ServiceProvider::getGroupRepository();
     
@@ -2226,15 +2258,15 @@ function fn_mwl_xlsx_import_post($pattern, $import_data, $options, $result, $pro
         $is_update_scenario = $group_data['is_update_scenario'];
         
         if ($is_update_scenario) {
-            echo '[MWL_XLSX] Processing group #' . $group_id . ' in UPDATE SCENARIO mode' . PHP_EOL;
-            echo '  → Will verify/fix ALL variation feature values: ' . implode(', ', $new_feature_ids) . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Processing group #' . $group_id . ' in UPDATE SCENARIO mode');
+            fn_mwl_xlsx_log_debug('→ Will verify/fix ALL variation feature values: ' . implode(', ', $new_feature_ids));
         } else {
-            echo '[MWL_XLSX] Processing group #' . $group_id . ' with new features: ' . implode(', ', $new_feature_ids) . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Processing group #' . $group_id . ' with new features: ' . implode(', ', $new_feature_ids));
         }
         
         $group = $group_repository->findGroupById($group_id);
         if (!$group) {
-            echo '  - Group not found, skipping' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Group not found, skipping');
             continue;
         }
         
@@ -2247,18 +2279,18 @@ function fn_mwl_xlsx_import_post($pattern, $import_data, $options, $result, $pro
             );
             if (!empty($all_group_features)) {
                 $new_feature_ids = $all_group_features;
-                echo '  → Using ALL group features from DB: ' . implode(', ', $new_feature_ids) . PHP_EOL;
+                fn_mwl_xlsx_log_debug('→ Using ALL group features from DB: ' . implode(', ', $new_feature_ids));
             }
         }
         
         $product_ids = $group->getProductIds();
-        echo '  - Products currently in group: ' . (empty($product_ids) ? 'none' : implode(', ', $product_ids)) . PHP_EOL;
+        fn_mwl_xlsx_log_debug('Products currently in group: ' . (empty($product_ids) ? 'none' : implode(', ', $product_ids)));
         
         // ВАЖНО: Ищем ВСЕ продукты из import_data с этим variation_group_code,
         // а не только те, которые уже в группе
         // Это нужно потому что продукты могут не быть добавлены в группу из-за отсутствия required features
         $group_code = $group->getCode();
-        echo '  - Searching for products with variation_group_code="' . $group_code . '" in import_data (total rows: ' . count($import_data) . ')...' . PHP_EOL;
+        fn_mwl_xlsx_log_debug('Searching for products with variation_group_code="' . $group_code . '" in import_data (total rows: ' . count($import_data) . ')...');
         
         $products_to_fix = [];
         $product_codes_to_find = [];
@@ -2275,11 +2307,11 @@ function fn_mwl_xlsx_import_post($pattern, $import_data, $options, $result, $pro
         }
         
         if (empty($product_codes_to_find)) {
-            echo '  - No products with variation_group_code="' . $group_code . '" in import data' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('No products with variation_group_code="' . $group_code . '" in import data');
             continue;
         }
         
-        echo '  - Found ' . count($product_codes_to_find) . ' product codes with this group code: ' . implode(', ', $product_codes_to_find) . PHP_EOL;
+        fn_mwl_xlsx_log_debug('Found ' . count($product_codes_to_find) . ' product codes with this group code: ' . implode(', ', $product_codes_to_find));
         
         // Получаем product_id для всех найденных product_code
         $product_codes_map = db_get_hash_single_array(
@@ -2288,9 +2320,9 @@ function fn_mwl_xlsx_import_post($pattern, $import_data, $options, $result, $pro
             $product_codes_to_find
         );
         
-        echo '  - Product IDs found: ' . implode(', ', array_map(function($code, $pid) {
+        fn_mwl_xlsx_log_debug('Product IDs found: ' . implode(', ', array_map(function($code, $pid) {
             return '#' . $pid . '=' . $code;
-        }, array_keys($product_codes_map), $product_codes_map)) . PHP_EOL;
+        }, array_keys($product_codes_map), $product_codes_map)));
         
         // Теперь находим соответствующие строки в import_data
         foreach ($import_data as $idx => $import_row) {
@@ -2300,26 +2332,26 @@ function fn_mwl_xlsx_import_post($pattern, $import_data, $options, $result, $pro
             if ($row_product_code && isset($product_codes_map[$row_product_code])) {
                 $found_pid = $product_codes_map[$row_product_code];
                 $products_to_fix[$found_pid] = $row;
-                echo '    * Found product #' . $found_pid . ' (code: ' . $row_product_code . ') at import_data[' . $idx . ']' . PHP_EOL;
+                fn_mwl_xlsx_log_debug('  * Found product #' . $found_pid . ' (code: ' . $row_product_code . ') at import_data[' . $idx . ']');
             }
         }
         
         if (empty($products_to_fix)) {
-            echo '  - No products from this group in import data' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('No products from this group in import data');
             continue;
         }
         
-        echo '  - Found ' . count($products_to_fix) . ' products in import data to fix' . PHP_EOL;
+        fn_mwl_xlsx_log_debug('Found ' . count($products_to_fix) . ' products in import data to fix');
         
         // Получаем product_features из статического хранилища
         $products_features_map = fn_mwl_xlsx_get_products_features($group_id);
-        echo '  - Products features map contains ' . (empty($products_features_map) ? '0' : count($products_features_map)) . ' products' . PHP_EOL;
+        fn_mwl_xlsx_log_debug('Products features map contains ' . (empty($products_features_map) ? '0' : count($products_features_map)) . ' products');
         
         // Для продуктов, которых нет в статическом хранилище, получаем features из БД
         // Это нужно для продуктов, которые ещё не в группе
         $missing_pids = array_diff(array_keys($products_to_fix), array_keys($products_features_map ?: []));
         if (!empty($missing_pids)) {
-            echo '  - Products not in static storage (will load from DB): ' . implode(', ', $missing_pids) . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Products not in static storage (will load from DB): ' . implode(', ', $missing_pids));
             
             // Загружаем features из БД для этих продуктов
             $db_features = db_get_array(
@@ -2343,25 +2375,27 @@ function fn_mwl_xlsx_import_post($pattern, $import_data, $options, $result, $pro
                 ];
             }
             
-            echo '  - Loaded ' . count($db_features) . ' features from DB for missing products' . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Loaded ' . count($db_features) . ' features from DB for missing products');
         }
         
         // Для каждого продукта обновляем feature values для новых features
+        $products_with_changes = [];
         foreach ($products_to_fix as $pid => $import_row) {
             if (!isset($products_features_map[$pid])) {
-                echo '  - Product #' . $pid . ': NO product_features available (not in storage and not in DB)' . PHP_EOL;
+                fn_mwl_xlsx_log_debug('Product #' . $pid . ': NO product_features available (not in storage and not in DB)');
                 continue;
             }
             
             $product_features = $products_features_map[$pid];
             if (!is_array($product_features)) {
-                echo '  - Product #' . $pid . ': product_features is not array: ' . gettype($product_features) . PHP_EOL;
+                fn_mwl_xlsx_log_debug('Product #' . $pid . ': product_features is not array: ' . gettype($product_features));
                 continue;
             }
             
-            echo '  - Fixing product #' . $pid . ' feature values...' . PHP_EOL;
-            echo '    Available product_features: ' . implode(', ', array_keys($product_features)) . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Fixing product #' . $pid . ' feature values...');
+            fn_mwl_xlsx_log_debug('Available product_features: ' . implode(', ', array_keys($product_features)));
             
+            $features_fixed = 0;
             // Проверяем какие из новых features есть в импортируемых данных
             foreach ($new_feature_ids as $new_fid) {
                 if (isset($product_features[$new_fid])) {
@@ -2369,7 +2403,7 @@ function fn_mwl_xlsx_import_post($pattern, $import_data, $options, $result, $pro
                     $variant_id = isset($feature_data['variant_id']) ? $feature_data['variant_id'] : (isset($feature_data['value']) ? $feature_data['value'] : null);
                     
                     if (!$variant_id) {
-                        echo '    * Feature #' . $new_fid . ': NO variant_id found' . PHP_EOL;
+                        fn_mwl_xlsx_log_debug('  * Feature #' . $new_fid . ': NO variant_id found');
                         continue;
                     }
                     
@@ -2377,7 +2411,7 @@ function fn_mwl_xlsx_import_post($pattern, $import_data, $options, $result, $pro
                     $feature_name = db_get_field("SELECT description FROM ?:product_features_descriptions WHERE feature_id = ?i AND lang_code = 'en'", $new_fid);
                     $variant_name = db_get_field("SELECT variant FROM ?:product_feature_variant_descriptions WHERE variant_id = ?i AND lang_code = 'en'", $variant_id);
                     
-                    echo '    * Feature #' . $new_fid . ' (' . ($feature_name ?: 'unknown') . '): will update to variant_id=' . $variant_id . ' (' . ($variant_name ?: 'unknown') . ')' . PHP_EOL;
+                    fn_mwl_xlsx_log_debug('  * Feature #' . $new_fid . ' (' . ($feature_name ?: 'unknown') . '): will update to variant_id=' . $variant_id . ' (' . ($variant_name ?: 'unknown') . ')');
                     
                     // Обновляем или создаем feature value для всех языков
                     $lang_codes = db_get_fields("SELECT lang_code FROM ?:languages WHERE status = 'A'");
@@ -2416,17 +2450,31 @@ function fn_mwl_xlsx_import_post($pattern, $import_data, $options, $result, $pro
                         }
                     }
                     
-                    echo '      → Updated/Inserted ' . $total_updated . ' rows in DB (' . count($lang_codes) . ' languages)' . PHP_EOL;
+                    if ($total_updated > 0) {
+                        $features_fixed++;
+                    }
+                    fn_mwl_xlsx_log_debug('  → Updated/Inserted ' . $total_updated . ' rows in DB (' . count($lang_codes) . ' languages)');
                 } else {
-                    echo '    * Feature #' . $new_fid . ': NOT in product_features map' . PHP_EOL;
+                    fn_mwl_xlsx_log_debug('  * Feature #' . $new_fid . ': NOT in product_features map');
                 }
+            }
+            
+            // Log brief info only when there are changes
+            if ($features_fixed > 0) {
+                $products_with_changes[$pid] = $features_fixed;
             }
         }
         
-        // Проверяем итоговое состояние feature values
-        // Используем все найденные продукты, а не только те, что уже в группе
+        // Log brief summary for products with changes
+        if (!empty($products_with_changes)) {
+            foreach ($products_with_changes as $pid => $count) {
+                fn_mwl_xlsx_log_info('Product #' . $pid . ': fixed ' . $count . ' feature(s)');
+            }
+        }
+        
+        // Проверяем итоговое состояние feature values (debug only)
         $all_product_ids = array_keys($products_to_fix);
-        echo '  - Verifying fixed feature values from DB (products: ' . implode(', ', $all_product_ids) . '):' . PHP_EOL;
+        fn_mwl_xlsx_log_debug('Verifying fixed feature values from DB (products: ' . implode(', ', $all_product_ids) . '):');
         $verification = db_get_array(
             "SELECT pfv.product_id, pfv.feature_id, pfv.variant_id, pfvd.variant " .
             "FROM ?:product_features_values pfv " .
@@ -2442,7 +2490,7 @@ function fn_mwl_xlsx_import_post($pattern, $import_data, $options, $result, $pro
         }
         
         foreach ($by_prod as $pid => $feats) {
-            echo '    - Product #' . $pid . ': ' . implode(', ', $feats) . PHP_EOL;
+            fn_mwl_xlsx_log_debug('Product #' . $pid . ': ' . implode(', ', $feats));
         }
         
     }
@@ -2450,8 +2498,8 @@ function fn_mwl_xlsx_import_post($pattern, $import_data, $options, $result, $pro
     // Очищаем статическое хранилище после обработки
     fn_mwl_xlsx_get_groups_to_fix([]);
     
-    echo '[MWL_XLSX] Post-import feature values fix completed' . PHP_EOL;
-    echo '[MWL_XLSX] ========================================' . PHP_EOL;
+    fn_mwl_xlsx_log_debug('Post-import feature values fix completed');
+    fn_mwl_xlsx_log_debug('========================================');
 }
 
 /**
@@ -2548,7 +2596,7 @@ function fn_mwl_xlsx_sync_group_features_from_csv(int $group_id, array $csv_feat
     $current_feature_ids = empty($current_db_features) ? [] : array_column($current_db_features, 'feature_id');
     
     if ($debug) {
-        echo "  - Current features in group: " . (empty($current_feature_ids) ? 'none' : implode(', ', $current_feature_ids)) . PHP_EOL;
+        fn_mwl_xlsx_log_debug("Current features in group: " . (empty($current_feature_ids) ? 'none' : implode(', ', $current_feature_ids)));
     }
     
     // Находим feature_id для каждой feature из CSV
@@ -2559,7 +2607,7 @@ function fn_mwl_xlsx_sync_group_features_from_csv(int $group_id, array $csv_feat
             // Это не ошибка, а предупреждение - feature не является variation feature
             $result['warnings'][] = "Feature '{$feature_name}' not found in database (not a variation feature)";
             if ($debug) {
-                echo "  - [debug] Feature '{$feature_name}' not found in database (not a variation feature)" . PHP_EOL;
+                fn_mwl_xlsx_log_debug("Feature '{$feature_name}' not found in database (not a variation feature)");
             }
             continue;
         }
@@ -2571,7 +2619,7 @@ function fn_mwl_xlsx_sync_group_features_from_csv(int $group_id, array $csv_feat
         foreach ($csv_feature_ids as $fid => $name) {
             $features_list[] = "{$name} (#{$fid})";
         }
-        echo "  - [debug] Features from CSV: " . (empty($features_list) ? 'none' : implode(', ', $features_list)) . PHP_EOL;
+        fn_mwl_xlsx_log_debug("Features from CSV: " . (empty($features_list) ? 'none' : implode(', ', $features_list)));
     }
     
     // Определяем features для добавления (есть в CSV, нет в группе)
@@ -2581,8 +2629,8 @@ function fn_mwl_xlsx_sync_group_features_from_csv(int $group_id, array $csv_feat
     $features_to_remove = array_diff($current_feature_ids, array_keys($csv_feature_ids));
     
     if ($debug) {
-        echo "  - [debug] Features to add: " . (empty($features_to_add) ? 'none' : implode(', ', $features_to_add)) . PHP_EOL;
-        echo "  - [debug] Features to remove: " . (empty($features_to_remove) ? 'none' : implode(', ', $features_to_remove)) . PHP_EOL;
+        fn_mwl_xlsx_log_debug("Features to add: " . (empty($features_to_add) ? 'none' : implode(', ', $features_to_add)));
+        fn_mwl_xlsx_log_debug("Features to remove: " . (empty($features_to_remove) ? 'none' : implode(', ', $features_to_remove)));
     }
     
     // Добавляем новые features
@@ -2596,7 +2644,7 @@ function fn_mwl_xlsx_sync_group_features_from_csv(int $group_id, array $csv_feat
             $result['added'][] = $feature_id;
             $feature_name = $csv_feature_ids[$feature_id] ?? "Feature #{$feature_id}";
             if ($debug) {
-                echo "  - [debug] ✓ Added feature #{$feature_id} ({$feature_name})" . PHP_EOL;
+                fn_mwl_xlsx_log_debug("✓ Added feature #{$feature_id} ({$feature_name})");
             }
         } else {
             $result['errors'][] = "Failed to add feature #{$feature_id}";
@@ -2614,7 +2662,7 @@ function fn_mwl_xlsx_sync_group_features_from_csv(int $group_id, array $csv_feat
         if ($deleted) {
             $result['removed'][] = $feature_id;
             if ($debug) {
-                echo "  - [debug] ✓ Removed feature #{$feature_id}" . PHP_EOL;
+                fn_mwl_xlsx_log_debug("✓ Removed feature #{$feature_id}");
             }
         } else {
             $result['errors'][] = "Failed to remove feature #{$feature_id}";
@@ -2623,4 +2671,211 @@ function fn_mwl_xlsx_sync_group_features_from_csv(int $group_id, array $csv_feat
     }
     
     return $result;
+}
+
+/**
+ * Hook handler: preserves SEO URL for default variation products during import
+ * 
+ * If a product with "Variation set as default = Y" has its SEO URL occupied by another product
+ * from the same variation group, frees the URL by reassigning it to the occupying product.
+ * 
+ * @param int    $object_id         Object ID
+ * @param string $object_type       Object type
+ * @param string $object_name       Object name (by reference)
+ * @param int    $index             Index
+ * @param string $dispatch          Dispatch (for static object type)
+ * @param int    $company_id        Company ID
+ * @param string $lang_code         Two-letter language code
+ * @param array  $params            Additional params
+ * @param bool   $create_redirect   Creates 301 redirect if set to true
+ * @param string $area              Current working area
+ * @param bool   $changed           Object reformat indicator
+ * @param string $input_object_name Entered object name
+ */
+function fn_mwl_xlsx_create_seo_name_pre(
+    $object_id,
+    $object_type,
+    &$object_name,
+    $index,
+    $dispatch,
+    $company_id,
+    $lang_code,
+    $params,
+    $create_redirect,
+    $area,
+    $changed,
+    $input_object_name
+) {
+    // Protection against recursion when freeing URL for occupying product
+    static $processing_products = [];
+    
+    if (isset($processing_products[$object_id])) {
+        // Already processing this product, skip to avoid recursion
+        return;
+    }
+    
+    // Only process products
+    if ($object_type !== 'p' || empty($object_id) || $object_id <= 0) {
+        return;
+    }
+    
+    // Mark this product as being processed
+    $processing_products[$object_id] = true;
+    
+    // Check if this product is a default variation
+    // Default variation is determined by parent_product_id: if NULL or 0, it's the default
+    $variation_info = db_get_row(
+        "SELECT group_id, parent_product_id 
+         FROM ?:product_variation_group_products 
+         WHERE product_id = ?i AND (parent_product_id IS NULL OR parent_product_id = 0)",
+        $object_id
+    );
+    
+    if (empty($variation_info) || empty($variation_info['group_id'])) {
+        // Not a default variation product, skip
+        unset($processing_products[$object_id]);
+        return;
+    }
+    
+    $default_group_id = $variation_info['group_id'];
+    
+    // Normalize object name the same way fn_create_seo_name does
+    $seo_settings = fn_get_seo_settings($company_id);
+    $non_latin_symbols = $seo_settings['non_latin_symbols'];
+    
+    $normalized_name = fn_seo_normalize_object_name(
+        fn_generate_name($object_name, '', 0, ($non_latin_symbols === YesNo::YES))
+    );
+    
+    if (empty($normalized_name)) {
+        $seo_var = fn_get_seo_vars($object_type);
+        $normalized_name = fn_seo_normalize_object_name(
+            $seo_var['description'] . '-' . $object_id
+        );
+    }
+    
+    // Check if this SEO name is occupied by another product
+    $condition = fn_get_seo_company_condition('?:seo_names.company_id', $object_type, $company_id);
+    
+    $path_condition = '';
+    $seo_var = fn_get_seo_vars($object_type);
+    if (fn_check_seo_schema_option($seo_var, 'tree_options')) {
+        $path_condition = db_quote(
+            " AND path = ?s",
+            fn_get_seo_parent_path($object_id, $object_type, $company_id, true)
+        );
+    }
+    
+    $occupied_by = db_get_row(
+        "SELECT object_id, name 
+         FROM ?:seo_names 
+         WHERE name = ?s ?p 
+           AND object_id != ?i 
+           AND type = ?s 
+           AND (dispatch = ?s OR dispatch = '') 
+           AND lang_code = ?s ?p",
+        $normalized_name,
+        $path_condition,
+        $object_id,
+        $object_type,
+        $dispatch,
+        $lang_code,
+        $condition
+    );
+    
+    if (empty($occupied_by)) {
+        // SEO URL is not occupied, nothing to do
+        unset($processing_products[$object_id]);
+        return;
+    }
+    
+    $occupying_product_id = $occupied_by['object_id'];
+    
+    // Check if the occupying product is in the same variation group
+    $occupying_variation_info = db_get_row(
+        "SELECT group_id 
+         FROM ?:product_variation_group_products 
+         WHERE product_id = ?i",
+        $occupying_product_id
+    );
+    
+    if (empty($occupying_variation_info) || 
+        $occupying_variation_info['group_id'] != $default_group_id) {
+        // Occupying product is from a different group, use standard behavior (add lang_code)
+        // Don't modify $object_name, let fn_create_seo_name handle it
+        unset($processing_products[$object_id]);
+        return;
+    }
+    
+    // Occupying product is from the same group - free the URL
+    // Mark occupying product as being processed to avoid recursion
+    $processing_products[$occupying_product_id] = true;
+    
+    // Get product name for the occupying product to generate new SEO name
+    $occupying_product_name = db_get_field(
+        "SELECT product 
+         FROM ?:product_descriptions 
+         WHERE product_id = ?i AND lang_code = ?s",
+        $occupying_product_id,
+        $lang_code
+    );
+    
+    if (empty($occupying_product_name)) {
+        // Fallback to product_code if name is not available
+        $occupying_product_name = db_get_field(
+            "SELECT product_code FROM ?:products WHERE product_id = ?i",
+            $occupying_product_id
+        );
+        
+        if (empty($occupying_product_name)) {
+            $occupying_product_name = 'product-' . $occupying_product_id;
+        }
+    }
+    
+    // Delete the old SEO name to free the URL
+    $delete_condition = fn_get_seo_company_condition('?:seo_names.company_id', $object_type, $company_id);
+    db_query(
+        "DELETE FROM ?:seo_names 
+         WHERE object_id = ?i 
+           AND type = ?s 
+           AND dispatch = ?s 
+           AND name = ?s 
+           AND lang_code = ?s ?p",
+        $occupying_product_id,
+        $object_type,
+        $dispatch,
+        $normalized_name,
+        $lang_code,
+        $delete_condition
+    );
+    
+    // Generate new SEO name for the occupying product
+    // Add suffix to make it unique
+    $new_base_name = $occupying_product_name . '-variant';
+    $new_seo_name = fn_create_seo_name(
+        $occupying_product_id,
+        $object_type,
+        $new_base_name,
+        0,
+        $dispatch,
+        $company_id,
+        $lang_code,
+        false,
+        $area,
+        $params,
+        false,
+        ''
+    );
+    
+    if (!empty($new_seo_name)) {
+        // Log the action for debugging
+        if (defined('DEVELOPMENT') || Registry::get('runtime.advanced_import.in_progress')) {
+            echo "[MWL_XLSX] SEO URL preservation: Freed URL '{$normalized_name}' from product #{$occupying_product_id} " .
+                 "(same variation group #{$default_group_id}), assigned new URL '{$new_seo_name}'" . PHP_EOL;
+        }
+    }
+    
+    // Unmark both products from processing
+    unset($processing_products[$object_id]);
+    unset($processing_products[$occupying_product_id]);
 }

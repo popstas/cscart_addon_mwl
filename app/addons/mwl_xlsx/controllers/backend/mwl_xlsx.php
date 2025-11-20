@@ -927,8 +927,8 @@ if ($mode === 'import_prepare') {
     $debug = isset($_REQUEST['debug']) ? (bool) $_REQUEST['debug'] : false;
     
     if ($debug) {
-        echo '[MWL_XLSX] ========================================' . PHP_EOL;
-        echo '[MWL_XLSX] Import prepare: syncing variation group features from CSV' . PHP_EOL;
+        fn_mwl_xlsx_log_debug('========================================');
+        fn_mwl_xlsx_log_debug('Import prepare: syncing variation group features from CSV');
     }
     
     // Получаем путь к CSV файлу
@@ -938,7 +938,7 @@ if ($mode === 'import_prepare') {
     }
     
     if ($debug) {
-        echo "  - [debug] CSV file path: {$csv_path}" . PHP_EOL;
+        fn_mwl_xlsx_log_debug("CSV file path: {$csv_path}");
     }
     
     if (!file_exists($csv_path)) {
@@ -1022,7 +1022,7 @@ if ($mode === 'import_prepare') {
         
         if (count($data) < max($variation_group_code_index, $features_index) + 1) {
             if ($debug) {
-                echo "[debug] Line {$line_number}: insufficient columns" . PHP_EOL;
+                fn_mwl_xlsx_log_debug("Line {$line_number}: insufficient columns");
             }
             continue;
         }
@@ -1068,12 +1068,12 @@ if ($mode === 'import_prepare') {
     unset($group_data);
     
     if ($debug) {
-        echo "  - [debug] Found " . count($groups_data) . " variation groups in CSV" . PHP_EOL;
+        fn_mwl_xlsx_log_debug("Found " . count($groups_data) . " variation groups in CSV");
     }
     
     if (empty($groups_data)) {
         if ($debug) {
-            echo "  - [debug] No variation groups found in CSV" . PHP_EOL;
+            fn_mwl_xlsx_log_debug("No variation groups found in CSV");
         }
         return [CONTROLLER_STATUS_NO_CONTENT];
     }
@@ -1086,7 +1086,7 @@ if ($mode === 'import_prepare') {
     // Синхронизируем features для каждой группы
     foreach ($groups_data as $group_code => $group_data) {
         if ($debug) {
-            echo PHP_EOL . "[debug] Processing group: {$group_code}" . PHP_EOL;
+            fn_mwl_xlsx_log_debug("Processing group: {$group_code}");
         }
         
         // Находим группу по коду через SQL (метод findGroupByCode не существует)
@@ -1096,14 +1096,15 @@ if ($mode === 'import_prepare') {
         );
         
         if (!$group_id) {
-            // Это реальная ошибка - группа должна существовать
-            echo "  - [info] Group '{$group_code}' not found, skipping" . PHP_EOL;
-            $total_errors++;
+            // Это не ошибка - группа не должна существовать перед импортом
+            if ($debug) {
+                fn_mwl_xlsx_log_debug("Group '{$group_code}' not found, skipping");
+            }
             continue;
         }
         
         if ($debug) {
-            echo "  - [debug] Group ID: {$group_id}" . PHP_EOL;
+            fn_mwl_xlsx_log_debug("Group ID: {$group_id}");
         }
         
         // Синхронизируем features
@@ -1116,18 +1117,19 @@ if ($mode === 'import_prepare') {
     }
     
     // Выводим итоговую статистику (всегда, не только в debug)
-    echo PHP_EOL . "[MWL_XLSX] Import prepare completed:" . PHP_EOL;
-    echo "  - Groups processed: " . count($groups_data) . PHP_EOL;
-    echo "  - Features added: {$total_added}" . PHP_EOL;
-    echo "  - Features removed: {$total_removed}" . PHP_EOL;
-    if ($total_errors > 0) {
-        echo "  - Errors: {$total_errors}" . PHP_EOL;
-    }
+    $metrics = [
+        'groups_processed' => count($groups_data),
+        'features_added' => $total_added,
+        'features_removed' => $total_removed,
+        'errors' => $total_errors,
+    ];
+    fn_mwl_xlsx_output_metrics('import_prepare', $metrics);
+    
     if ($debug && $total_warnings > 0) {
-        echo "  - [debug] Warnings: {$total_warnings} (features not found - not variation features)" . PHP_EOL;
+        fn_mwl_xlsx_log_debug("Warnings: {$total_warnings} (features not found - not variation features)");
     }
     if ($debug) {
-        echo '[MWL_XLSX] ========================================' . PHP_EOL;
+        fn_mwl_xlsx_log_debug('========================================');
     }
     
     return [CONTROLLER_STATUS_NO_CONTENT];
