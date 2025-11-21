@@ -1946,6 +1946,13 @@ function fn_mwl_xlsx_import_post($pattern, $import_data, $options, $result, $pro
         }
     }
     
+    // Fix SEO names for default products in variation groups
+    // This is needed because during product creation, SEO names are assigned before
+    // products are added to variation_group_products table, so the create_seo_name_pre
+    // hook can't detect default products
+    // IMPORTANT: Call this BEFORE the early return, so it runs even when there are no groups_to_fix
+    fn_mwl_xlsx_fix_seo_names_after_import($import_data);
+    
     if (empty($groups_to_fix)) {
         fn_mwl_xlsx_log_debug('No groups to fix found, skipping post-processing');
         fn_mwl_xlsx_log_debug('========================================');
@@ -2230,212 +2237,189 @@ function fn_mwl_xlsx_import_post($pattern, $import_data, $options, $result, $pro
  * @param int $group_id ID группы вариаций
  * @param array<string, string> $csv_features Массив ['feature_name' => 'feature_type'] из CSV
  * @param bool $debug Флаг отладки (по умолчанию false)
- * @return array{added: array<int>, removed: array<int>, errors: array<string>, warnings: array<string>} Результат синхронизации
+ * @return array{added: array<``int>, removed: array<int>, errors: array<string>, warnings: array<string>} Результат синхронизации
  */
 
 /**
- * Hook handler: preserves SEO URL for default variation products during import
+ * Fixes SEO names for default products in variation groups after import
  * 
- * If a product with "Variation set as default = Y" has its SEO URL occupied by another product
- * from the same variation group, frees the URL by reassigning it to the occupying product.
+ * During product creation, SEO names are assigned before products are added to
+ * variation_group_products table, so the create_seo_name_pre hook can't detect
+ * default products. This function fixes SEO names after import is complete.
  * 
- * @param int    $object_id         Object ID
- * @param string $object_type       Object type
- * @param string $object_name       Object name (by reference)
- * @param int    $index             Index
- * @param string $dispatch          Dispatch (for static object type)
- * @param int    $company_id        Company ID
- * @param string $lang_code         Two-letter language code
- * @param array  $params            Additional params
- * @param bool   $create_redirect   Creates 301 redirect if set to true
- * @param string $area              Current working area
- * @param bool   $changed           Object reformat indicator
- * @param string $input_object_name Entered object name
+ * @param array $import_data Import data from import_post hook
  */
-function fn_mwl_xlsx_create_seo_name_pre(
-    $object_id,
-    $object_type,
-    &$object_name,
-    $index,
-    $dispatch,
-    $company_id,
-    $lang_code,
-    $params,
-    $create_redirect,
-    $area,
-    $changed,
-    $input_object_name
-) {
-    // Protection against recursion when freeing URL for occupying product
-    static $processing_products = [];
+function fn_mwl_xlsx_fix_seo_names_after_import($import_data)
+{
+    $is_import = Registry::get('runtime.advanced_import.in_progress');
     
-    if (isset($processing_products[$object_id])) {
-        // Already processing this product, skip to avoid recursion
+    // Get all unique variation groups that were imported
+    $group_codes = [];
+    foreach ($import_data as $idx => $import_row) {
+        $row = reset($import_row);
+        $group_code = isset($row['variation_group_code']) ? $row['variation_group_code'] : (isset($row['Variation group code']) ? $row['Variation group code'] : null);
+        
+        if ($group_code) {
+            $group_codes[$group_code] = true;
+        }
+    }
+    
+    if (empty($group_codes)) {
         return;
     }
     
-    // Only process products
-    if ($object_type !== 'p' || empty($object_id) || $object_id <= 0) {
-        return;
-    }
-    
-    // Mark this product as being processed
-    $processing_products[$object_id] = true;
-    
-    // Check if this product is a default variation
-    // Default variation is determined by parent_product_id: if NULL or 0, it's the default
-    $variation_info = db_get_row(
-        "SELECT group_id, parent_product_id 
-         FROM ?:product_variation_group_products 
-         WHERE product_id = ?i AND (parent_product_id IS NULL OR parent_product_id = 0)",
-        $object_id
-    );
-    
-    if (empty($variation_info) || empty($variation_info['group_id'])) {
-        // Not a default variation product, skip
-        unset($processing_products[$object_id]);
-        return;
-    }
-    
-    $default_group_id = $variation_info['group_id'];
-    
-    // Normalize object name the same way fn_create_seo_name does
-    $seo_settings = fn_get_seo_settings($company_id);
-    $non_latin_symbols = $seo_settings['non_latin_symbols'];
-    
-    $normalized_name = fn_seo_normalize_object_name(
-        fn_generate_name($object_name, '', 0, ($non_latin_symbols === YesNo::YES))
-    );
-    
-    if (empty($normalized_name)) {
-        $seo_var = fn_get_seo_vars($object_type);
-        $normalized_name = fn_seo_normalize_object_name(
-            $seo_var['description'] . '-' . $object_id
-        );
-    }
-    
-    // Check if this SEO name is occupied by another product
-    $condition = fn_get_seo_company_condition('?:seo_names.company_id', $object_type, $company_id);
-    
-    $path_condition = '';
-    $seo_var = fn_get_seo_vars($object_type);
-    if (fn_check_seo_schema_option($seo_var, 'tree_options')) {
-        $path_condition = db_quote(
-            " AND path = ?s",
-            fn_get_seo_parent_path($object_id, $object_type, $company_id, true)
-        );
-    }
-    
-    $occupied_by = db_get_row(
-        "SELECT object_id, name 
-         FROM ?:seo_names 
-         WHERE name = ?s ?p 
-           AND object_id != ?i 
-           AND type = ?s 
-           AND (dispatch = ?s OR dispatch = '') 
-           AND lang_code = ?s ?p",
-        $normalized_name,
-        $path_condition,
-        $object_id,
-        $object_type,
-        $dispatch,
-        $lang_code,
-        $condition
-    );
-    
-    if (empty($occupied_by)) {
-        // SEO URL is not occupied, nothing to do
-        unset($processing_products[$object_id]);
-        return;
-    }
-    
-    $occupying_product_id = $occupied_by['object_id'];
-    
-    // Check if the occupying product is in the same variation group
-    $occupying_variation_info = db_get_row(
-        "SELECT group_id 
-         FROM ?:product_variation_group_products 
-         WHERE product_id = ?i",
-        $occupying_product_id
-    );
-    
-    if (empty($occupying_variation_info) || 
-        $occupying_variation_info['group_id'] != $default_group_id) {
-        // Occupying product is from a different group, use standard behavior (add lang_code)
-        // Don't modify $object_name, let fn_create_seo_name handle it
-        unset($processing_products[$object_id]);
-        return;
-    }
-    
-    // Occupying product is from the same group - free the URL
-    // Mark occupying product as being processed to avoid recursion
-    $processing_products[$occupying_product_id] = true;
-    
-    // Get product name for the occupying product to generate new SEO name
-    $occupying_product_name = db_get_field(
-        "SELECT product 
-         FROM ?:product_descriptions 
-         WHERE product_id = ?i AND lang_code = ?s",
-        $occupying_product_id,
-        $lang_code
-    );
-    
-    if (empty($occupying_product_name)) {
-        // Fallback to product_code if name is not available
-        $occupying_product_name = db_get_field(
-            "SELECT product_code FROM ?:products WHERE product_id = ?i",
-            $occupying_product_id
+    // Process each variation group
+    foreach (array_keys($group_codes) as $group_code) {
+        // Get group ID
+        $group_id = db_get_field(
+            "SELECT id FROM ?:product_variation_groups WHERE code = ?s",
+            $group_code
         );
         
-        if (empty($occupying_product_name)) {
-            $occupying_product_name = 'product-' . $occupying_product_id;
+        if (!$group_id) {
+            continue;
+        }
+        
+        // Get default product for this group (parent_product_id = 0)
+        // Use DESC to get the newest product (most recently created)
+        $default_product = db_get_row(
+            "SELECT product_id, parent_product_id 
+             FROM ?:product_variation_group_products 
+             WHERE group_id = ?i AND (parent_product_id IS NULL OR parent_product_id = 0)
+             ORDER BY product_id DESC
+             LIMIT 1",
+            $group_id
+        );
+        
+        if (empty($default_product)) {
+            continue;
+        }
+        
+        $default_product_id = $default_product['product_id'];
+        
+        // Expected SEO name is the variation group code
+        $expected_seo_name = $group_code;
+        
+        // Get current SEO name
+        $current_seo_name = db_get_field(
+            "SELECT name FROM ?:seo_names WHERE object_id = ?i AND type = 'p' AND lang_code = 'en'",
+            $default_product_id
+        );
+        
+        if ($current_seo_name === $expected_seo_name) {
+            // Already correct
+            continue;
+        }
+        
+        // Check if expected SEO name is occupied
+        $occupied_by = db_get_row(
+            "SELECT object_id, name 
+             FROM ?:seo_names 
+             WHERE name = ?s 
+               AND object_id != ?i 
+               AND type = 'p' 
+               AND lang_code = 'en'",
+            $expected_seo_name,
+            $default_product_id
+        );
+        
+        if (!empty($occupied_by)) {
+            $occupying_product_id = $occupied_by['object_id'];
+            
+            // Check if occupying product is from the same variation group
+            $occupying_variation_info = db_get_row(
+                "SELECT group_id 
+                 FROM ?:product_variation_group_products 
+                 WHERE product_id = ?i",
+                $occupying_product_id
+            );
+            
+            if (!empty($occupying_variation_info) && $occupying_variation_info['group_id'] == $group_id) {
+                // Free the URL from occupying product
+                $occupying_product_name = db_get_field(
+                    "SELECT product 
+                     FROM ?:product_descriptions 
+                     WHERE product_id = ?i AND lang_code = 'en'",
+                    $occupying_product_id
+                );
+                
+                if (empty($occupying_product_name)) {
+                    $occupying_product_name = db_get_field(
+                        "SELECT product_code FROM ?:products WHERE product_id = ?i",
+                        $occupying_product_id
+                    );
+                    
+                    if (empty($occupying_product_name)) {
+                        $occupying_product_name = 'product-' . $occupying_product_id;
+                    }
+                }
+                
+                // Delete old SEO name
+                db_query(
+                    "DELETE FROM ?:seo_names 
+                     WHERE object_id = ?i 
+                       AND type = 'p' 
+                       AND name = ?s 
+                       AND lang_code = 'en'",
+                    $occupying_product_id,
+                    $expected_seo_name
+                );
+                
+                // Generate new SEO name for occupying product
+                $new_base_name = $occupying_product_name . '-variant';
+                $new_seo_name = fn_create_seo_name(
+                    $occupying_product_id,
+                    'p',
+                    $new_base_name,
+                    0,
+                    '',
+                    0,
+                    'en',
+                    false,
+                    'C',
+                    [],
+                    false,
+                    ''
+                );
+                
+                if ($is_import) {
+                    fn_mwl_xlsx_log_info("Post-import SEO fix: Freed URL '{$expected_seo_name}' from product #{$occupying_product_id} " .
+                         "(same variation group #{$group_id}), assigned new URL '{$new_seo_name}'");
+                }
+            }
+        }
+        
+        // Update default product SEO name
+        if ($current_seo_name !== $expected_seo_name) {
+            // Delete current SEO name
+            db_query(
+                "DELETE FROM ?:seo_names 
+                 WHERE object_id = ?i 
+                   AND type = 'p' 
+                   AND lang_code = 'en'",
+                $default_product_id
+            );
+            
+            // Create new SEO name using the group code directly
+            $new_seo_name = fn_create_seo_name(
+                $default_product_id,
+                'p',
+                $expected_seo_name,
+                0,
+                '',
+                0,
+                'en',
+                false,
+                'C',
+                [],
+                false,
+                ''
+            );
+            
+            if ($is_import) {
+                fn_mwl_xlsx_log_info("Post-import SEO fix: Updated SEO name for default product #{$default_product_id} " .
+                     "from '{$current_seo_name}' to '{$new_seo_name}' (group #{$group_id}, expected: '{$expected_seo_name}')");
+            }
         }
     }
-    
-    // Delete the old SEO name to free the URL
-    $delete_condition = fn_get_seo_company_condition('?:seo_names.company_id', $object_type, $company_id);
-    db_query(
-        "DELETE FROM ?:seo_names 
-         WHERE object_id = ?i 
-           AND type = ?s 
-           AND dispatch = ?s 
-           AND name = ?s 
-           AND lang_code = ?s ?p",
-        $occupying_product_id,
-        $object_type,
-        $dispatch,
-        $normalized_name,
-        $lang_code,
-        $delete_condition
-    );
-    
-    // Generate new SEO name for the occupying product
-    // Add suffix to make it unique
-    $new_base_name = $occupying_product_name . '-variant';
-    $new_seo_name = fn_create_seo_name(
-        $occupying_product_id,
-        $object_type,
-        $new_base_name,
-        0,
-        $dispatch,
-        $company_id,
-        $lang_code,
-        false,
-        $area,
-        $params,
-        false,
-        ''
-    );
-    
-    if (!empty($new_seo_name)) {
-        // Log the action for debugging
-        if (defined('DEVELOPMENT') || Registry::get('runtime.advanced_import.in_progress')) {
-            echo "[MWL_XLSX] SEO URL preservation: Freed URL '{$normalized_name}' from product #{$occupying_product_id} " .
-                 "(same variation group #{$default_group_id}), assigned new URL '{$new_seo_name}'" . PHP_EOL;
-        }
-    }
-    
-    // Unmark both products from processing
-    unset($processing_products[$object_id]);
-    unset($processing_products[$occupying_product_id]);
 }

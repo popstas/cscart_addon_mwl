@@ -39,8 +39,7 @@ fn_register_hooks(
     'variation_group_add_products_to_group',
     'variation_group_save_group',
     'update_product_features_value_pre',
-    'import_post',
-    'create_seo_name_pre'
+    'import_post'
 );
 
 Tygh::$app['event.transports.mwl'] = static function ($app) {
