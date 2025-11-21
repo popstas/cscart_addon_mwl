@@ -1758,15 +1758,34 @@ function fn_mwl_xlsx_variation_group_save_group($service, $group, $events)
     }
     
     // Проверяем feature combinations всех продуктов в группе
-    fn_mwl_xlsx_log_debug('Checking feature combinations in saved group (from DB):');
+    // Важно: проверяем ТОЛЬКО активные продукты (status = 'A')
+    // Игнорируем отключенные продукты (status = 'D'), т.к. они могут быть дубликатами перед удалением
+    fn_mwl_xlsx_log_debug('Checking feature combinations in saved group (from DB, active products only):');
     $product_ids = $group->getProductIds();
     if (!empty($product_ids)) {
-        // Сначала получаем product_code'ы
-        $product_codes = db_get_hash_single_array(
-            "SELECT product_id, product_code FROM ?:products WHERE product_id IN (?a)",
-            ['product_id', 'product_code'],
+        // Получаем только активные продукты с дополнительной информацией
+        $active_products_info = db_get_array(
+            "SELECT product_id, product_code, status, timestamp, updated_timestamp " .
+            "FROM ?:products WHERE product_id IN (?a) AND status = 'A'",
             $product_ids
         );
+        
+        if (empty($active_products_info)) {
+            fn_mwl_xlsx_log_debug('No active products in group, skipping duplicate check');
+            fn_mwl_xlsx_log_debug('========================================');
+            return;
+        }
+        
+        $active_product_ids = array_column($active_products_info, 'product_id');
+        $product_codes = [];
+        $product_ages = []; // Для определения новых продуктов
+        $current_time = TIME;
+        foreach ($active_products_info as $info) {
+            $product_codes[$info['product_id']] = $info['product_code'];
+            // Продукт считается "новым" если создан менее 5 минут назад (во время импорта)
+            $product_age = $current_time - max($info['timestamp'], $info['updated_timestamp'] ?: 0);
+            $product_ages[$info['product_id']] = $product_age < 300 ? 'new' : 'existing';
+        }
         
         $combinations_check = db_get_array(
             "SELECT pfv.product_id, pfv.feature_id, pfv.variant_id, pfv.value_int, pfvd.variant " .
@@ -1774,7 +1793,7 @@ function fn_mwl_xlsx_variation_group_save_group($service, $group, $events)
             "LEFT JOIN ?:product_feature_variant_descriptions pfvd ON pfv.variant_id = pfvd.variant_id AND pfvd.lang_code = 'en' " .
             "WHERE pfv.product_id IN (?a) AND pfv.feature_id IN (?a) AND pfv.lang_code = 'en' " .
             "ORDER BY pfv.product_id, pfv.feature_id",
-            $product_ids, $group->getFeatureIds()
+            $active_product_ids, $group->getFeatureIds()
         );
         
         $by_product = [];
@@ -1790,6 +1809,7 @@ function fn_mwl_xlsx_variation_group_save_group($service, $group, $events)
         
         foreach ($by_product as $pid => $features) {
             $product_code = isset($product_codes[$pid]) ? $product_codes[$pid] : 'unknown';
+            $product_age = isset($product_ages[$pid]) ? $product_ages[$pid] : 'unknown';
             $feature_list = implode(', ', $features);
             
             // Показываем детали
@@ -1797,21 +1817,73 @@ function fn_mwl_xlsx_variation_group_save_group($service, $group, $events)
             foreach ($by_product_detailed[$pid] as $fid => $info) {
                 $details[] = 'F' . $fid . '=' . $info['variant_id'] . '(' . ($info['variant'] ?? $info['value_int']) . ')';
             }
-            fn_mwl_xlsx_log_debug('Product #' . $pid . ' [' . $product_code . ']: ' . $feature_list . ' [' . implode(', ', $details) . ']');
+            fn_mwl_xlsx_log_debug('Product #' . $pid . ' [' . $product_code . '] (' . $product_age . '): ' . $feature_list . ' [' . implode(', ', $details) . ']');
         }
         
         // Проверяем дубликаты
-        $combinations = [];
-        foreach ($by_product as $pid => $features) {
-            ksort($features); // Сортируем для консистентности
-            $combo_key = implode('_', $features);
-            if (isset($combinations[$combo_key])) {
-                fn_mwl_xlsx_log_info('⚠ DUPLICATE COMBINATION detected in saved group!');
-                fn_mwl_xlsx_log_info('Product #' . $pid . ' has same combination as Product #' . $combinations[$combo_key]);
-                fn_mwl_xlsx_log_info('Combination: ' . implode(', ', $features) . ' (key: ' . $combo_key . ')');
-                fn_mwl_xlsx_log_info('→ This should NOT happen! Check why feature values not updated correctly');
-            } else {
-                $combinations[$combo_key] = $pid;
+        // Важно: сравниваем ТОЛЬКО variation features (те что в $group->getFeatureIds())
+        // Не сравниваем shared features (URL, Type of media, Region и т.д.) - они одинаковые для всех продуктов
+        $variation_feature_ids = $group->getFeatureIds();
+        if (empty($variation_feature_ids)) {
+            fn_mwl_xlsx_log_debug('No variation features in group, skipping duplicate check');
+        } else {
+            $combinations = [];
+            foreach ($by_product as $pid => $features) {
+                // Фильтруем только variation features для сравнения
+                $variation_features_only = [];
+                foreach ($variation_feature_ids as $fid) {
+                    if (isset($features[$fid])) {
+                        $variation_features_only[$fid] = $features[$fid];
+                    }
+                }
+                
+                if (empty($variation_features_only)) {
+                    fn_mwl_xlsx_log_debug('Product #' . $pid . ' has no variation features, skipping');
+                    continue;
+                }
+                
+                ksort($variation_features_only); // Сортируем для консистентности
+                $combo_key = implode('_', $variation_features_only);
+                
+                if (isset($combinations[$combo_key])) {
+                    $existing_pid = $combinations[$combo_key];
+                    $existing_code = isset($product_codes[$existing_pid]) ? $product_codes[$existing_pid] : 'unknown';
+                    $existing_age = isset($product_ages[$existing_pid]) ? $product_ages[$existing_pid] : 'unknown';
+                    $current_code = isset($product_codes[$pid]) ? $product_codes[$pid] : 'unknown';
+                    $current_age = isset($product_ages[$pid]) ? $product_ages[$pid] : 'unknown';
+                    
+                    // Подавляем предупреждения для продуктов, которые оба "новые" (созданы во время импорта)
+                    // Это временные дубликаты, которые будут разрешены логикой удаления дубликатов или валидацией CS-Cart
+                    if ($current_age === 'new' && $existing_age === 'new') {
+                        fn_mwl_xlsx_log_debug('Duplicate combination detected between new products #' . $pid . ' [' . $current_code . '] and #' . $existing_pid . ' [' . $existing_code . '] - suppressing warning (temporary during import)');
+                        // Не добавляем в combinations, чтобы не создавать ложные предупреждения для следующих продуктов
+                        continue;
+                    }
+                    
+                    // Улучшенное логирование с контекстом для реальных проблем
+                    fn_mwl_xlsx_log_info('⚠ DUPLICATE COMBINATION detected in saved group!');
+                    fn_mwl_xlsx_log_info('Product #' . $pid . ' [' . $current_code . '] (' . $current_age . ') has same combination as Product #' . $existing_pid . ' [' . $existing_code . '] (' . $existing_age . ')');
+                    
+                    // Показываем только variation features в сообщении
+                    $feature_names = [];
+                    foreach ($variation_features_only as $fid => $value) {
+                        $feature_name = db_get_field(
+                            "SELECT description FROM ?:product_features_descriptions WHERE feature_id = ?i AND lang_code = 'en'",
+                            $fid
+                        ) ?: "Feature #{$fid}";
+                        $feature_names[] = $feature_name . '=' . $value;
+                    }
+                    fn_mwl_xlsx_log_info('Combination (variation features only): ' . implode(', ', $feature_names) . ' (key: ' . $combo_key . ')');
+                    
+                    // Дополнительная диагностика
+                    if ($current_age === 'new' && $existing_age === 'existing') {
+                        fn_mwl_xlsx_log_info('→ New product conflicts with existing - duplicate removal should have handled this');
+                    } else {
+                        fn_mwl_xlsx_log_info('→ This should NOT happen! Check why feature values not updated correctly');
+                    }
+                } else {
+                    $combinations[$combo_key] = $pid;
+                }
             }
         }
         
