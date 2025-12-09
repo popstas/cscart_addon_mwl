@@ -53,7 +53,7 @@ class DeleteUnusedProductsRunner
 
             if (!$table_exists) {
                 $warning_message = __('mwl_xlsx.delete_unused_products_table_missing', ['[table]' => $table_name]);
-                echo '[info] ' . $warning_message . PHP_EOL;
+                echo '[warning] ' . $warning_message . PHP_EOL;
                 fn_mwl_xlsx_append_log('[delete_unused] ' . $warning_message);
 
                 continue;

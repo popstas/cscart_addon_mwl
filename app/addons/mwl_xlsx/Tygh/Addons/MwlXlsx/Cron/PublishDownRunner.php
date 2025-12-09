@@ -138,7 +138,7 @@ class PublishDownRunner
 
             if (!$group_id) {
                 $warning = "Variation group not found in database: {$group_code}";
-                echo '[info] ' . $warning . PHP_EOL;
+                echo '[warning] ' . $warning . PHP_EOL;
                 fn_mwl_xlsx_append_log('[publish_down_csv] ' . $warning);
                 continue;
             }

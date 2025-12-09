@@ -285,7 +285,7 @@ function fn_mwl_xlsx_filter_sync_service(): FilterSyncService
 
 function fn_mwl_xlsx_append_log(string $message): void
 {
-    $log_dir = Registry::get('config.dir.root') . '/var/log';
+    $log_dir = Registry::get('config.dir.root') . '/var/files/log';
     fn_mkdir($log_dir);
 
     $line = sprintf('[%s] %s%s', date('c'), $message, PHP_EOL);
@@ -1193,7 +1193,7 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
                 $group->getId()
             );
             if (!empty($db_features_check)) {
-                fn_mwl_xlsx_log_info('⚠ Group object has no features, but DB has: ' . implode(', ', array_column($db_features_check, 'feature_id')));
+                fn_mwl_xlsx_log_info('⚠ WARNING: Group object has no features, but DB has: ' . implode(', ', array_column($db_features_check, 'feature_id')));
                 fn_mwl_xlsx_log_debug('→ Group object not fully loaded, reloading from DB...');
                 
                 $fresh_group = $group_repository->findGroupById($group->getId());
@@ -1385,7 +1385,7 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
         // Причина: CS-Cart фильтрует variation features при сохранении через ProductsHookHandler
         // Когда мы добавляем новую feature, CS-Cart не сохраняет её values → ошибка "required features"
         if (!empty($added_feature_ids)) {
-            fn_mwl_xlsx_log_debug('⚠ New features detected: ' . implode(', ', $added_feature_ids));
+            fn_mwl_xlsx_log_debug('New features detected: ' . implode(', ', $added_feature_ids));
             fn_mwl_xlsx_log_debug('→ Auto-adding features DISABLED due to CS-Cart import filtering');
             fn_mwl_xlsx_log_debug('→ Will fix feature values in import_post hook');
             fn_mwl_xlsx_log_debug('→ New features: ' . implode(', ', array_map(function($fid) use ($available_features) {
@@ -1541,7 +1541,7 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
                     fn_mwl_xlsx_log_debug('Stack trace: ' . $db_error->getTraceAsString());
                 }
             } else {
-                fn_mwl_xlsx_log_debug('⚠ No features to insert!');
+                fn_mwl_xlsx_log_debug('⚠ WARNING: No features to insert!');
             }
             
             // Перезагружаем группу с обновленными features
@@ -1633,7 +1633,7 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
                 foreach ($new_combinations as $new_pid => $new_combo_data) {
                     if ($combo_key === $new_combo_data['key']) {
                         $products_to_remove[] = $existing_pid;
-                        fn_mwl_xlsx_log_debug('⚠ Product #' . $existing_pid . ' has SAME combination as new product #' . $new_pid);
+                        fn_mwl_xlsx_log_debug('⚠ WARNING: Product #' . $existing_pid . ' has SAME combination as new product #' . $new_pid);
                         fn_mwl_xlsx_log_debug('→ Will remove existing product #' . $existing_pid . ' from group');
                     }
                 }
@@ -1680,7 +1680,7 @@ function fn_mwl_xlsx_variation_group_add_products_to_group($service, $result, $p
         
     } catch (\Exception $e) {
         // Логируем ошибку, но не прерываем процесс импорта
-        echo '[MWL_XLSX] ✗ EXCEPTION: ' . $e->getMessage() . PHP_EOL;
+        echo '[MWL_XLSX] ✗ ERROR EXCEPTION: ' . $e->getMessage() . PHP_EOL;
         echo '  Trace: ' . $e->getTraceAsString() . PHP_EOL;
     }
     
@@ -1861,7 +1861,7 @@ function fn_mwl_xlsx_variation_group_save_group($service, $group, $events)
                     }
                     
                     // Улучшенное логирование с контекстом для реальных проблем
-                    fn_mwl_xlsx_log_info('⚠ DUPLICATE COMBINATION detected in saved group!');
+                    fn_mwl_xlsx_log_info('⚠ WARNING: DUPLICATE COMBINATION detected in saved group!');
                     fn_mwl_xlsx_log_info('Product #' . $pid . ' [' . $current_code . '] (' . $current_age . ') has same combination as Product #' . $existing_pid . ' [' . $existing_code . '] (' . $existing_age . ')');
                     
                     // Показываем только variation features в сообщении
