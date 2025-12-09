@@ -932,22 +932,31 @@
           
           console.log('[MWL] Full lines:', fullLines, 'Max visible:', maxVisibleLines, 'Hidden lines:', hiddenLines);
           
-          // Store hidden lines count in data attribute
-          $contentDesc.data('mwl-hidden-lines', hiddenLines);
-          $contentDesc.data('mwl-max-visible-lines', maxVisibleLines);
-          
-          // Update toggle button text
-          var $toggleBtn = $contentDesc.find('.mwl-description-toggle');
-          if ($toggleBtn.length) {
-            var buttonText = '';
-            if (hiddenLines > 0) {
-              buttonText = hiddenLines + ' ' + (hiddenLines === 1 ? 'строка' : (hiddenLines < 5 ? 'строки' : 'строк'));
+          // Only apply collapse if description has more lines than maxVisibleLines
+          if (fullLines > maxVisibleLines + 2) {
+            // Store hidden lines count in data attribute
+            $contentDesc.data('mwl-hidden-lines', hiddenLines);
+            $contentDesc.data('mwl-max-visible-lines', maxVisibleLines);
+            
+            // Update toggle button text
+            var $toggleBtn = $contentDesc.find('.mwl-description-toggle');
+            if ($toggleBtn.length) {
+              var buttonText = '';
+              if (hiddenLines > 0) {
+                buttonText = hiddenLines.toString();
+              }
+              $toggleBtn.text(buttonText);
             }
-            $toggleBtn.text(buttonText);
+            
+            // Collapse by default if description is long (element starts expanded in template)
+            $contentDesc.addClass('mwl-description-collapsed');
+          } else {
+            // Description is too short, remove collapse functionality
+            console.log('[MWL] Description is too short (' + fullLines + ' lines), removing collapse functionality');
+            $contentDesc.removeClass('mwl-description-collapsed');
+            $contentDesc.find('.mwl-description-fade').remove();
+            $contentDesc.find('.mwl-description-toggle').remove();
           }
-          
-          // Collapse by default if description is long (element starts expanded in template)
-          $contentDesc.addClass('mwl-description-collapsed');
         } else {
           console.log('[MWL] Description is too short, skipping');
         }
@@ -989,7 +998,7 @@
         var hiddenLines = $contentDesc.data('mwl-hidden-lines') || 0;
         var buttonText = '';
         if (hiddenLines > 0) {
-          buttonText = hiddenLines + ' ' + (hiddenLines === 1 ? 'строка' : (hiddenLines < 5 ? 'строки' : 'строк'));
+          buttonText = hiddenLines.toString();
         }
         $btn.text(buttonText);
         console.log('[MWL] Expanded description');
@@ -999,7 +1008,7 @@
         var hiddenLines = $contentDesc.data('mwl-hidden-lines') || 0;
         var buttonText = '';
         if (hiddenLines > 0) {
-          buttonText = hiddenLines + ' ' + (hiddenLines === 1 ? 'строка' : (hiddenLines < 5 ? 'строки' : 'строк'));
+          buttonText = hiddenLines.toString();
         }
         $btn.text(buttonText);
         console.log('[MWL] Collapsed description');
