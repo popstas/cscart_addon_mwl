@@ -277,6 +277,9 @@
     // init user id in Metrika
     setMwlUserId();
 
+    // Initialize description toggle styles
+    initDescriptionToggle();
+
     if (_ && _.addons && _.addons.mwl_xlsx) {
       if (_.addons.mwl_xlsx.linkify_feature_urls) {
         linkifyFeatureValues(context);
@@ -363,6 +366,58 @@
         }
       } catch (e) {}
     }
+  });
+
+  // Also initialize on DOM ready and after AJAX updates
+  $(function() {
+    initDescriptionToggle();
+    
+    // Re-initialize after AJAX content updates (for tabs)
+    if (typeof MutationObserver !== 'undefined') {
+      var observer = new MutationObserver(function(mutations) {
+        var shouldInit = false;
+        mutations.forEach(function(mutation) {
+          if (mutation.addedNodes) {
+            for (var i = 0; i < mutation.addedNodes.length; i++) {
+              var node = mutation.addedNodes[i];
+              if (node.nodeType === 1) { // Element node
+                var $node = $(node);
+                if ($node.is('#content_description') || $node.find('#content_description').length || 
+                    $node.closest('#content_description').length) {
+                  shouldInit = true;
+                  break;
+                }
+              }
+            }
+          }
+          // Also check if content_description content changed
+          if (mutation.target && $(mutation.target).closest('#content_description').length) {
+            shouldInit = true;
+          }
+        });
+        if (shouldInit) {
+          console.log('[MWL] MutationObserver detected content_description change');
+          // Reset processed flag to allow re-processing
+          $('#content_description').removeData('mwl-processed');
+          setTimeout(initDescriptionToggle, 100);
+        }
+      });
+      
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true
+      });
+    }
+    
+    // Also listen for tab switching events
+    $(_.doc).on('click', '.ty-tabs__item a, .tab-list-title', function() {
+      console.log('[MWL] Tab clicked, will re-init description toggle');
+      setTimeout(function() {
+        $('#content_description').removeData('mwl-processed');
+        initDescriptionToggle();
+      }, 200);
+    });
   });
 
   $(_.doc).on('change', '[data-ca-list-select-xlsx]', function() {
@@ -764,6 +819,214 @@
     }, 300);
   });
 
+  // Description expand/collapse functionality
+  function initDescriptionToggle() {
+    console.log('[MWL] initDescriptionToggle called');
+
+    // Process #content_description element
+    var $contentDesc = $('#content_description');
+    console.log('[MWL] #content_description found:', $contentDesc.length, 'processed:', $contentDesc.data('mwl-processed'));
+    
+    if ($contentDesc.length && !$contentDesc.data('mwl-processed')) {
+      // Add card class - element should be expanded by default in template
+      if (!$contentDesc.hasClass('mwl-description-card')) {
+        $contentDesc.addClass('mwl-description-card');
+      }
+      
+      // Try to find the description div - it might be the last div or a direct child
+      var $descDiv = $contentDesc.find('> div:last-child');
+      if (!$descDiv.length) {
+        $descDiv = $contentDesc.children('div').last();
+      }
+      if (!$descDiv.length) {
+        // If no div found, use the content_description itself
+        $descDiv = $contentDesc;
+      }
+      
+      console.log('[MWL] Description div found:', $descDiv.length, 'HTML length:', $descDiv.html() ? $descDiv.html().length : 0);
+      
+      if ($descDiv.length) {
+        var descTextPlain = $descDiv.text() || '';
+        // Remove extra whitespace and newlines for length calculation
+        descTextPlain = descTextPlain.replace(/\s+/g, ' ').trim();
+        
+        console.log('[MWL] Description text length:', descTextPlain.length, 'First 100 chars:', descTextPlain.substring(0, 100));
+        
+        // Check if description is long enough to truncate (more than 300 chars)
+        if (descTextPlain.length > 300) {
+          console.log('[MWL] Description is long enough, adding collapse functionality');
+          
+          // Wrap the description div in a container for better control
+          if (!$descDiv.hasClass('mwl-description-text-wrapper')) {
+            $descDiv.wrap('<div class="mwl-description-text-wrapper"></div>');
+          }
+          var $wrapper = $descDiv.parent('.mwl-description-text-wrapper');
+          
+          // Add fade overlay and toggle button (they should be in template, but add if missing)
+          if (!$contentDesc.find('.mwl-description-fade').length) {
+            console.log('[MWL] Adding fade overlay');
+            $contentDesc.append('<div class="mwl-description-fade"></div>');
+          }
+          
+          // Add toggle button (should be in template, but add if missing)
+          if (!$contentDesc.find('.mwl-description-toggle').length) {
+            console.log('[MWL] Adding toggle button');
+            $contentDesc.append(
+              '<a href="#" class="mwl-description-toggle" data-ca-mwl-description-toggle onclick="return false;"></a>'
+            );
+          }
+          
+          // Calculate line height and number of visible lines using Range API for accurate line count
+          var computedStyle = window.getComputedStyle($descDiv[0]);
+          var maxVisibleLines = 6; // Show 6 lines when collapsed
+          
+          // Function to count lines using Range API
+          function countLines(element) {
+            var text = element.innerText || element.textContent || '';
+            if (!text.trim()) return 0;
+            
+            var styles = window.getComputedStyle(element);
+            var lineHeight = parseFloat(styles.lineHeight);
+            if (isNaN(lineHeight) || styles.lineHeight === 'normal') {
+              var fontSize = parseFloat(styles.fontSize) || 14;
+              lineHeight = fontSize * 1.5;
+            }
+            
+            // Create a temporary clone to measure
+            var $clone = $(element).clone()
+              .css({
+                position: 'absolute',
+                visibility: 'hidden',
+                width: $(element).width() + 'px',
+                height: 'auto',
+                maxHeight: 'none',
+                overflow: 'visible',
+                whiteSpace: 'normal',
+                wordWrap: 'break-word'
+              })
+              .appendTo('body');
+            
+            var cloneEl = $clone[0];
+            var range = document.createRange();
+            range.selectNodeContents(cloneEl);
+            
+            var rects = range.getClientRects();
+            var lines = rects.length;
+            
+            // Fallback: use height calculation if Range API doesn't work well
+            if (lines === 0 || lines === 1) {
+              var height = cloneEl.scrollHeight;
+              var paddingTop = parseFloat(styles.paddingTop) || 0;
+              var paddingBottom = parseFloat(styles.paddingBottom) || 0;
+              var contentHeight = height - paddingTop - paddingBottom;
+              lines = Math.round(contentHeight / lineHeight);
+            }
+            
+            $clone.remove();
+            return lines;
+          }
+          
+          // Count total lines
+          var fullLines = countLines($descDiv[0]);
+          var hiddenLines = Math.max(0, fullLines - maxVisibleLines);
+          
+          console.log('[MWL] Full lines:', fullLines, 'Max visible:', maxVisibleLines, 'Hidden lines:', hiddenLines);
+          
+          // Store hidden lines count in data attribute
+          $contentDesc.data('mwl-hidden-lines', hiddenLines);
+          $contentDesc.data('mwl-max-visible-lines', maxVisibleLines);
+          
+          // Update toggle button text
+          var $toggleBtn = $contentDesc.find('.mwl-description-toggle');
+          if ($toggleBtn.length) {
+            var buttonText = '';
+            if (hiddenLines > 0) {
+              buttonText = hiddenLines + ' ' + (hiddenLines === 1 ? 'строка' : (hiddenLines < 5 ? 'строки' : 'строк'));
+            }
+            $toggleBtn.text(buttonText);
+          }
+          
+          // Collapse by default if description is long (element starts expanded in template)
+          $contentDesc.addClass('mwl-description-collapsed');
+        } else {
+          console.log('[MWL] Description is too short, skipping');
+        }
+        
+        $contentDesc.data('mwl-processed', true);
+        console.log('[MWL] Marked as processed');
+      } else {
+        console.log('[MWL] No description div found');
+      }
+    } else {
+      if (!$contentDesc.length) {
+        console.log('[MWL] #content_description element not found on page');
+      }
+    }
+
+    // Initialize wrapper state for template-based descriptions
+    $('.mwl-description-wrapper').each(function() {
+      var $wrapper = $(this);
+      var $content = $wrapper.find('.mwl-description-content');
+      if ($content.hasClass('mwl-description-collapsed')) {
+        $wrapper.addClass('mwl-description-collapsed');
+      }
+    });
+  }
+
+  $(_.doc).on('click', '[data-ca-mwl-description-toggle]', function(e) {
+    e.preventDefault();
+    console.log('[MWL] Toggle button clicked');
+    var $btn = $(this);
+    var $contentDesc = $('#content_description');
+    var $wrapper = $btn.closest('.mwl-description-wrapper');
+    
+    // Handle #content_description (tabs-based description)
+    if ($contentDesc.length && $contentDesc.has($btn).length) {
+      console.log('[MWL] Toggling #content_description, current state:', $contentDesc.hasClass('mwl-description-collapsed') ? 'collapsed' : 'expanded');
+      if ($contentDesc.hasClass('mwl-description-collapsed')) {
+        // Expand
+        $contentDesc.removeClass('mwl-description-collapsed');
+        var hiddenLines = $contentDesc.data('mwl-hidden-lines') || 0;
+        var buttonText = '';
+        if (hiddenLines > 0) {
+          buttonText = hiddenLines + ' ' + (hiddenLines === 1 ? 'строка' : (hiddenLines < 5 ? 'строки' : 'строк'));
+        }
+        $btn.text(buttonText);
+        console.log('[MWL] Expanded description');
+      } else {
+        // Collapse
+        $contentDesc.addClass('mwl-description-collapsed');
+        var hiddenLines = $contentDesc.data('mwl-hidden-lines') || 0;
+        var buttonText = '';
+        if (hiddenLines > 0) {
+          buttonText = hiddenLines + ' ' + (hiddenLines === 1 ? 'строка' : (hiddenLines < 5 ? 'строки' : 'строк'));
+        }
+        $btn.text(buttonText);
+        console.log('[MWL] Collapsed description');
+      }
+      return;
+    }
+    
+    // Handle template-based description wrapper
+    if ($wrapper.length) {
+      console.log('[MWL] Toggling template-based wrapper');
+      var $content = $wrapper.find('.mwl-description-content');
+      var $fade = $wrapper.find('.mwl-description-fade');
+
+      if ($wrapper.hasClass('mwl-description-collapsed')) {
+        // Expand
+        $wrapper.removeClass('mwl-description-collapsed');
+        $content.removeClass('mwl-description-collapsed');
+        $btn.text(_.tr('mwl_xlsx.show_less') || 'Скрыть');
+      } else {
+        // Collapse
+        $wrapper.addClass('mwl-description-collapsed');
+        $content.addClass('mwl-description-collapsed');
+        $btn.text(_.tr('mwl_xlsx.show_all') || 'Показать все');
+      }
+    }
+  });
+
   function populateAddDialogOptions() {
     var $dlgSelect = $addDialog.find('[data-ca-list-select-xlsx]');
     $dlgSelect.empty();
@@ -947,6 +1210,9 @@
   $(function() {
     setLanguageFromBrowser();
 
+    // Initialize description toggle styles
+    initDescriptionToggle();
+
     if (_ && _.addons && _.addons.mwl_xlsx) {
       if (_.addons.mwl_xlsx.format_feature_numbers) {
         formatFeatureNumbers();
@@ -956,6 +1222,9 @@
         addPriceHints();
       }
     }
+    
+    // Re-initialize description toggle after a delay (for dynamically loaded content)
+    setTimeout(initDescriptionToggle, 500);
   });
 
   function parseResponse(data) {
