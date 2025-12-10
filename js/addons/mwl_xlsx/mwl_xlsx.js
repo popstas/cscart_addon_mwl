@@ -995,12 +995,8 @@
       if ($contentDesc.hasClass('mwl-description-collapsed')) {
         // Expand
         $contentDesc.removeClass('mwl-description-collapsed');
-        var hiddenLines = $contentDesc.data('mwl-hidden-lines') || 0;
-        var buttonText = '';
-        if (hiddenLines > 0) {
-          buttonText = hiddenLines.toString();
-        }
-        $btn.text(buttonText);
+        // Remove number when expanded
+        $btn.text('');
         console.log('[MWL] Expanded description');
       } else {
         // Collapse
