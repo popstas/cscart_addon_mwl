@@ -25,6 +25,10 @@ if ($mode === 'planfix_changed_status') {
     return [CONTROLLER_STATUS_NO_CONTENT];
 }
 
+if (empty($auth['user_id'])) {
+    return [CONTROLLER_STATUS_REDIRECT, '/login?return_url=' . urlencode(Registry::get('config.current_url'))];
+}
+
 if (!fn_mwl_xlsx_access_service()->canAccessLists($auth)) {
     return [CONTROLLER_STATUS_DENIED];
 }
