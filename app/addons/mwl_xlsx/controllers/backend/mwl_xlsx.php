@@ -2,6 +2,7 @@
 use Tygh\Tygh;
 use Tygh\Registry;
 use Tygh\Enum\UserTypes;
+use Tygh\Storage;
 use Tygh\Addons\MwlXlsx\Service\SettingsBackup;
 use Tygh\Addons\MwlXlsx\Cron\DeleteUnusedProductsRunner;
 use Tygh\Addons\MwlXlsx\Cron\FiltersSyncRunner;
@@ -448,6 +449,214 @@ if ($mode === 'check_feature_63') {
     foreach ($features as $fid => $feat) {
         echo "  - Feature #{$fid}: " . ($feat['description'] ?? 'unknown') . " (purpose: " . ($feat['purpose'] ?? 'unknown') . ")\n";
     }
+    
+    return [CONTROLLER_STATUS_NO_CONTENT];
+}
+
+if ($mode === 'check_images') {
+    $dry_run = false;
+    
+    if (defined('MWL_XLSX_CHECK_IMAGES_DRY_RUN')) {
+        $dry_run = (bool) MWL_XLSX_CHECK_IMAGES_DRY_RUN;
+    }
+    
+    if (!defined('MAX_FILES_IN_DIR')) {
+        define('MAX_FILES_IN_DIR', 1000);
+    }
+    
+    echo "Checking images in database...\n";
+    echo "Dry run: " . ($dry_run ? 'YES' : 'NO') . "\n\n";
+    
+    // Получаем все изображения (включая с пустым image_path)
+    $images = db_get_array("SELECT image_id, image_path FROM ?:images ORDER BY image_id");
+    
+    if (empty($images)) {
+        echo "No images found in database.\n";
+        return [CONTROLLER_STATUS_NO_CONTENT];
+    }
+    
+    $total_images = count($images);
+    $missing_images = [];
+    $checked_count = 0;
+    $found_count = 0;
+    $deleted_count = 0;
+    
+    $storage = Storage::instance('images');
+    
+    foreach ($images as $image) {
+        $image_id = (int) $image['image_id'];
+        $image_path = trim((string) ($image['image_path'] ?? ''));
+        
+        $checked_count++;
+        $file_exists = false;
+        $checked_paths = [];
+        $object_types = [];
+        
+        // Проверяем пустой image_path
+        if (empty($image_path)) {
+            // Пустой image_path - считаем как отсутствующий файл
+            $missing_images[] = [
+                'image_id' => $image_id,
+                'image_path' => '',
+                'checked_paths' => [],
+                'object_types' => [],
+                'empty_path' => true,
+            ];
+            
+            // Удаляем сломанное изображение из БД если dry_run = false
+            if (!$dry_run) {
+                // Удаляем связи из images_links
+                db_query('UPDATE ?:images_links SET image_id = 0 WHERE image_id = ?i', $image_id);
+                db_query('UPDATE ?:images_links SET detailed_id = 0 WHERE detailed_id = ?i', $image_id);
+                
+                // Удаляем описание изображения
+                db_query('DELETE FROM ?:common_descriptions WHERE object_id = ?i AND object_holder = ?s', $image_id, 'images');
+                
+                // Удаляем саму запись изображения
+                db_query('DELETE FROM ?:images WHERE image_id = ?i', $image_id);
+                
+                $deleted_count++;
+            }
+            
+            // Прогресс каждые 100 изображений
+            if ($checked_count % 100 === 0) {
+                echo "Checked: {$checked_count} / {$total_images}\n";
+            }
+            
+            continue;
+        }
+        
+        // Получаем все object_type для этого изображения из images_links
+        $object_types = db_get_fields(
+            "SELECT DISTINCT object_type FROM ?:images_links WHERE image_id = ?i AND image_id != 0",
+            $image_id
+        );
+        
+        // Также проверяем, используется ли как detailed
+        $is_detailed = db_get_field(
+            "SELECT 1 FROM ?:images_links WHERE detailed_id = ?i AND detailed_id != 0 LIMIT 1",
+            $image_id
+        );
+        if ($is_detailed) {
+            if (!in_array('detailed', $object_types)) {
+                $object_types[] = 'detailed';
+            }
+        }
+        
+        // Если нет связей, пробуем стандартные типы
+        if (empty($object_types)) {
+            $object_types = ['product', 'category', 'detailed', 'banner'];
+        }
+        
+        // Проверяем каждый возможный путь
+        foreach ($object_types as $object_type) {
+            $subdir = floor($image_id / MAX_FILES_IN_DIR);
+            $relative_path = $object_type . '/' . $subdir . '/' . $image_path;
+            
+            $checked_paths[] = $relative_path;
+            
+            if ($storage->isExist($relative_path)) {
+                $file_exists = true;
+                break;
+            }
+        }
+        
+        if ($file_exists) {
+            $found_count++;
+        } else {
+            // Файл не найден
+            $missing_images[] = [
+                'image_id' => $image_id,
+                'image_path' => $image_path,
+                'checked_paths' => $checked_paths,
+                'object_types' => $object_types,
+                'empty_path' => false,
+            ];
+            
+            // Удаляем сломанное изображение из БД если dry_run = false
+            if (!$dry_run) {
+                // Удаляем связи из images_links
+                db_query('UPDATE ?:images_links SET image_id = 0 WHERE image_id = ?i', $image_id);
+                db_query('UPDATE ?:images_links SET detailed_id = 0 WHERE detailed_id = ?i', $image_id);
+                
+                // Удаляем описание изображения
+                db_query('DELETE FROM ?:common_descriptions WHERE object_id = ?i AND object_holder = ?s', $image_id, 'images');
+                
+                // Удаляем саму запись изображения
+                db_query('DELETE FROM ?:images WHERE image_id = ?i', $image_id);
+                
+                $deleted_count++;
+            }
+        }
+        
+        // Прогресс каждые 100 изображений
+        if ($checked_count % 100 === 0) {
+            echo "Checked: {$checked_count} / {$total_images}\n";
+        }
+    }
+    
+    // Удаляем пустые связи (если image_id и detailed_id оба 0) после всех удалений
+    if (!$dry_run && $deleted_count > 0) {
+        $empty_pairs = db_get_fields(
+            'SELECT pair_id FROM ?:images_links WHERE image_id = 0 AND detailed_id = 0'
+        );
+        if (!empty($empty_pairs)) {
+            db_query('DELETE FROM ?:images_links WHERE pair_id IN (?n)', $empty_pairs);
+        }
+    }
+    
+    // Выводим результаты
+    echo "\n" . str_repeat('=', 80) . "\n";
+    echo "RESULTS\n";
+    echo str_repeat('=', 80) . "\n\n";
+    
+    if (!empty($missing_images)) {
+        $action_text = $dry_run ? "Would delete" : "Deleted";
+        echo "Missing files (" . count($missing_images) . "):\n\n";
+        
+        if ($dry_run) {
+            foreach ($missing_images as $missing) {
+                echo "Image ID: {$missing['image_id']}\n";
+                if (!empty($missing['empty_path'])) {
+                    echo "  Image path: (EMPTY)\n";
+                } else {
+                    echo "  Image path: {$missing['image_path']}\n";
+                    echo "  Object types: " . implode(', ', $missing['object_types']) . "\n";
+                    echo "  Checked paths:\n";
+                    foreach ($missing['checked_paths'] as $path) {
+                        echo "    - {$path}\n";
+                    }
+                }
+                echo "\n";
+            }
+        } else {
+            // В режиме удаления показываем только краткую информацию
+            echo "Broken images removed from database:\n";
+            foreach ($missing_images as $missing) {
+                $path_display = !empty($missing['empty_path']) ? '(EMPTY)' : $missing['image_path'];
+                echo "  - Image ID: {$missing['image_id']}, path: {$path_display}\n";
+            }
+            echo "\n";
+        }
+    } else {
+        echo "All images found!\n\n";
+    }
+    
+    // Статистика
+    $will_delete_count = count($missing_images);
+    
+    echo str_repeat('=', 80) . "\n";
+    echo "STATISTICS\n";
+    echo str_repeat('=', 80) . "\n";
+    echo "Total images in database: {$total_images}\n";
+    echo "Checked images: {$checked_count}\n";
+    echo "Found files: {$found_count}\n";
+    echo "Missing files: {$will_delete_count}\n";
+    echo "Will delete: {$will_delete_count}\n";
+    if (!$dry_run) {
+        echo "Deleted from database: {$deleted_count}\n";
+    }
+    echo "\n";
     
     return [CONTROLLER_STATUS_NO_CONTENT];
 }
