@@ -223,10 +223,27 @@ if ($mode === 'update_currencies') {
         return [CONTROLLER_STATUS_NO_CONTENT];
     }
 
+    $date = date('Y-m-d H:i:s');
+    
+    // Normalize currency codes to uppercase
+    $normalized_data = [];
+    $currency_codes = [];
+    foreach ($data as $code => $coef) {
+        $code_upper = strtoupper($code);
+        $normalized_data[$code_upper] = $coef;
+        $currency_codes[] = $code_upper;
+    }
+    
+    // Get old currencies before update
+    $old_currencies = db_get_hash_array(
+        'SELECT currency_code, coefficient FROM ?:currencies WHERE currency_code IN (?a)',
+        'currency_code',
+        $currency_codes
+    );
+
     $symbols = db_get_hash_array('SELECT currency_code, symbol FROM ?:currencies', 'currency_code');
 
-    foreach ($data as $code => $coef) {
-        $code = strtoupper($code);
+    foreach ($normalized_data as $code => $coef) {
         $currency_id = db_get_field('SELECT currency_id FROM ?:currencies WHERE currency_code = ?s', $code);
         if ($currency_id) {
             $currency_data = [
@@ -237,6 +254,29 @@ if ($mode === 'update_currencies') {
             fn_update_currency($currency_data, $currency_id);
         }
     }
+
+    // Get new currencies after update
+    $new_currencies = db_get_hash_array(
+        'SELECT currency_code, coefficient FROM ?:currencies WHERE currency_code IN (?a)',
+        'currency_code',
+        $currency_codes
+    );
+
+    // Output date, old currencies, and new currencies
+    echo "Date: {$date}\n\n";
+    
+    echo "Old currencies:\n";
+    foreach ($old_currencies as $code => $currency) {
+        $coefficient = isset($currency['coefficient']) ? (float) $currency['coefficient'] : 0;
+        echo "  {$code}: {$coefficient}\n";
+    }
+    
+    echo "\nNew currencies:\n";
+    foreach ($new_currencies as $code => $currency) {
+        $coefficient = isset($currency['coefficient']) ? (float) $currency['coefficient'] : 0;
+        echo "  {$code}: {$coefficient}\n";
+    }
+    echo "\n";
 
     return [CONTROLLER_STATUS_NO_CONTENT];
 }
