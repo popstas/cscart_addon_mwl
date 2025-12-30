@@ -55,20 +55,9 @@ function fn_mwl_xlsx_get_product_features_post(&$data, $params, $has_ungroupped)
     }
 }
 
-// replace variant = '-1' with '?' in variations select at product page
-// TODO: find more general hook for override variants at all pages
-function fn_mwl_xlsx_dispatch_before_display()
+// Helper function to replace variant = '-1' with '?' in variation_features_variants
+function fn_mwl_xlsx_replace_variant_minus_one(&$product)
 {
-    // Only process product pages in frontend
-    if (Registry::get('runtime.controller') !== 'products' || Registry::get('runtime.mode') !== 'view') {
-        return;
-    }
-
-    /** @var \Tygh\SmartyEngine\Core $view */
-    $view = Tygh::$app['view'];
-    
-    $product = $view->getTemplateVars('product');
-    
     if (empty($product) || empty($product['variation_features_variants'])) {
         return;
     }
@@ -96,6 +85,27 @@ function fn_mwl_xlsx_dispatch_before_display()
         }
     }
     unset($feature);
+}
+
+// replace variant = '-1' with '?' in variations select at product page
+// For cart page, replacement is done in template: product_options.pre.tpl
+function fn_mwl_xlsx_dispatch_before_display()
+{
+    // Only process product pages in frontend
+    if (Registry::get('runtime.controller') !== 'products' || Registry::get('runtime.mode') !== 'view') {
+        return;
+    }
+
+    /** @var \Tygh\SmartyEngine\Core $view */
+    $view = Tygh::$app['view'];
+    
+    $product = $view->getTemplateVars('product');
+    
+    if (empty($product) || empty($product['variation_features_variants'])) {
+        return;
+    }
+
+    fn_mwl_xlsx_replace_variant_minus_one($product);
 
     // Update the product variable in Smarty
     $view->assign('product', $product);

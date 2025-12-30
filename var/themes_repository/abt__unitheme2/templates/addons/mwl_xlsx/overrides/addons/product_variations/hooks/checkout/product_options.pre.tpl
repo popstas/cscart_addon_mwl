@@ -29,10 +29,10 @@
                                     data-ca-change-url="{"checkout.change_variation?cart_item_id={$key}&product_id={$variant.product.product_id}"|fn_url}"
                                     {if $feature.variant_id == $variant.variant_id}selected="selected"{/if}
                                 >
-                                    {$variant.variant}
+                                    {if $variant.variant == '-1'}?{else}{$variant.variant}{/if}
                                 </option>
                             {elseif $show_all_possible_feature_variants}
-                                <option disabled>{$variant.variant}</option>
+                                <option disabled>{if $variant.variant == '-1'}?{else}{$variant.variant}{/if}</option>
                             {/if}
                         {/foreach}
                     </select>
