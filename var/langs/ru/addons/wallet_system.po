@@ -1,0 +1,1536 @@
+msgid ""
+msgstr "Project-Id-Version: tygh\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language-Team: Russian\n"
+"Language: ru_RU\n"
+
+msgctxt "Addons::name::wallet_system"
+msgid "Wallet System"
+msgstr "Кошелек системы"
+
+msgctxt "Languages::wk_webkul_user_guide_content"
+msgid "Congratulation!! <b>\"[addon_name]\"</b> Add-on is succesfully installed. <ul class='inline social-share'><li><a href='[support_link]' target='_blank' class='uibutton large confirm'>Support Link</a></li><li><a href='[user_guide]' class='uibutton large confirm' target='_blank'>User Guide</a></li></ul>"
+msgstr "поздравление!! <b>\"[addon_name]\"</b> Надстройка успешно установлена. <ul class='inline social-share'><li><a href='[support_link]' target='_blank' class='uibutton large confirm'>Ссылка поддержки</a></li><li><a href='[user_guide]' class='uibutton large confirm' target='_blank'>Гид пользователя</a></li></ul>"
+
+msgctxt "LanguageName"
+msgid "Localized language name"
+msgstr "английский"
+
+msgctxt "Addons::description::wallet_system"
+msgid "Adds a built-in wallet system in your store"
+msgstr "Добавляет встроенную систему кошелька в ваш магазин"
+
+msgctxt "Languages::wallet"
+msgid "Wallet"
+msgstr "Бумажник"
+
+msgctxt "Languages::wallet_system"
+msgid "Wallet System"
+msgstr "Кошелек системы"
+
+msgctxt "Languages::users_search"
+msgid "users search"
+msgstr "поиск пользователей"
+
+msgctxt "Languages::wallet_system_menu_description"
+msgid "View Wallet Users & Transactions Here."
+msgstr "Посмотреть пользователей кошелька и транзакции здесь."
+
+msgctxt "Languages::wallet_system::wallet_refund_limit"
+msgid "Wallet Refund Configuration"
+msgstr "Конфигурация возврата кошелька"
+
+msgctxt "Languages::wallet_system::general"
+msgid "General"
+msgstr "генеральный"
+
+msgctxt "Languages::wallet_system::wallet_transfer"
+msgid "Wallet Transfer Configuration"
+msgstr "Конфигурация перевода кошелька"
+
+msgctxt "Languages::wallet_system::min_refund_amount"
+msgid "Minimum amount for Refund"
+msgstr "Минимальная сумма для возврата"
+
+msgctxt "Languages::wallet_system::max_refund_amount"
+msgid "Maximum amount for Refund"
+msgstr "Максимальная сумма для возврата"
+
+msgctxt "Languages::wallet_system::min_transfer_amount"
+msgid "Minimum amount for Transfer"
+msgstr "Минимальная сумма для перевода"
+
+msgctxt "Languages::wallet_system::max_transfer_amount"
+msgid "Maximum amount for Transfer"
+msgstr "Максимальная сумма для перевода"
+
+msgctxt "Languages::wallet_system::status_wallet_transfer"
+msgid "Transfer"
+msgstr "Перечислить"
+
+msgctxt "Languages::wallet_system::wallet_user_transfer_header"
+msgid "Configuration"
+msgstr "конфигурация"
+
+msgctxt "Languages::wallet_system::wallet_user_refund_header"
+msgid "Configuration"
+msgstr "конфигурация"
+
+msgctxt "Languages::wallet_system::wallet_user_recharge_header"
+msgid "Configuration"
+msgstr "конфигурация"
+
+msgctxt "Languages::wallet_system::wallet_recharge_limit"
+msgid "Wallet Recharge Configuration"
+msgstr "Конфигурация пополнения кошелька"
+
+msgctxt "Languages::wallet_system::min_recharge_amount"
+msgid "Minimum amount for Wallet Recharge"
+msgstr "Минимальная сумма для пополнения кошелька"
+
+msgctxt "Languages::wallet_system::max_recharge_amount"
+msgid "Maximum amount for Wallet Recharge"
+msgstr "Максимальная сумма пополнения кошелька"
+
+msgctxt "Languages::wallet_refund"
+msgid "Wallet Refund"
+msgstr "Кошелек возврат"
+
+msgctxt "Languages::refund_already_initiated"
+msgid "Wallet Refund already initiated"
+msgstr "Возврат кошелька уже начат"
+
+msgctxt "Languages::wallet_error"
+msgid "Wallet Error"
+msgstr "Ошибка кошелька"
+
+msgctxt "Languages::credit_source"
+msgid "Credit Type"
+msgstr "Тип кредита"
+
+msgctxt "Languages::wallet_limit"
+msgid "Wallet Limit"
+msgstr "Кошелек лимит"
+
+msgctxt "Languages::can_not_add_money_in_wallet_please_check_refund_limit_in_addon_setting"
+msgid "Sorry,can not add money in wallet ,please check refund limit in wallet system addon setting"
+msgstr "Извините, я не могу добавить деньги в кошелек, пожалуйста, проверьте лимит возврата в настройках аддона системы кошелька."
+
+msgctxt "Languages::wallet_limit_is"
+msgid "Wallet limit is "
+msgstr "Лимит кошелька "
+
+msgctxt "Languages::_to_"
+msgid " To "
+msgstr " к "
+
+msgctxt "Languages::amount_has_been_refunded_in_user_wallet"
+msgid "Amount has been refunded in user Wallet"
+msgstr "Сумма была возвращена в кошелек пользователя"
+
+msgctxt "Languages::error"
+msgid "Error"
+msgstr "ошибка"
+
+msgctxt "Languages::success"
+msgid "Success"
+msgstr "успех"
+
+msgctxt "Languages::enter_email_address"
+msgid "Enter Payee E-mail Address"
+msgstr "Введите адрес электронной почты получателя"
+
+msgctxt "Languages::remove_gift_certificate_first"
+msgid "Please remove first gift certificate From Cart"
+msgstr "Пожалуйста, удалите первый подарочный сертификат из корзины"
+
+msgctxt "Languages::my_wallet_details"
+msgid "My Wallet Details"
+msgstr "Детали моего кошелька"
+
+msgctxt "Languages::wallet_recharge"
+msgid "Wallet Recharge"
+msgstr "Пополнение кошелька"
+
+msgctxt "Languages::please_login_first"
+msgid "Please Login First"
+msgstr "Пожалуйста, войдите сначала"
+
+msgctxt "Languages::remove_product_from_cart"
+msgid "Please remove all products from cart"
+msgstr "Пожалуйста, удалите все продукты из корзины"
+
+msgctxt "Languages::money_added_in_cart_please_make_a_paymnet"
+msgid "Amount added in cart"
+msgstr "Сумма добавлена ​​в корзину"
+
+msgctxt "Languages::clear_cart_successfully"
+msgid "cart cleared successfully"
+msgstr "корзина успешно очищена"
+
+msgctxt "Languages::money_added_in_user_wallet"
+msgid "money added in user wallet successfully"
+msgstr "Сумма [text_amt] успешно добавлена ​​в кошелек пользователя"
+
+msgctxt "Languages::order_has_been_saved_for_admin_review_money_will_be_added_wallet_after_admin_approval"
+msgid "Order has been saved for admin review , Money will be added wallet after store admin approval"
+msgstr "Заказ был сохранен для проверки администратором, деньги будут добавлены кошелек после одобрения администратора магазина"
+
+msgctxt "Languages::wallet_recharge_with_products_not_accepted"
+msgid "Wallet recharge with products not accepted , please clear cart first"
+msgstr "Пополнение кошелька с продуктами не принимаются, пожалуйста, сначала очистите корзину"
+
+msgctxt "Languages::wallet_credit_details"
+msgid "Wallet Update"
+msgstr "Обновление кошелька"
+
+msgctxt "Languages::wallet_debit_details"
+msgid "Wallet Update"
+msgstr "Обновление кошелька"
+
+msgctxt "Languages::dear"
+msgid "Dear "
+msgstr "дорогая "
+
+msgctxt "Languages::transfer_amount_is_more_than_available_cash"
+msgid "The transfer amount is more than available cash"
+msgstr "Сумма перевода больше доступной наличности"
+
+msgctxt "Languages::your_wallet_debited_with_amount"
+msgid "Wallet is debited with amount "
+msgstr "Кошелек списывается с суммы "
+
+msgctxt "Languages::regardeing_order_no"
+msgid " regarding order no "
+msgstr " относительно заказа нет "
+
+msgctxt "Languages::debit_wallet_amount"
+msgid "Debited Wallet Amount "
+msgstr "Сумма списанного кошелька "
+
+msgctxt "Languages::total_wallet_amount"
+msgid "Total Wallet Amount "
+msgstr "Общая сумма кошелька "
+
+msgctxt "Languages::refund"
+msgid "Refund"
+msgstr "Возвращать деньги"
+
+msgctxt "Languages::recharge"
+msgid "Recharge"
+msgstr "перезарядка"
+
+msgctxt "Languages::credit_wallet_amount"
+msgid "Credited Wallet Amount"
+msgstr "Сумма кредитного кошелька"
+
+msgctxt "Languages::money_has_been_refunded_in_wallet"
+msgid "money refunded in wallet"
+msgstr "деньги возвращены в кошелек"
+
+msgctxt "Languages::refunded_wallet_money"
+msgid "Refunded Wallet Money"
+msgstr "Деньги на кошелек"
+
+msgctxt "Languages::add_wallet_money"
+msgid "Add Wallet Money"
+msgstr "Добавить кошелек деньги"
+
+msgctxt "Languages::credit_search"
+msgid "Credit Search"
+msgstr "Поиск кредита"
+
+msgctxt "Languages::credit_type"
+msgid "Credit Type"
+msgstr "Тип кредита"
+
+msgctxt "Languages::reference_id"
+msgid "Reference id"
+msgstr "Ссылочный идентификатор"
+
+msgctxt "Languages::debit_search"
+msgid "Debit Search"
+msgstr "Поиск дебета"
+
+msgctxt "Languages::user_email"
+msgid "User Email"
+msgstr "Электронная почта пользователя"
+
+msgctxt "Languages::credit_id"
+msgid "Credit id"
+msgstr "Кредитный идентификатор"
+
+msgctxt "Languages::credit_amount"
+msgid "Credit Amount"
+msgstr "Сумма кредита"
+
+msgctxt "Languages::total_amount"
+msgid "Total Amount"
+msgstr "Итого"
+
+msgctxt "Languages::date"
+msgid "Date"
+msgstr "Дата"
+
+msgctxt "Languages::timestamp"
+msgid "Date"
+msgstr "Дата"
+
+msgctxt "Languages::wallet_credit_log"
+msgid "Wallet Credit Log"
+msgstr "Кошелек Кредит Журнал"
+
+msgctxt "Languages::debit_id"
+msgid "Debit id"
+msgstr "Идентификатор дебета"
+
+msgctxt "Languages::debit_amount"
+msgid "Debit Amount"
+msgstr "Сумма дебета"
+
+msgctxt "Languages::remain_amount"
+msgid "Remaining Amount"
+msgstr "Оставшееся количество"
+
+msgctxt "Languages::wallet_debit_log"
+msgid "Wallet Debit Log"
+msgstr "Кошелек"
+
+msgctxt "Languages::my_wallet"
+msgid "My Wallet"
+msgstr "Мой бумажник"
+
+msgctxt "Languages::enter_amount"
+msgid "Enter Amount "
+msgstr "Вносить количество "
+
+msgctxt "Languages::add_money"
+msgid "Add Money"
+msgstr "Добавить деньги"
+
+msgctxt "Languages::view_debit_history"
+msgid "View Debit History"
+msgstr "Просмотреть историю дебетов"
+
+msgctxt "Languages::view_credit_history"
+msgid "View Credit History"
+msgstr "Просмотр кредитной истории"
+
+msgctxt "Languages::wallet_recharge_can_not_done_with_wallet_payment_method"
+msgid "Wallet Recharge can not done with wallet, Please Choose another Payment Method"
+msgstr "Пополнение кошелька с помощью кошелька невозможно, выберите другой способ оплаты"
+
+msgctxt "Languages::sorry_you_have_not_enough_wallet_cash_please_try_another_payment_method_or_recharge_first"
+msgid "Sorry, you have not enough wallet cash, Please try another payment method or Recharge first"
+msgstr "Извините, у вас недостаточно денег на кошельке, пожалуйста, попробуйте другой способ оплаты или сначала пополните счет"
+
+msgctxt "Languages::click_here_to_recharge"
+msgid "Click Here to Recharge"
+msgstr "Нажмите здесь, чтобы пополнить"
+
+msgctxt "Languages::required_add_wallet_amount"
+msgid "Required wallet amount"
+msgstr "Необходимая сумма кошелька"
+
+msgctxt "Languages::wallet_money"
+msgid "Wallet Money"
+msgstr "Кошелек деньги"
+
+msgctxt "Languages::paid_amount"
+msgid "Paid Amount"
+msgstr "Выплаченная сумма"
+
+msgctxt "Languages::remain_wallet_amount"
+msgid "Remaining Wallet Amount"
+msgstr "Оставшаяся сумма кошелька"
+
+msgctxt "Languages::order_status"
+msgid "Order Status"
+msgstr "Статус заказа"
+
+msgctxt "Languages::wallet_recharge_can_initiated_please_choose_other_payment_method"
+msgid "Wallet recharge can not initiated, please choose another payment method"
+msgstr "Пополнение кошелька не может быть начато, выберите другой способ оплаты"
+
+msgctxt "Languages::payment_has_been_created_remain_amount_"
+msgid "Payment has been created ,  remaining amount  "
+msgstr "Платеж создан, оставшаяся сумма  "
+
+msgctxt "Languages::success_transection"
+msgid "Wallet Transaction"
+msgstr "Кошелек транзакции"
+
+msgctxt "Languages::you_have_not_enough_cash_please_rechagege_your_wallet_or_choose_another_payment_method"
+msgid "You have not enough cash , Please recharge wallet or choose another payment method"
+msgstr "У вас недостаточно денежных средств, пополните кошелек или выберите другой способ оплаты"
+
+msgctxt "Languages::credit_history"
+msgid "Credit History"
+msgstr "Кредитная история"
+
+msgctxt "Languages::debit_history"
+msgid "Debit History"
+msgstr "История дебетов"
+
+msgctxt "Languages::wallet_credit_history"
+msgid "Wallet Credit History"
+msgstr "Кредитная история кошелька"
+
+msgctxt "Languages::wallet_debit_history"
+msgid "Wallet Debit History"
+msgstr "История дебетового кошелька"
+
+msgctxt "Languages::ammount_has_been_refunded_in_user_wallet"
+msgid "Amount has been refunded in user wallet"
+msgstr "Сумма была возвращена в кошелек пользователя"
+
+msgctxt "Languages::amount_has_been_refunded_in_user_wallet after_cancelation_of_product"
+msgid "Amount has been refunded in user Wallet after Cancelation of product"
+msgstr "Сумма была возвращена в кошелек пользователя после отмены продукта"
+
+msgctxt "Languages::your_wallet_credited_with_amount"
+msgid "Wallet is credited with amount "
+msgstr "Кошелек зачисляется на сумму "
+
+msgctxt "Languages::regardeing_return_request_no"
+msgid " regarding return request no "
+msgstr " относительно запроса на возврат нет "
+
+msgctxt "Languages::user_name"
+msgid "User Name"
+msgstr "Имя пользователя"
+
+msgctxt "Languages::return_id"
+msgid "Return Id"
+msgstr "Идентификатор возврата"
+
+msgctxt "Languages::can_not_proceed_please_check_limit"
+msgid "Can not Proccess , please check amount"
+msgstr "Не удается обработать, пожалуйста, проверьте сумму"
+
+msgctxt "Languages::user_wallet"
+msgid "User Wallet"
+msgstr "Пользователь Кошелек"
+
+msgctxt "Languages::available_wallet_cash"
+msgid "Available Wallet Cash"
+msgstr "Доступный кошелек наличными"
+
+msgctxt "Languages::use_wallet"
+msgid "Use Wallet"
+msgstr "Используйте кошелек"
+
+msgctxt "Languages::applied_wallet_cash"
+msgid "Applied Wallet Cash"
+msgstr "Прикладной кошелек наличными"
+
+msgctxt "Languages::wallet_cash_applied"
+msgid "Applied Wallet Cash"
+msgstr "Прикладной кошелек наличными"
+
+msgctxt "Languages::wallet_payment_prepaid"
+msgid "Wallet Payment(Prepaid)"
+msgstr "Оплата кошелька (Предоплата)"
+
+msgctxt "Languages::make_a_refund"
+msgid "Make A Payment"
+msgstr "Производить платеж"
+
+msgctxt "Languages::wallet_payment"
+msgid "Wallet Payment"
+msgstr "Оплата кошелька"
+
+msgctxt "Languages::remain_amount"
+msgid "Remaining Amount"
+msgstr "Оставшееся количество"
+
+msgctxt "Languages::can_not_refunded"
+msgid "Money Can't Be Refunded"
+msgstr "Деньги не могут быть возвращены"
+
+msgctxt "Languages::remain_unrefunded_amount_regarding_this_order_is"
+msgid "Remaining unrefunded amount regarding this order is : "
+msgstr "Оставшаяся невозмещенная сумма по данному заказу составляет: "
+
+msgctxt "Languages::wallet_payment_prepaid"
+msgid "Wallet Payment(Prepaid)"
+msgstr "Оплата кошелька (Предоплата)"
+
+msgctxt "Languages::wallet_transfer"
+msgid "Wallet Money Transfer"
+msgstr "Кошелек денежный перевод"
+
+msgctxt "Languages::transfer_wallet_cash"
+msgid "Wallet Money Transfer"
+msgstr "Кошелек денежный перевод"
+
+msgctxt "Languages::please_insert_only_numeric_value"
+msgid "Please insert numeric value only"
+msgstr "Пожалуйста, введите только числовое значение"
+
+msgctxt "Languages::amount_error"
+msgid "Amount Error"
+msgstr "Ошибка суммы"
+
+msgctxt "Languages::transfer_limit_is"
+msgid "Transfer Limit is "
+msgstr "Предел передачи "
+
+msgctxt "Languages::user_not_exist"
+msgid "User Not Exist"
+msgstr "Пользователь не существует"
+
+msgctxt "Languages::email_user_not_found_at_store"
+msgid "Email is not register with us."
+msgstr "Электронная почта не зарегистрирована у нас."
+
+msgctxt "Languages::transfer_completed_successfully"
+msgid "Transaction completed successfully"
+msgstr "Транзакция успешно завершена"
+
+msgctxt "Languages::reciever"
+msgid "Receiver"
+msgstr "Получатель"
+
+msgctxt "Languages::transfer"
+msgid "Transfer"
+msgstr "Перечислить"
+
+msgctxt "Languages::credit_debit_id"
+msgid "Credit / Debit ID"
+msgstr "Идентификатор кредита/дебета"
+
+msgctxt "Languages::wallet_transactions"
+msgid "Wallet Transaction"
+msgstr "Кошелек транзакции"
+
+msgctxt "Languages::wallet_transaction"
+msgid "Wallet Transaction"
+msgstr "Кошелек транзакции"
+
+msgctxt "Languages::credit"
+msgid "Credit"
+msgstr "кредит"
+
+msgctxt "Languages::debit"
+msgid "Debit"
+msgstr "Списание средств"
+
+msgctxt "Languages::total_cash"
+msgid "Total Cash"
+msgstr "Всего наличных"
+
+msgctxt "Languages::wallet_users"
+msgid "Wallet Users"
+msgstr "Пользователи кошелька"
+
+msgctxt "Languages::gross_credit_total"
+msgid "Gross Credit Total"
+msgstr "Общая сумма кредита"
+
+msgctxt "Languages::gross_debit_total"
+msgid "Gross Debit Total"
+msgstr "Всего брутто-дебет"
+
+msgctxt "Languages::gross_wallet_cash"
+msgid "Gross Wallet Cash"
+msgstr "Валовой кошелек наличными"
+
+msgctxt "Languages::transaction_search"
+msgid "Transaction Search"
+msgstr "Поиск транзакций"
+
+msgctxt "Languages::wallet_id"
+msgid "Wallet Id"
+msgstr "Идентификатор кошелька"
+
+msgctxt "Languages::total_credit"
+msgid "Total Credit"
+msgstr "Всего Кредит"
+
+msgctxt "Languages::total_debit"
+msgid "Total Debit"
+msgstr "Общий дебет"
+
+msgctxt "Languages::current_cash"
+msgid "Current Cash"
+msgstr "Текущая наличность"
+
+msgctxt "Languages::current_cash"
+msgid "Current Cash"
+msgstr "Текущая наличность"
+
+msgctxt "Languages::bytransfer"
+msgid "By Transfer"
+msgstr "Перевод"
+
+msgctxt "Languages::can_not_transfer_to_own_email"
+msgid "can't transfer to own email"
+msgstr "не может перейти на собственную электронную почту"
+
+msgctxt "Languages::wallet_system::new_registration_amount"
+msgid "Cash back Amount of Wallet when a new User gets registered"
+msgstr "Возврат наличных Сумма кошелька при регистрации нового пользователя"
+
+msgctxt "Languages::wallet_system::new_registration_cash_back"
+msgid "Allow cash back in wallet for new user registration"
+msgstr "Разрешить возврат денег в кошельке для регистрации нового пользователя"
+
+msgctxt "Languages::un_paid_amount"
+msgid "Remaining Unpaid Amount"
+msgstr "Оставшаяся неоплаченная сумма"
+
+msgctxt "Languages::amount_has_been_debited_from_user_wallet"
+msgid "Amount [text_amt] has been debited from user wallet successfully"
+msgstr "Сумма была успешно списана с кошелька пользователя"
+
+msgctxt "Languages::amount_has_been_credited_in_user_wallet"
+msgid "Amount [text_amt] has been credited in user wallet successfully"
+msgstr "Сумма успешно зачислена в кошелек пользователя"
+
+msgctxt "Languages::please_fill_all_fields"
+msgid "Please fill all fields"
+msgstr "Пожалуйста заполните все поля"
+
+msgctxt "Languages::wallet_credit"
+msgid "Wallet Credit"
+msgstr "Кошелек Кредит"
+
+msgctxt "Languages::wallet_debit"
+msgid "Wallet Debit"
+msgstr "Кошелек дебет"
+
+msgctxt "Languages::promotion_bonus_wallet_cash_back"
+msgid "Wallet Cash Back"
+msgstr "Кошелек Возврат наличных"
+
+msgctxt "Languages::total_refunded_amount"
+msgid "Total Refunded Amount"
+msgstr "Общая сумма возврата"
+
+msgctxt "Languages::amount_is_zero"
+msgid "Amount cannot be debited from user wallet due to zero balance"
+msgstr "Сумма не может быть списана с кошелька пользователя из-за нулевого баланса"
+
+msgctxt "Languages::wallet_dabit_credit"
+msgid "Wallet debit credit"
+msgstr "Кошелек Кредит / Дебет"
+
+msgctxt "Languages::email_template.wallet_debit"
+msgid "Wk Wallet Debit"
+msgstr "неделя Кошелек дебет"
+
+msgctxt "Languages::email_template.wallet_credit"
+msgid "Wk Wallet Credit"
+msgstr "неделя Кошелек Кредит"
+
+msgctxt "Languages::credit_by_admin"
+msgid "Credit by admin"
+msgstr "Кредит от администратора"
+
+msgctxt "Languages::new_registration"
+msgid "New registration"
+msgstr "Новая регистрация"
+
+msgctxt "Languages::debit_by_admin"
+msgid "Debit by admin"
+msgstr "Дебет админом"
+
+msgctxt "Languages::cash_back"
+msgid "Cash back"
+msgstr "Возврат наличных"
+
+msgctxt "Languages::order_edit"
+msgid "Order edit"
+msgstr "Редактировать заказ"
+
+msgctxt "Languages::refund_rma"
+msgid "Refund RMA"
+msgstr "Возврат RMA"
+
+msgctxt "Languages::amount_cannot_be_greater"
+msgid "Amount Cannot be greater than available wallet cash of customer"
+msgstr "Сумма не может быть больше наличных денежных средств клиента"
+
+msgctxt "Languages::refund_order"
+msgid "Refund Order"
+msgstr "Возврат заказа"
+
+msgctxt "Languages::refund_cancelled_order"
+msgid "Refund Cancelled Order"
+msgstr "Возврат средств за отмененный заказ"
+
+
+msgctxt "Languages::_block_lite_checkout_wallet_system"
+msgid "Wallet"
+msgstr "Бумажник"
+
+msgctxt "Languages::block_lite_checkout_wallet_system"
+msgid "Wallet"
+msgstr "Бумажник"
+
+msgctxt "Languages::lite_checkout_wallet_system"
+msgid "Wallet"
+msgstr "Бумажник"
+
+msgctxt "Languages::wk_wallet_system_text_empty_error"
+msgid "[text_error] amount is required."
+msgstr "Требуется сумма [text_error]."
+
+msgctxt "Languages::wk_wallet_system_text_condition_min_error"
+msgid "[text_min] amount is too high rather then [text_min_last] amount."
+msgstr "Сумма [text_min] слишком велика, а не сумма [text_min_last]."
+
+msgctxt "Languages::wk_wallet_system_text_max_limit_error"
+msgid "[text_max] amount must be less then [text_value]"
+msgstr "Сумма [text_max] должна быть меньше [text_value]"
+
+msgctxt "Languages::back_to_wallet"
+msgid "Back To My Wallet"
+msgstr "Вернуться к моему кошельку"
+
+msgctxt "Languages::can_not_create_gift_certificate_for_partial_amount"
+msgid "Cannot create gift certificate for partial amount"
+msgstr "Невозможно создать подарочный сертификат на неполную сумму"
+
+msgctxt "Languages::text_reason_limit"
+msgid "Reason must be between <b>\"[text_start]\"</b> and <b>\"[text_limit]\"</b> characters!"
+msgstr "Причина должна быть между символами <b>\"[text_start]\"</b> и <b>\"[text_limit]\"</b>!"
+
+msgctxt "Languages::wk_wallet_system_max_refund_limit"
+msgid "Max refund amount must be less then 99,999,999.99"
+msgstr "Максимальная сумма возврата должна быть меньше 99 999 999,99."
+
+msgctxt "Languages::wk_wallet_system_max_transfer_limit"
+msgid "Max transfer amount must be less then 99,999,999.99"
+msgstr "Максимальная сумма перевода должна быть меньше 99 999 999,99."
+
+msgctxt "Languages::wk_wallet_system_max_recharge_limit"
+msgid "Max recharge amount must be less then 99,999,999.99"
+msgstr "Максимальная сумма пополнения должна быть меньше 99 999 999,99."
+
+msgctxt "Languages::wk_wallet_system_min_limit_msg"
+msgid "Minimum limit must be greater then 0"
+msgstr "Минимальный предел должен быть больше 0"
+
+msgctxt "Languages::text_items_added"
+msgid "The user were added successfully"
+msgstr "Пользователь успешно добавлен"
+
+msgctxt "Languages::no_items"
+msgid "No users selected."
+msgstr "Пользователи не выбраны."
+
+msgctxt "Languages::your_current_cash_less_than_order_total"
+msgid "Your Wallet Cash is less than order total"
+msgstr "Деньги на вашем кошельке меньше общей суммы заказа"
+
+
+
+
+
+
+
+
+
+
+msgctxt "Languages::can_not_create_gift_certificate_for_partial_amount"
+msgid "Невозможно создать подарочный сертификат на неполную сумму"
+msgstr "Невозможно создать подарочный сертификат на неполную сумму"
+
+msgctxt "Languages::wk_wallet_system_text_empty_error"
+msgid "[text_error] amount is required."
+msgstr "[text_error] требуется сумма."
+
+msgctxt "Languages::wk_wallet_system_text_condition_min_error"
+msgid "[text_min] amount is too high rather then [text_min_last] amount."
+msgstr "[text_min] сумма слишком велика, а затем [text_min_last] количество."
+
+msgctxt "Languages::wk_wallet_system_text_max_limit_error"
+msgid "[text_max] сумма должна быть меньше [text_value]"
+msgstr "[text_max] сумма должна быть меньше [text_value]"
+
+msgctxt "Languages::text_reason_limit"
+msgid "Причина должна быть между <b>\"[text_start]\"</b> а также <b>\"[text_limit]\"</b> персонажи!"
+msgstr "Причина должна быть между <b>\"[text_start]\"</b> а также <b>\"[text_limit]\"</b> персонажи!"
+
+msgctxt "Languages::back_to_wallet"
+msgid "Вернуться к моему кошельку"
+msgstr "Вернуться к моему кошельку"
+
+msgctxt "Languages::wk_wallet_system_max_refund_limit"
+msgid "Максимальная сумма возврата должна быть меньше 99 999 999,99."
+msgstr "Максимальная сумма возврата должна быть меньше 99 999 999,99."
+
+msgctxt "Languages::wk_wallet_system_max_transfer_limit"
+msgid "Максимальная сумма перевода должна быть меньше 99 999 999,99."
+msgstr "Максимальная сумма перевода должна быть меньше 99 999 999,99."
+
+msgctxt "Languages::wk_wallet_system_max_recharge_limit"
+msgid "Максимальная сумма пополнения должна быть меньше 99 999 999,99."
+msgstr "Максимальная сумма пополнения должна быть меньше 99 999 999,99."
+
+msgctxt "Languages::wk_wallet_system_min_limit_msg"
+msgid "Минимальный предел должен быть больше 0"
+msgstr "Минимальный предел должен быть больше 0"
+
+msgctxt "Languages::text_items_added"
+msgid "Пользователь успешно добавлен"
+msgstr "Пользователь успешно добавлен"
+
+msgctxt "Languages::no_items"
+msgid "Пользователи не выбраны."
+msgstr "Пользователи не выбраны."
+
+msgctxt "Languages::refund_shipping_cost"
+msgid "Возврат суммы доставки"
+msgstr "Возврат суммы доставки"
+
+msgctxt "Languages::available_wallet_cash_new"
+msgid "Бумажник"
+msgstr "Бумажник"
+
+msgctxt "Languages::available_wallet_cash_new_balance"
+msgid "Остаток средств"
+msgstr "Остаток средств"
+
+msgctxt "Languages::wallet_transactions_details"
+msgid "Сведения о транзакции кошелька"
+msgstr "Сведения о транзакции кошелька"
+
+msgctxt "Languages::total_cash_balance"
+msgid "Итоговый баланс"
+msgstr "Итоговый баланс"
+
+msgctxt "Languages::credit_ammount_price"
+msgid "Сумма кредита"
+msgstr "Сумма кредита"
+
+msgctxt "Languages::last_wallet_price"
+msgid "Последняя сумма кошелька"
+msgstr "Последняя сумма кошелька"
+
+msgctxt "Languages::refund_reason_details"
+msgid "Резон"
+msgstr "Резон"
+
+msgctxt "Languages::refund_reason_extra_info"
+msgid "Дополнительная информация"
+msgstr "Дополнительная информация"
+
+msgctxt "Languages::refund_reason_source"
+msgid "Источник"
+msgstr "Источник"
+
+msgctxt "Languages::transaction_at"
+msgid "Транзакция в"
+msgstr "Транзакция в"
+
+msgctxt "Languages::refund_reason_order_id"
+msgid "Номер заказа"
+msgstr "Номер заказа"
+
+msgctxt "Languages::debit_ammount_price"
+msgid "Сумма дебета"
+msgstr "Сумма дебета"
+
+msgctxt "Languages::wallet_payment_stop_data"
+msgid "Платежные ограничения"
+msgstr "Платежные ограничения"
+
+msgctxt "Languages::elm_payment_processor"
+msgid "Платежные ограничения"
+msgstr "Платежные ограничения"
+
+msgctxt "Languages::elm_payment_processor_help"
+msgid "Удерживайте нажатой кнопку Ctrl (Windows) или Command (Mac), чтобы выбрать несколько вариантов. Чтобы остановить способ оплаты для пополнения кошелька"
+msgstr "Удерживайте нажатой кнопку Ctrl (Windows) или Command (Mac), чтобы выбрать несколько вариантов. Чтобы остановить способ оплаты для пополнения кошелька"
+
+msgctxt "Languages::export_transaction"
+msgid "Экспортировать как CSV"
+msgstr "Экспортировать как CSV"
+
+msgctxt "Languages::import_transaction"
+msgid "Импортировать как CSV"
+msgstr "Импортировать как CSV"
+
+msgctxt "Languages::the_file_support_only_csv_file"
+msgid "Импортировать как CSФайл поддерживает только расширение CSV. Поэтому используйте только файл CSV.V"
+msgstr "Импортировать как CSФайл поддерживает только расширение CSV. Поэтому используйте только файл CSV.V"
+
+msgctxt "Languages::the_file_contain_no_data_in_file"
+msgid "В выбранном файле не найдено значение (пустые данные)."
+msgstr "В выбранном файле не найдено значение (пустые данные)."
+
+msgctxt "Languages::wallet_payment_usergroup_data"
+msgid "Группа пользователей кошелька"
+msgstr "Группа пользователей кошелька"
+
+msgctxt "Languages::test_usergroups_data"
+msgid "Пользовательская группа клиентов"
+msgstr "Пользовательская группа клиентов"
+
+msgctxt "Languages::test_user_group_help"
+msgid "Пожалуйста, выберите группу пользователей для оплаты с помощью системы кошелька. (Пример->если вы выбрали одну группу в этой и эта группа также выбрана покупателем, то бумажник отображается для оплаты.) (Если ничего не выбрано, доступ к оплате с использованием кошелька для всех клиентов.)"
+msgstr "Пожалуйста, выберите группу пользователей для оплаты с помощью системы кошелька. (Пример->если вы выбрали одну группу в этой и эта группа также выбрана покупателем, то бумажник отображается для оплаты.) (Если ничего не выбрано, доступ к оплате с использованием кошелька для всех клиентов.)"
+
+msgctxt "Languages::wallet_credit_or_debit_id"
+msgid "Идентификатор кредита/дебета"
+msgstr "Идентификатор кредита/дебета"
+
+msgctxt "Languages::wallet_trasaction_id"
+msgid "ID транзакции"
+msgstr "ID транзакции"
+
+msgctxt "Languages::elm_report_data_on_mail"
+msgid "Отправить жалобу"
+msgstr "Отправить жалобу"
+
+msgctxt "Languages::elm_report_data_on_mail_type"
+msgid "Тип"
+msgstr "Тип"
+
+msgctxt "Languages::elm_report_data_mail_help"
+msgid "Пожалуйста, выберите время для отправки отчета между текущим временем и последним временем. например --> если вы выбираете месяц, то он отправляет отчет за последний месяц."
+msgstr "Пожалуйста, выберите время для отправки отчета между текущим временем и последним временем. например --> если вы выбираете месяц, то он отправляет отчет за последний месяц."
+
+msgctxt "Languages::elm_report_data_mail_type_help"
+msgid "Выберите Тип для отчета. Как в кредит, так и в дебет."
+msgstr "Выберите Тип для отчета. Как в кредит, так и в дебет."
+
+msgctxt "Languages::wallet_system_report_send_on_mail"
+msgid "Отправить конфигурацию отчета"
+msgstr "Отправить конфигурацию отчета"
+
+msgctxt "Languages::email"
+msgid "Эл. адрес"
+msgstr "Эл. адрес"
+
+msgctxt "Languages::you_are_using_max_ammount_in_your_wallet"
+msgid "You are using the maximum amount in your wallet. That's Why we are not able to add more amount to your wallet."
+msgstr "Вы используете максимальную сумму в своем кошельке. Вот почему мы не можем пополнить ваш кошелек."
+
+msgctxt "Languages::wallet_month_report_details"
+msgid "Wallet Report"
+msgstr "Wallet Report"
+
+msgctxt "Languages::wallet_transfer_otp"
+msgid "Wallet OTP"
+msgstr "Отчет о кошелькеP"
+
+msgctxt "Languages::transfer_wallet_otp_varify"
+msgid "Verify OTP"
+msgstr "Подтвердить одноразовый пароль"
+
+msgctxt "Languages::transfer_amount"
+msgid "Transfer Amount"
+msgstr "Сумма перевода"
+
+msgctxt "Languages::verify"
+msgid "Verify"
+msgstr "Проверять"
+
+msgctxt "Languages::user_group_access_work_not"
+msgid "Note: These UserGroup Access work only for customer not for vendor and admin."
+msgstr "Примечание. Этот доступ к пользовательской группе работает только для клиентов, а не для поставщиков и администраторов."
+
+msgctxt "Languages::send_report_dafault_note_show"
+msgid "Defaut It show both type and Montly saleceted."
+msgstr "По умолчанию Показывает как выбранный тип, так и Ежемесячно."
+
+msgctxt "Languages::send_report_montly"
+msgid "Montly"
+msgstr "Монтли"
+
+msgctxt "Languages::send_report_quarterly"
+msgid "Quarterly"
+msgstr "Ежеквартальный"
+
+msgctxt "Languages::send_report_half_yearly"
+msgid "HalfYearly"
+msgstr "Полугодовой"
+
+msgctxt "Languages::send_report_yearly"
+msgid "Yearly"
+msgstr "Ежегодно"
+
+msgctxt "Languages::send_report_type_both"
+msgid "Both"
+msgstr "Оба"
+
+msgctxt "Languages::send_report_type_credit"
+msgid "Credit"
+msgstr "Кредит"
+
+msgctxt "Languages::send_report_type_debit"
+msgid "Debit"
+msgstr "Списание средств"
+
+msgctxt "Languages::please_fill_opt_data_not_empty"
+msgid "Please fill OTP data. Data Can not be empty."
+msgstr "Пожалуйста, заполните данные OTP. Данные не могут быть пустыми."
+
+msgctxt "Languages::please_fill_again_data_expire"
+msgid "OTP Data Expired."
+msgstr "Срок действия одноразового пароля истек."
+
+msgctxt "Languages::please_fill_again_wront_password_expried_passwork_use"
+msgid "Try Again, Wrong Password use."
+msgstr "Попробуйте еще раз, неверный пароль."
+
+msgctxt "Languages::please_fill_again_wront_password"
+msgid "Try Again, Wrong Password use."
+msgstr "Попробуйте еще раз, неверный пароль."
+
+msgctxt "Languages::transfer_completed_successfully"
+msgid "Transfer Completed successfully."
+msgstr "Передача завершена успешно."
+
+msgctxt "Languages::can_not_transfer_data_not_found_try_again"
+msgid "Can not Transfer amount. Data not found. Please try again."
+msgstr "Не могу перевести сумму. Данные не найдены. Пожалуйста, попробуйте еще раз."
+
+msgctxt "Languages::send_report_otp_data_show_in_five_min"
+msgid "Note : OTP is valid for 5 min only and then the customer can resend the OTP again."
+msgstr "Примечание. OTP действителен только в течение 5 минут, после чего клиент может повторно отправить OTP."
+
+msgctxt "Languages::you_dont_have_perminssion_to_create_transfer_please_commnuncate_with_amin"
+msgid "You dont have permission. Please commnunicate with Admin"
+msgstr "У вас нет разрешения. Пожалуйста, свяжитесь с Админом"
+
+
+
+msgctxt "Languages::status_reward_points"
+msgid "Reward Point Status"
+msgstr "Статус бонусных баллов"
+
+msgctxt "Languages::min_reward_points"
+msgid "Min Points"
+msgstr "Мин. баллы"
+
+msgctxt "Languages::min_reward_points_help"
+msgid "Please select Min reward Points that can we change on Wallet Amount(default = 10)"
+msgstr "Пожалуйста, выберите Минимальное вознаграждение Баллы, которое мы можем изменить на Сумму кошелька (по умолчанию = 10)"
+
+msgctxt "Languages::max_reward_points_help"
+msgid "Please select Max reward Points that can we change on Wallet Amount(default = 100)"
+msgstr "Пожалуйста, выберите Макс. баллы вознаграждения, которые мы можем изменить в сумме кошелька (по умолчанию = 100)."
+
+msgctxt "Languages::max_reward_points"
+msgid "Max Points"
+msgstr "Максимальное количество очков"
+
+msgctxt "Languages::reward_points_commission"
+msgid "Commission"
+msgstr "комиссия"
+
+msgctxt "Languages::reward_points_commission_help"
+msgid "Please Select Commission in % when the customer change the Points in Wallet Amount."
+msgstr "Пожалуйста, выберите комиссию в %, когда клиент изменяет количество баллов в кошельке."
+
+msgctxt "Languages::wallet_payment_reward_feature"
+msgid "Reward Points"
+msgstr "Бонусные очки"
+
+msgctxt "Languages::wallet_trasfer_points"
+msgid "Transfer To Wallet"
+msgstr "Перевод на кошелек"
+
+msgctxt "Languages::enter_reward_points"
+msgid "Enter Reward"
+msgstr "Введите награду"
+
+msgctxt "Languages::avaible_reward_points"
+msgid "Avaible Points = "
+msgstr "Доступные баллы ="
+
+msgctxt "Languages::reward_points_commission_enter"
+msgid "Points"
+msgstr "Точки"
+
+msgctxt "Languages::reward_points_commission_enter_help"
+msgid "Please enter Points To transfer to the wallet amount. Then the value is not exceeded The available points. And when you transfer amount then [] % data deduct when go to wallet."
+msgstr "Пожалуйста, введите количество баллов для перевода на кошелек. Тогда значение не превышает доступных баллов. И когда вы переводите сумму, тогда [] % данных вычитается при переходе в кошелек."
+
+msgctxt "Languages::transfer_reward"
+msgid "Transfer"
+msgstr "Перевод"
+
+msgctxt "Languages::wallet_system_bank_trasfer"
+msgid "Bank Transfer"
+msgstr "Банковский перевод"
+
+msgctxt "Languages::status_bank_transfer"
+msgid "Status Bank Transfer"
+msgstr "Статус Банковский перевод"
+
+msgctxt "Languages::min_bank_transfer"
+msgid "Min Bank Transfer"
+msgstr "Мин. банковский перевод"
+
+msgctxt "Languages::min_bank_transfer_help"
+msgid "Please enter min amount that customer can transfer(Default:10)"
+msgstr "Пожалуйста, введите минимальную сумму, которую клиент может перевести (по умолчанию: 10)"
+
+msgctxt "Languages::max_bank_transfer"
+msgid "Max Bank Transfer"
+msgstr "Макс. банковский перевод"
+
+msgctxt "Languages::max_bank_transfer_help"
+msgid "Please enter max amount that customer can transfer(Default:100)"
+msgstr "Пожалуйста, введите максимальную сумму, которую клиент может перевести (по умолчанию: 100)"
+
+msgctxt "Languages::wallet_bank_transfer"
+msgid "Wallet Bank Transfer"
+msgstr "Кошелек Банковский перевод"
+
+msgctxt "Languages::reward_points_not_found_please_check_again"
+msgid "reward points not found please check again"
+msgstr "бонусные баллы не найдены, проверьте еще раз"
+
+msgctxt "Languages::reward_points_not_found_please_check_again_and_sign_acount"
+msgid "reward points not found because you are not logged in"
+msgstr "бонусные баллы не найдены, потому что вы не вошли в систему"
+
+msgctxt "Languages::trasfer_points_not_proceed_wallet_id_not_found"
+msgid "Transfer point not processed because wallet ID not found. "
+msgstr "Точка перевода не обработана, так как идентификатор кошелька не найден. "
+
+msgctxt "Languages::trasfer_points_not_exeed_the_given_limit"
+msgid "transfer reward points not coming under configured points limit."
+msgstr "переводить призовые баллы, не превышающие настроенный лимит баллов."
+
+msgctxt "Languages::points_is_not_trasfer_more_than_avaible_points"
+msgid "There were a limited number of reward points that could be transferred. "
+msgstr "Было ограниченное количество бонусных баллов, которые можно было передать. "
+
+msgctxt "Languages::user_must_login_for_reward_points"
+msgid "You don`t have any points to transfer into the wallet. "
+msgstr "У вас нет баллов для перевода на кошелек."
+
+msgctxt "Languages::transfer_wallet_to_bank"
+msgid "Transfer Wallet to Bank"
+msgstr "Перевести кошелек в банк"
+
+msgctxt "Languages::min_amount_transfer_wallet_to_bank"
+msgid "Minimum Amount Transfer Wallet to Bank"
+msgstr "Минимальная сумма перевода кошелька в банк"
+
+msgctxt "Languages::max_amount_transfer_wallet_to_bank"
+msgid "Maximum Amount Transfer Wallet to Bank"
+msgstr "Максимальная сумма перевода кошелька в банк"
+
+msgctxt "Languages::transfer_for_all_customers"
+msgid "Transfer for all Customers"
+msgstr "Трансфер для всех клиентов"
+
+msgctxt "Languages::transfer_for_selected_customers"
+msgid "Transfer for selected Customers"
+msgstr "Перевод для выбранных клиентов"
+
+msgctxt "Languages::customers"
+msgid "Customers"
+msgstr "Клиенты"
+
+msgctxt "Languages::add_customers"
+msgid "Add Customers"
+msgstr "Добавить клиентов"
+
+msgctxt "Languages::transfer_wallet_cash_to_bank"
+msgid "Transfer wallet cash to bank"
+msgstr "Перевести наличные с кошелька в банк"
+
+msgctxt "Languages::enter_ifsc_code"
+msgid "Enter IFSC Code"
+msgstr "Введите код IFSC"
+
+msgctxt "Languages::enter_account_number"
+msgid "Enter Account Number"
+msgstr "Введите номер счета"
+
+msgctxt "Languages::enter_account_holder_name"
+msgid "Enter Account Holder Name"
+msgstr "Введите имя владельца счета"
+
+msgctxt "Languages::enter_bank_name"
+msgid "Enter Bank Name"
+msgstr "Введите название банка"
+
+msgctxt "Languages::add_bank"
+msgid "Add Bank"
+msgstr "Добавить банк"
+
+msgctxt "Languages::add_bank_detail"
+msgid "Add Bank Detail"
+msgstr "Добавить банковские реквизиты"
+
+msgctxt "Languages::transfer_to_bank"
+msgid "Transfer to Bank"
+msgstr "Перевод в банк"
+
+msgctxt "Languages::wallet_bank_transfer"
+msgid "Wallet To Bank Transfer"
+msgstr "Кошелек на банковский перевод"
+
+msgctxt "Languages::request_id"
+msgid "Request Id"
+msgstr "Идентификатор запроса"
+
+msgctxt "Languages::user_id"
+msgid "User Id"
+msgstr "ID пользователя"
+
+msgctxt "Languages::amount"
+msgid "Amount"
+msgstr "Количество"
+
+msgctxt "Languages::ifsc"
+msgid "IFSC"
+msgstr "ИФСК"
+
+msgctxt "Languages::ifsc_code"
+msgid "IFSC Code"
+msgstr "Код IFSC"
+
+msgctxt "Languages::account_number"
+msgid "Account Number"
+msgstr "Номер счета"
+
+msgctxt "Languages::holder_name"
+msgid "Bank Holder Name"
+msgstr "Имя держателя банка"
+
+msgctxt "Languages::bank_name"
+msgid "Bank Name"
+msgstr "Название банка"
+
+msgctxt "Languages::status"
+msgid "Status"
+msgstr "Положение дел"
+
+msgctxt "Languages::page_title_bank_transfer"
+msgid "Wallet To Bank Transfer"
+msgstr "Кошелек на банковский перевод"
+
+msgctxt "Languages::enter_transition_id"
+msgid "Enter Transition Id"
+msgstr "Введите идентификатор перехода"
+
+msgctxt "Languages::wallet_to_bank_transfer"
+msgid "Wallet To Bank Transfer"
+msgstr "Кошелек на банковский перевод"
+
+msgctxt "Languages::email_template.wallet_recharge_email_template_for_customer"
+msgid "Wallet Recharge Email Template For Customer"
+msgstr "Шаблон электронной почты пополнения кошелька для клиента"
+
+msgctxt "Languages::template.wallet_recharge_email_template_for_customer"
+msgid "Wallet Recharge Email Template For Customer"
+msgstr "Дорогой [user_name],<br><br>
+Кошелек пополнен <br><br>
+<strong>Зачисленная сумма кошелька</strong> : [amount]<br>
+<strong>Общая сумма кошелька</strong> : [total_cash]<br>"
+
+
+msgctxt "Languages::email_template.wallet_recharge_email_template_for_admin"
+msgid "Wallet Recharge Email Template For Admin"
+msgstr "Шаблон электронной почты пополнения кошелька для администратора"
+
+msgctxt "Languages::template.wallet_recharge_email_template_for_admin"
+msgid "Wallet Recharge Email Template For Admin"
+msgstr "Уважаемый админ,<br><br>
+Кошелек пополнен <br><br>
+<strong>Зачисленная сумма кошелька</strong> : [amount]<br>
+<strong>Общая сумма кошелька</strong> : [total_cash]<br>"
+
+
+msgctxt "Languages::email_template.wallet_amount_used_email_template_for_customer"
+msgid "Wallet Amount Used Email Template For Customer"
+msgstr "Использованная сумма кошелька Шаблон электронной почты для клиента"
+
+msgctxt "Languages::template.wallet_amount_used_email_template_for_customer"
+msgid "Wallet Amount Used Email Template For Customer"
+msgstr "Дорогой [user_name],<br><br>
+Используемый кошелек <br><br>
+<strong>№ заказа</strong> : [order_number]<br>
+<strong>Использованная сумма</strong> : [amount]<br>
+<strong>Общая сумма кошелька</strong> : [total_cash]<br>"
+
+
+msgctxt "Languages::email_template.wallet_amount_used_email_template_for_admin"
+msgid "Wallet Amount Used Email Template For Admin"
+msgstr "Используемая сумма кошелька Шаблон электронной почты для администратора"
+
+msgctxt "Languages::template.wallet_amount_used_email_template_for_admin"
+msgid "Wallet Amount Used Email Template For Admin"
+msgstr "Уважаемый админ,<br><br>
+Используемый кошелек <br><br>
+<strong>№ заказа</strong> : [order_number]<br>
+<strong>Использованная сумма</strong> : [amount]<br>
+<strong>Общая сумма кошелька</strong> : [total_cash]<br>"
+
+
+msgctxt "Languages::email_template.wallet_cashback_amount_email_template_for_customer"
+msgid "Wallet Cashback Amount Email Template For Customer"
+msgstr "Шаблон электронного письма о сумме кэшбэка кошелька для клиента"
+
+msgctxt "Languages::template.wallet_cashback_amount_email_template_for_customer"
+msgid "Wallet Cashback Amount Email Template For Customer"
+msgstr "Дорогой [user_name],<br><br>
+Кэшбэк кошелька <br><br>
+<strong>Сумма кэшбэка</strong> : [amount]<br>
+<strong>Общая сумма кошелька</strong> : [total_cash]<br>"
+
+
+msgctxt "Languages::email_template.wallet_cashback_amount_email_template_for_admin"
+msgid "Wallet Cashback Amount Email Template For Admin"
+msgstr "Шаблон сообщения электронной почты о сумме кэшбэка кошелька для администратора"
+
+msgctxt "Languages::template.wallet_cashback_amount_email_template_for_admin"
+msgid "Wallet Cashback Amount Email Template For Admin"
+msgstr "Уважаемый админ,<br><br>
+Кэшбэк кошелька <br><br>
+<strong>Сумма кэшбэка</strong> : [amount]<br>
+<strong>Общая сумма кошелька</strong> : [total_cash]<br>"
+
+
+msgctxt "Languages::email_template.wallet_amount_refund_email_template_for_customer"
+msgid "Wallet Amount Refund Email Template For Customer"
+msgstr "Шаблон письма о возврате суммы кошелька для клиента"
+
+msgctxt "Languages::template.wallet_amount_refund_email_template_for_customer"
+msgid "Wallet Amount Refund Email Template For Customer"
+msgstr "Дорогой [user_name],<br><br>
+Возврат кошелька <br><br>
+<strong>Сумма возмещения</strong> : [amount]<br>
+<strong>Общая сумма кошелька</strong> : [total_cash]<br>"
+
+
+msgctxt "Languages::email_template.wallet_amount_refund_email_template_for_admin"
+msgid "Wallet Amount Refund Email Template For Admin"
+msgstr "Шаблон электронной почты для возврата суммы кошелька для администратора"
+
+msgctxt "Languages::template.wallet_amount_refund_email_template_for_admin"
+msgid "Wallet Amount Refund Email Template For Admin"
+msgstr "Уважаемый админ,<br><br>
+Возврат кошелька <br><br>
+<strong>Сумма возмещения</strong> : [amount]<br>
+<strong>Общая сумма кошелька</strong> : [total_cash]<br>"
+
+
+msgctxt "Languages::email_template.wallet_amount_order_refund_email_template_for_customer"
+msgid "Wallet Order Refund Email Template For Customer"
+msgstr "Шаблон электронного письма о возврате заказа кошелька для клиента"
+
+msgctxt "Languages::template.wallet_amount_order_refund_email_template_for_customer"
+msgid "Wallet Order Refund Email Template For Customer"
+msgstr "Дорогой [user_name],<br><br>
+Возврат заказа кошелька <br><br>
+<strong>Сумма возмещения</strong> : [amount]<br>
+<strong>Общая сумма кошелька</strong> : [total_cash]<br>"
+
+
+msgctxt "Languages::email_template.wallet_amount_order_refund_email_template_for_admin"
+msgid "Wallet Order Refund Email Template For Admin"
+msgstr "Шаблон письма о возврате заказа кошелька для администратора"
+
+msgctxt "Languages::template.wallet_amount_order_refund_email_template_for_admin"
+msgid "Wallet Order Refund Email Template For Admin"
+msgstr "Уважаемый админ,<br><br>
+Возврат заказа кошелька <br><br>
+<strong>Сумма возмещения</strong> : [amount]<br>
+<strong>Общая сумма кошелька</strong> : [total_cash]<br>"
+
+
+msgctxt "Languages::email_template.admin_credit_amount_email_template_for_customer"
+msgid "Admin Credit Amount Email Template For Customer"
+msgstr "Шаблон электронной почты с суммой кредита администратора для клиента"
+
+msgctxt "Languages::template.admin_credit_amount_email_template_for_customer"
+msgid "Admin Credit Amount Email Template For Customer"
+msgstr "Дорогой [user_name],<br><br>
+Кредит кошелька от администратора <br><br>
+<strong>Сумма кредита</strong> : [amount]<br>
+<strong>Общая сумма кошелька</strong> : [total_cash]<br>"
+
+
+msgctxt "Languages::email_template.admin_credit_amount_email_template_for_admin"
+msgid "Admin Credit Amount Email Template For Admin"
+msgstr "Шаблон электронной почты с суммой кредита администратора для администратора"
+
+msgctxt "Languages::template.admin_credit_amount_email_template_for_admin"
+msgid "Admin Credit Amount Email Template For Admin"
+msgstr "Уважаемый админ,<br><br>
+Кредит кошелька от администратора <br><br>
+<strong>Сумма кредита</strong> : [amount]<br>
+<strong>Общая сумма кошелька</strong> : [total_cash]<br>"
+
+
+msgctxt "Languages::email_template.admin_debit_amount_email_template_for_customer"
+msgid "Admin Debit Amount Email Template For Customer"
+msgstr "Шаблон электронной почты администратора для суммы дебета для клиента"
+
+msgctxt "Languages::template.admin_debit_amount_email_template_for_customer"
+msgid "Admin Debit Amount Email Template For Customer"
+msgstr "Дорогой [user_name],<br><br>
+Дебет кошелька администратором <br><br>
+<strong>Сумма дебета</strong> : [amount]<br>
+<strong>Общая сумма кошелька</strong> : [total_cash]<br>"
+
+msgctxt "Languages::email_template.admin_debit_amount_email_template_for_admin"
+msgid "Admin Debit Amount Email Template For Admin"
+msgstr "Шаблон электронной почты администратора с дебетовой суммой для администратора"
+
+msgctxt "Languages::template.admin_debit_amount_email_template_for_admin"
+msgid "Admin Debit Amount Email Template For Admin"
+msgstr "Уважаемый админ,<br><br>
+Дебет кошелька администратором <br><br>
+<strong>Сумма дебета</strong> : [amount]<br>
+<strong>Общая сумма кошелька</strong> : [total_cash]<br>"
+
+
+msgctxt "Languages::email_template.customer_transfer_amount_to_bank_email_template_for_customer"
+msgid "Customer Transfer Amount To Bank Email Template For Customer"
+msgstr "Сумма перевода клиента в банк Шаблон электронной почты для клиента"
+
+msgctxt "Languages::template.customer_transfer_amount_to_bank_email_template_for_customer"
+msgid "Customer Transfer Amount To Bank Email Template For Customer"
+msgstr "Дорогой [user_name],<br><br>
+Перевод кошелька в банк <br><br>
+<strong>Сумма перевода</strong> : [amount]<br>"
+
+msgctxt "Languages::email_template.customer_transfer_amount_to_bank_email_template_for_admin"
+msgid "Customer Transfer Amount To Bank Email Template For Admin"
+msgstr "Шаблон электронной почты для перевода суммы клиента в банк для администратора"
+
+msgctxt "Languages::template.customer_transfer_amount_to_bank_email_template_for_admin"
+msgid "Customer Transfer Amount To Bank Email Template For Admin"
+msgstr "Уважаемый админ,<br><br>
+Перевод кошелька в банк <br><br>
+<strong>Сумма перевода</strong> : [amount]<br>"
+
+
+msgctxt "Languages::status_has_been_changed"
+msgid "Status has been changed"
+msgstr "Статус изменен"
+
+msgctxt "Languages::wk_wallet_system_tool_tip_min_transfer_wallet_to_bank"
+msgid "Minimum amount to transfer wallet to bank account."
+msgstr "Минимальная сумма для перевода кошелька на банковский счет"
+
+msgctxt "Languages::wk_wallet_system_tool_tip_max_transfer_wallet_to_bank"
+msgid "Maximum amount to transfer wallet to bank account."
+msgstr "Максимальная сумма для перевода кошелька на банковский счет"
+
+msgctxt "Languages::bank_added_successfully"
+msgid "Bank added successfully"
+msgstr "Банк успешно добавлен"
+
+msgctxt "Languages::your_request_submit_successfully"
+msgid "Your request submit successfully"
+msgstr "Ваш запрос успешно отправлен"
+
+msgctxt "Languages::description"
+msgid "Description"
+msgstr "Описание"
+
+msgctxt "Languages::nodata"
+msgid "No data found"
+msgstr "Данные не найдены"
+
+msgctxt "Languages::no_data"
+msgid "No data found"
+msgstr "Данные не найдены"
+
+msgctxt "Languages::invalid_amount"
+msgid "Invalid amount"
+msgstr "Недопустимая сумма"
+
+msgctxt "Languages::bank_transfer_limit_is"
+msgid "Bank transfer limit is "
+msgstr "Лимит банковского перевода составляет "
+
+msgctxt "Languages::please_enter_the_valid_amount"
+msgid "Please enter the valid amount"
+msgstr "Пожалуйста, введите действительную сумму"
+
+msgctxt "Languages::bank_accounts"
+msgid "Bank Accounts"
+msgstr "Банковские счета"
+
+msgctxt "Languages::name"
+msgid "Name"
+msgstr "Имя"
+
+msgctxt "Languages::home"
+msgid "Home"
+msgstr "Дом"
+
+msgctxt "Languages::please_enter_the_valid_data"
+msgid "Please enter the valid data"
+msgstr "Пожалуйста, введите действительные данные"
+
+msgctxt "Languages::you_have_not_permission_to_transfer_amount_in_bank"
+msgid "You have not permission to transfer amount in bank"
+msgstr "У вас нет разрешения на перевод суммы в банк"
+
+msgctxt "Languages::update_bank"
+msgid "Update Bank"
+msgstr "Банк обновлений"
+
+msgctxt "Languages::bank_updated_successfully"
+msgid "Bank updated successfully"
+msgstr "Банк успешно обновлен"
+
+msgctxt "Languages::bank_deleted_successfully"
+msgid "Bank deleted successfully"
+msgstr "Банк успешно удален"
+
+msgctxt "Languages::debit by admin"
+msgid "Debit by admin"
+msgstr "Дебет администратором"
+
+msgctxt "Languages::credit by admin"
+msgid "Credit by admin"
+msgstr "Кредит от администратора"
+
+msgctxt "Languages::new registration"
+msgid "New registration"
+msgstr "Новая регистрация"
+
+msgctxt "Languages::wallet_amount_used"
+msgid "Wallet amount used"
+msgstr "Использованная сумма кошелька"
+
+msgctxt "Languages::cashback_amount"
+msgid "Cashback amount"
+msgstr "Сумма кэшбэка"
+
+msgctxt "Languages::amount_refund"
+msgid "Amount refund"
+msgstr "Возврат суммы"
+
+msgctxt "Languages::order_refund"
+msgid "Order refund"
+msgstr "Возврат заказа"
+
+msgctxt "Languages::complete"
+msgid "Complete"
+msgstr "Полный"
+
+msgctxt "Languages::cancel"
+msgid "Cancel"
+msgstr "Отмена"
+
+msgctxt "Languages::pending"
+msgid "Pending"
+msgstr "В ожидании"
+
+msgctxt "Languages::transfer wallet to bank"
+msgid "Tranfer wallet to bank"
+msgstr "Перевести кошелек в банк"
+
+msgctxt "Languages::id"
+msgid "Id"
+msgstr "Идентификатор"
+
