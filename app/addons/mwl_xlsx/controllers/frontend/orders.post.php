@@ -28,6 +28,17 @@ if ($mode === 'search') {
     }
 
     $order_items = [];
+    
+    // Get wallet recharge order IDs
+    $wallet_recharge_order_ids = [];
+    if ($order_ids) {
+        $wallet_recharge_order_ids = db_get_fields(
+            'SELECT order_id FROM ?:wallet_offline_payment WHERE order_id IN (?n)',
+            $order_ids
+        );
+        $wallet_recharge_order_ids = array_map('intval', $wallet_recharge_order_ids);
+    }
+    
     $order_products = db_get_array(
         'SELECT item_id, order_id, product_id, product_code, amount, extra FROM ?:order_details WHERE order_id IN (?n) ORDER BY order_id, item_id',
         $order_ids
@@ -78,8 +89,25 @@ if ($mode === 'search') {
         );
     }
 
+    // Process wallet recharge orders first
+    foreach ($wallet_recharge_order_ids as $wallet_order_id) {
+        if (!isset($order_items[$wallet_order_id])) {
+            $order_items[$wallet_order_id] = [];
+        }
+        $order_items[$wallet_order_id][] = [
+            'product' => __('wallet_recharge'),
+            'amount' => 1,
+        ];
+    }
+
+    // Process regular order products (skip wallet recharge orders)
     foreach ($order_products as $order_product) {
         $order_id = (int) $order_product['order_id'];
+
+        // Skip if this order is a wallet recharge order
+        if (in_array($order_id, $wallet_recharge_order_ids, true)) {
+            continue;
+        }
 
         if (!isset($order_items[$order_id])) {
             $order_items[$order_id] = [];
