@@ -344,8 +344,8 @@ msgid "Request price check"
 msgstr "Запросить проверку цены"
 
 msgctxt "Languages::mwl_xlsx.price_check_requested"
-msgid "The outlet has been sent for a price check. It usually takes 3–48 hours."
-msgstr "Издание отправлено на проверку цены. Как правило это занимает от 3 до 48 часов."
+msgid "The outlet has been sent for a price check. It usually takes 1–12 hours."
+msgstr "Издание отправлено на проверку цены. Обычно это занимает от 1 до 12 часов."
 
 msgctxt "Languages::mwl_xlsx.price_check_failed"
 msgid "Failed to send a price check request. Please try again later."
