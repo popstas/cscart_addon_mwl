@@ -3,3 +3,4 @@ deploy.sh
 vendor/
 app/addons/mwl_xlsx/vendor/
 .cursor/mcp.json
+.cursor/rules/cscart-files.mdc
