@@ -945,7 +945,7 @@
               if (hiddenLines > 0) {
                 buttonText = hiddenLines.toString();
               }
-              $toggleBtn.text(buttonText);
+              // $toggleBtn.text(buttonText);
             }
             
             // Collapse by default if description is long (element starts expanded in template)
@@ -997,7 +997,7 @@
         $contentDesc.removeClass('mwl-description-collapsed');
         // Remove number when expanded
         $btn.text('');
-        console.log('[MWL] Expanded description');
+        // console.log('[MWL] Expanded description');
       } else {
         // Collapse
         $contentDesc.addClass('mwl-description-collapsed');
@@ -1006,8 +1006,8 @@
         if (hiddenLines > 0) {
           buttonText = hiddenLines.toString();
         }
-        $btn.text(buttonText);
-        console.log('[MWL] Collapsed description');
+        // $btn.text(buttonText);
+        // console.log('[MWL] Collapsed description');
       }
       return;
     }
