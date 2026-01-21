@@ -241,3 +241,11 @@
 .test_button_blick {
   .ty-btn__primary() !important;
 }
+/* wallet menu items */
+[id^=account] .ty-account-info .ty-wallet-info__item {
+  margin-left: calc(var(--gap-xs) * -1);
+  margin-right: calc(var(--gap-xs) * -1);
+}
+[id^=account] .ty-account-info .ty-wallet-info__item .ty-wallet-info__a {
+  color: var(--color-font);
+}
