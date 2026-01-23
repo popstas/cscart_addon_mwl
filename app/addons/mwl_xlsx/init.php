@@ -39,7 +39,8 @@ fn_register_hooks(
     'variation_group_add_products_to_group',
     'variation_group_save_group',
     'update_product_features_value_pre',
-    'import_post'
+    'import_post',
+    'get_order_items_info_post'
 );
 
 Tygh::$app['event.transports.mwl'] = static function ($app) {
@@ -196,4 +197,22 @@ function fn_mwl_xlsx_smarty_modifier_shortnum($n) {
     if (abs($n) >= 1e6)  return floor($n / 1e6)  . $m;
     if (abs($n) >= 1e3)  return floor($n / 1e3)  . $k;
     return (string) intval($n);
+}
+
+function fn_mwl_xlsx_get_order_items_info_post(&$order, $v, $k)
+{
+    // Replace product name with full variation name using feature names
+    if (empty($order['products'][$k]['product_id'])) {
+        return;
+    }
+
+    $product_id = $order['products'][$k]['product_id'];
+    $lang_code = !empty($order['lang_code']) ? $order['lang_code'] : CART_LANGUAGE;
+    
+    // Get full variation name with feature names
+    $full_name = fn_mwl_xlsx_get_product_variations_name_full($product_id, $lang_code);
+    
+    if (!empty($full_name)) {
+        $order['products'][$k]['product'] = $full_name;
+    }
 }

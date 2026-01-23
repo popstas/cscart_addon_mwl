@@ -2495,3 +2495,74 @@ function fn_mwl_xlsx_fix_seo_names_after_import($import_data)
         }
     }
 }
+
+/**
+ * Get full product variation name with feature names
+ * Format: "Product Name (Feature1: Variant1, Feature2: Variant2, ...)"
+ *
+ * @param int $product_id Product ID
+ * @param string $lang_code Language code (optional, defaults to CART_LANGUAGE)
+ * @return string Full variation name or base product name if no variations
+ */
+function fn_mwl_xlsx_get_product_variations_name_full($product_id, $lang_code = CART_LANGUAGE)
+{
+    // Check if product_variations addon is available and active
+    if (!fn_check_addon_exists('product_variations')) {
+        return fn_get_product_name($product_id, $lang_code);
+    }
+
+    // Check if addon is active
+    $addon_status = db_get_field('SELECT status FROM ?:addons WHERE addon = ?s', 'product_variations');
+    if ($addon_status !== 'A') {
+        return fn_get_product_name($product_id, $lang_code);
+    }
+
+    try {
+        $product_repository = \Tygh\Addons\ProductVariations\ServiceProvider::getProductRepository();
+        $product_repository->setLangCode($lang_code);
+
+        // Find product
+        $product = $product_repository->findProduct($product_id);
+        if (empty($product)) {
+            return fn_get_product_name($product_id, $lang_code);
+        }
+
+        // Load group info and features
+        $product = $product_repository->loadProductGroupInfo($product);
+        $product = $product_repository->loadProductFeatures($product);
+
+        // If no variation features, return base product name
+        if (empty($product['variation_features'])) {
+            return $product['product'];
+        }
+
+        // Build variation name with feature_name: variant_name format
+        $formatted_variants = [];
+
+        foreach ($product['variation_features'] as $feature) {
+            // Only include features with purpose 'group_variation_catalog_item'
+            // This matches the logic in product_variations addon's loadProductsVariationName
+            if (\Tygh\Addons\ProductVariations\Product\FeaturePurposes::isCreateVariationOfCatalogItem($feature['purpose'])) {
+                $feature_name = !empty($feature['description']) ? $feature['description'] : (!empty($feature['internal_name']) ? $feature['internal_name'] : '');
+                $variant_name = !empty($feature['variant']) ? $feature['variant'] : '';
+
+                if (!empty($feature_name) && !empty($variant_name)) {
+                    $formatted_variants[] = $feature_name . ': ' . $variant_name;
+                } elseif (!empty($variant_name)) {
+                    // Fallback: if no feature name, just use variant name
+                    $formatted_variants[] = $variant_name;
+                }
+            }
+        }
+
+        if (!empty($formatted_variants)) {
+            return $product['product'] . ' (' . implode(', ', $formatted_variants) . ')';
+        }
+
+        return $product['product'];
+
+    } catch (\Exception $e) {
+        // Fallback to base product name if any error occurs
+        return fn_get_product_name($product_id, $lang_code);
+    }
+}
