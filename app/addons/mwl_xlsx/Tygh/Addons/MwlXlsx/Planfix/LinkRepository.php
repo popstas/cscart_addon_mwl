@@ -76,6 +76,7 @@ class LinkRepository
         $params = [$entity_type, $entity_ids];
 
         $company_ids = array_values(array_filter(array_map('intval', $company_ids)));
+        $company_ids[] = 0;
 
         if ($company_ids) {
             $query .= ' AND company_id IN (?n)';
