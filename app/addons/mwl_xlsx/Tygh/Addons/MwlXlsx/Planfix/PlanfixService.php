@@ -168,9 +168,28 @@ class PlanfixService
         $secondary_currency = isset($order_info['secondary_currency']) ? (string) $order_info['secondary_currency'] : '';
         $currency_code = $secondary_currency !== '' ? $secondary_currency : ((string) ($order_info['currency'] ?? $primary_currency));
 
-        $products = isset($order_info['products']) && is_array($order_info['products'])
-            ? $order_info['products']
-            : [];
+        // Check if order is wallet recharge
+        $is_wallet_recharge = false;
+        if ($order_id) {
+            $wallet_recharge_order_id = db_get_field(
+                'SELECT order_id FROM ?:wallet_offline_payment WHERE order_id = ?i',
+                $order_id
+            );
+            $is_wallet_recharge = !empty($wallet_recharge_order_id);
+        }
+
+        if ($is_wallet_recharge) {
+            $products = [
+                [
+                    'product' => __('wallet_recharge'),
+                    'amount' => 1,
+                ],
+            ];
+        } else {
+            $products = isset($order_info['products']) && is_array($order_info['products'])
+                ? $order_info['products']
+                : [];
+        }
 
         $first_product_name = '';
         foreach ($products as $item) {
@@ -186,7 +205,10 @@ class PlanfixService
                 : __('order');
         }
 
-        $task_name = sprintf('Продажа %s на pressfinity.com', $first_product_name);
+        $storefront_url = fn_url('', 'C');
+        $storefront_domain = $storefront_url ? parse_url($storefront_url, PHP_URL_HOST) : '';
+        $storefront_domain = $storefront_domain !== '' ? $storefront_domain : 'CS-Cart';
+        $task_name = sprintf('Продажа %s на %s', $first_product_name, $storefront_domain); 
 
         $lines = [];
         foreach ($products as $item) {
