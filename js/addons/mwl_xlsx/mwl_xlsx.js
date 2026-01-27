@@ -1212,6 +1212,17 @@
     });
   }
 
+  function replaceRegisterLinks() {
+    $('[href*="/profiles-add/"]').each(function() {
+      var $link = $(this);
+      var href = $link.attr('href');
+      if (href && href.indexOf('/profiles-add/') !== -1) {
+        var newHref = href.replace(/\/profiles-add\//g, '/login/');
+        $link.attr('href', newHref);
+      }
+    });
+  }
+
   $(function() {
     setLanguageFromBrowser();
 
@@ -1227,6 +1238,9 @@
         addPriceHints();
       }
     }
+
+    // Replaces links to "/profiles-add/" with "/login/"
+    replaceRegisterLinks();
     
     // Re-initialize description toggle after a delay (for dynamically loaded content)
     setTimeout(initDescriptionToggle, 500);
