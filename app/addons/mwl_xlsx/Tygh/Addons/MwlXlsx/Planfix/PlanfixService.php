@@ -205,6 +205,13 @@ class PlanfixService
                 : __('order');
         }
 
+        // Cut first_product_name to first '('
+        $pos = strpos($first_product_name, '(');
+        if ($pos !== false) {
+            $first_product_name = substr($first_product_name, 0, $pos);
+            $first_product_name = rtrim($first_product_name);
+        }
+
         $storefront_url = fn_url('', 'C');
         $storefront_domain = $storefront_url ? parse_url($storefront_url, PHP_URL_HOST) : '';
         $storefront_domain = $storefront_domain !== '' ? $storefront_domain : 'CS-Cart';
@@ -229,7 +236,7 @@ class PlanfixService
                 $price = '0';
             }
 
-            $line = sprintf('- %s ×%d, %s', $product_name, $amount, $price);
+            $line = sprintf('- %s ×%d, %s: %s', $product_name, $amount, __('cscart_marketplace.price'), $price);
 
             if ($currency_code !== '') {
                 $line .= ' ' . $currency_code;
