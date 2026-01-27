@@ -183,6 +183,7 @@ class PlanfixService
                 [
                     'product' => __('wallet_recharge'),
                     'amount' => 1,
+                    'subtotal' => isset($order_info['total']) ? (float) $order_info['total'] : 0.0,
                 ],
             ];
         } else {
