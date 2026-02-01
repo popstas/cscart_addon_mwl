@@ -1223,6 +1223,12 @@
     });
   }
 
+  function redirectToLogin() {
+    if (window.location.pathname === '/profiles-add/') {
+      window.location.href = '/login/';
+    }
+  }
+
   $(function() {
     setLanguageFromBrowser();
 
@@ -1242,6 +1248,9 @@
     // Replaces links to "/profiles-add/" with "/login/"
     replaceRegisterLinks();
     
+    // Redirect from /profiles-add/ to /login/
+    redirectToLogin();
+
     // Re-initialize description toggle after a delay (for dynamically loaded content)
     setTimeout(initDescriptionToggle, 500);
   });
