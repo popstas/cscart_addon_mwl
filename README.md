@@ -40,6 +40,9 @@
 - Yandex Metrika tracking includes `user_id` for segmentation via `userParams` when available.
 - Synchronize Unitheme price filters from a CSV file via CLI cron with insert/update support, float-aware rounding values, and detailed debug logging.
 - Automatically handle product variation group conflicts during import: detect update scenarios, preserve original feature values before CS-Cart synchronization (using `update_product_features_value_pre` hook), fix feature values in `import_post` hook after synchronization, auto-remove duplicate products from groups, and support manual feature additions before import.
+- On backoffice profile add/update for customers (user_type C), the "Notify customer" checkbox is unchecked by default (core leaves it checked).
+- On backoffice "Add customer" page, a "Generate password" button fills the password and confirm fields with a random 12-character password (uppercase, lowercase, digits, symbols).
+- On backoffice "Add customer" page, a usergroup select lets you assign a group to the new user (assigned after save), and a "Send link to set password" checkbox sends the password recovery link email after the user is created.
 
 ### Shortcuts
 - Press "a" on a product page to open the "Add to media list" dialog.

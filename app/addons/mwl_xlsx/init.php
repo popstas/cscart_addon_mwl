@@ -40,7 +40,8 @@ fn_register_hooks(
     'variation_group_save_group',
     'update_product_features_value_pre',
     'import_post',
-    'get_order_items_info_post'
+    'get_order_items_info_post',
+    'update_profile'
 );
 
 Tygh::$app['event.transports.mwl'] = static function ($app) {
@@ -92,6 +93,17 @@ function fn_mwl_xlsx_replace_variant_minus_one(&$product)
 // For cart page, replacement is done in template: product_options.pre.tpl
 function fn_mwl_xlsx_dispatch_before_display()
 {
+    // Backoffice: on profiles add, pass usergroups so the form can show a select
+    if (defined('AREA') && AREA === 'A'
+        && Registry::get('runtime.controller') === 'profiles'
+        && Registry::get('runtime.mode') === 'add'
+    ) {
+        $user_type = !empty($_REQUEST['user_type']) ? $_REQUEST['user_type'] : 'C';
+        $usergroups = fn_get_available_usergroups($user_type);
+        Tygh::$app['view']->assign('usergroups', $usergroups);
+        return;
+    }
+
     // Only process product pages in frontend
     if (Registry::get('runtime.controller') !== 'products' || Registry::get('runtime.mode') !== 'view') {
         return;
@@ -214,5 +226,28 @@ function fn_mwl_xlsx_get_order_items_info_post(&$order, $v, $k)
     
     if (!empty($full_name)) {
         $order['products'][$k]['product'] = $full_name;
+    }
+}
+
+/**
+ * After profile create: assign selected usergroup and/or send password setup link.
+ */
+function fn_mwl_xlsx_update_profile($action, $user_data, $current_user_data)
+{
+    if ($action !== 'add' || empty($user_data['user_id'])) {
+        return;
+    }
+
+    $user_id = (int) $user_data['user_id'];
+
+    // Assign usergroup if one was selected on add form
+    $usergroup_id = isset($_REQUEST['user_data']['usergroup_id']) ? (int) $_REQUEST['user_data']['usergroup_id'] : 0;
+    if ($usergroup_id > 0) {
+        fn_change_usergroup_status('A', $user_id, $usergroup_id, []);
+    }
+
+    // Send password setup link if checkbox was checked
+    if (!empty($_REQUEST['send_password_setup_link']) && !empty($user_data['email'])) {
+        fn_recover_password_generate_key($user_data['email'], true);
     }
 }
