@@ -1264,4 +1264,37 @@
     }
     return data || {};
   }
+  // === Google Analytics 4 events ===
+  document.addEventListener('click', function (e) {
+    if (typeof gtag !== 'function') return;
+
+    // click_all_publications — click on AI search block link
+    var link = e.target.closest('a.intro-ai-search-block');
+    if (link) {
+      gtag('event', 'click_all_publications', {
+        link_url: link.href || '',
+        link_text: (link.innerText || '').trim()
+      });
+      return;
+    }
+
+    // click_main_features — click on banner CTA buttons
+    var btn = e.target.closest('.ut2-banner a.ty-btn');
+    if (btn) {
+      gtag('event', 'click_main_features', {
+        link_url: btn.href || '',
+        link_text: (btn.innerText || '').trim()
+      });
+      return;
+    }
+
+    // add_to_cart — click on add-to-cart button
+    var cart = e.target.closest('.ty-btn__add-to-cart');
+    if (cart) {
+      gtag('event', 'add_to_cart', {
+        link_text: (cart.innerText || '').trim()
+      });
+      return;
+    }
+  });
 })(Tygh, Tygh.$);
