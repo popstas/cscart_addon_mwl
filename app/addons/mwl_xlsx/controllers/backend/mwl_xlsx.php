@@ -72,6 +72,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'settings') {
     return [CONTROLLER_STATUS_OK, 'mwl_xlsx.settings'];
 }
 
+if ($mode === 'update_mainpage') {
+    $url = trim((string) Registry::get('addons.mwl_xlsx.mainpage_replace_url'));
+
+    if (empty($url)) {
+        fn_set_notification('W', __('warning'), __('mwl_xlsx.mainpage_set_url_first'));
+        return [CONTROLLER_STATUS_OK, 'mwl_xlsx.settings'];
+    }
+
+    $result = fn_mwl_xlsx_download_mainpage($url);
+
+    if ($result['success']) {
+        fn_set_notification('N', __('notice'), __('mwl_xlsx.mainpage_updated') . ': ' . $result['message']);
+    } else {
+        fn_set_notification('E', __('error'), __('mwl_xlsx.mainpage_update_error') . ': ' . $result['message']);
+    }
+
+    return [CONTROLLER_STATUS_OK, 'mwl_xlsx.settings'];
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'planfix_create_task') {
     $order_id = isset($_REQUEST['order_id']) ? (int) $_REQUEST['order_id'] : 0;
     $order_info = $order_id ? fn_get_order_info($order_id, false, true, true, false) : [];
@@ -188,6 +207,9 @@ if ($mode === 'settings') {
     });
 
     \Tygh::$app['view']->assign('product_features', $feature_options);
+
+    $mainpage_file = fn_mwl_xlsx_mainpage_replace_dir() . 'index.html';
+    \Tygh::$app['view']->assign('mainpage_file_exists', file_exists($mainpage_file));
 }
 
 if ($mode === 'backup_settings') {

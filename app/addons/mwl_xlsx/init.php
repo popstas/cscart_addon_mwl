@@ -32,6 +32,7 @@ fn_register_hooks(
     'get_current_filters_post',
     'get_product_features',
     'get_product_features_post',
+    'dispatch_assign_template',
     'dispatch_before_display',
     'init_templater_post',
     'change_order_status_post',
@@ -47,6 +48,29 @@ fn_register_hooks(
 Tygh::$app['event.transports.mwl'] = static function ($app) {
     return new MwlTransport();
 };
+
+function fn_mwl_xlsx_dispatch_assign_template($controller, $mode, $area, $controllers_cascade)
+{
+    if ($area !== 'C' || $controller !== 'index' || $mode !== 'index') {
+        return;
+    }
+
+    $url = trim((string) Registry::get('addons.mwl_xlsx.mainpage_replace_url'));
+    if (empty($url)) {
+        return;
+    }
+
+    $mainpage_file = fn_mwl_xlsx_mainpage_replace_dir() . 'index.html';
+    if (!file_exists($mainpage_file)) {
+        return;
+    }
+
+    // Output directly bypassing Smarty (which strips <script> tags)
+    $html = file_get_contents($mainpage_file);
+    $html = fn_mwl_xlsx_rewrite_mainpage_paths($html, $url);
+    echo $html;
+    exit;
+}
 
 function fn_mwl_xlsx_get_product_features_post(&$data, $params, $has_ungroupped) {
     // unset feature with value_int = -1.00 at product page

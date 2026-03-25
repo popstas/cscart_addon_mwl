@@ -96,6 +96,30 @@
             </div>
         </div>
 
+        <div class="control-group">
+            <label class="control-label" for="elm_mainpage_replace_url">{__("mwl_xlsx.mainpage_replace_url")}:</label>
+            <div class="controls">
+                <input type="text" name="mwl_xlsx[mainpage_replace_url]" id="elm_mainpage_replace_url" value="{$mwl_xlsx.mainpage_replace_url}" size="60" />
+                <p class="muted description">{__("mwl_xlsx.mainpage_replace_url.desc")}</p>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label">{__("mwl_xlsx.mainpage_update")}:</label>
+            <div class="controls">
+                {if $mwl_xlsx.mainpage_replace_url}
+                    <a href="{fn_url("mwl_xlsx.update_mainpage")}" class="btn">{__("mwl_xlsx.mainpage_update")}</a>
+                    {if $mainpage_file_exists}
+                        <span class="label label-success">{__("mwl_xlsx.mainpage_file_exists")}</span>
+                    {else}
+                        <span class="label label-important">{__("mwl_xlsx.mainpage_file_missing")}</span>
+                    {/if}
+                {else}
+                    <span class="muted">{__("mwl_xlsx.mainpage_set_url_first")}</span>
+                {/if}
+            </div>
+        </div>
+
         <div class="buttons-container">
             {include file="buttons/save_changes.tpl" but_name="dispatch[mwl_xlsx.settings]"}
         </div>

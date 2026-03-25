@@ -1,4 +1,5 @@
 <?php
+use Tygh\Http;
 use Tygh\Addons\MwlXlsx\Customer\StatusResolver;
 use Tygh\Addons\MwlXlsx\MediaList\ListRepository;
 use Tygh\Addons\MwlXlsx\MediaList\ListService;
@@ -2565,4 +2566,282 @@ function fn_mwl_xlsx_get_product_variations_name_full($product_id, $lang_code = 
         // Fallback to base product name if any error occurs
         return fn_get_product_name($product_id, $lang_code);
     }
+}
+
+/**
+ * Resolve a relative URL against a base URL.
+ *
+ * @param string $relative Relative or absolute URL
+ * @param string $base_url Base URL to resolve against
+ * @return string Resolved absolute URL
+ */
+function fn_mwl_xlsx_resolve_url($relative, $base_url)
+{
+    // Already absolute
+    if (preg_match('~^(https?://|//)~i', $relative)) {
+        return $relative;
+    }
+
+    $base = parse_url($base_url);
+    $scheme = !empty($base['scheme']) ? $base['scheme'] : 'https';
+    $host = !empty($base['host']) ? $base['host'] : '';
+    $base_path = !empty($base['path']) ? $base['path'] : '/';
+
+    if (!$host) {
+        return $relative;
+    }
+
+    // Absolute path
+    if (strpos($relative, '/') === 0) {
+        return $scheme . '://' . $host . $relative;
+    }
+
+    // Relative path — resolve against base directory
+    $dir = rtrim(dirname($base_path), '/') . '/';
+    $path = $dir . $relative;
+
+    // Normalize . and ..
+    $parts = [];
+    foreach (explode('/', $path) as $seg) {
+        if ($seg === '..') {
+            array_pop($parts);
+        } elseif ($seg !== '' && $seg !== '.') {
+            $parts[] = $seg;
+        }
+    }
+
+    return $scheme . '://' . $host . '/' . implode('/', $parts);
+}
+
+/**
+ * Get the mainpage replace storage directory path.
+ *
+ * @return string Absolute directory path with trailing slash
+ */
+function fn_mwl_xlsx_mainpage_replace_dir()
+{
+    return Registry::get('config.dir.var') . 'files/mainpage_replace/';
+}
+
+/**
+ * Get the web-accessible path prefix for mainpage replace assets.
+ *
+ * @return string Path like "/var/files/mainpage_replace/"
+ */
+function fn_mwl_xlsx_mainpage_replace_web_path()
+{
+    return '/var/files/mainpage_replace/';
+}
+
+/**
+ * Download a page from URL and save it with relative assets.
+ *
+ * @param string $url The URL to download
+ * @return array{success: bool, message: string}
+ */
+function fn_mwl_xlsx_download_mainpage($url)
+{
+    if (!filter_var($url, FILTER_VALIDATE_URL)) {
+        return ['success' => false, 'message' => 'Invalid URL'];
+    }
+
+    $dir = fn_mwl_xlsx_mainpage_replace_dir();
+    fn_mkdir($dir);
+
+    // Download the HTML
+    $html = Http::get($url);
+    if (empty($html)) {
+        return ['success' => false, 'message' => 'Failed to download page'];
+    }
+
+    // Parse HTML for relative resources
+    $assets = fn_mwl_xlsx_extract_assets($html, $url);
+
+    // Download assets
+    $downloaded = 0;
+    foreach ($assets as $asset_url => $local_path) {
+        $asset_dir = dirname($dir . $local_path);
+        fn_mkdir($asset_dir);
+
+        $content = Http::get($asset_url);
+        if (!empty($content)) {
+            file_put_contents($dir . $local_path, $content);
+            $downloaded++;
+        }
+    }
+
+    // Save original HTML
+    file_put_contents($dir . 'index.html', $html);
+
+    return ['success' => true, 'message' => "Downloaded page + $downloaded assets"];
+}
+
+/**
+ * Extract relative asset URLs from HTML.
+ *
+ * @param string $html HTML content
+ * @param string $base_url Base URL for resolving relative paths
+ * @return array Map of absolute_url => local_relative_path
+ */
+function fn_mwl_xlsx_extract_assets($html, $base_url)
+{
+    $assets = [];
+
+    libxml_use_internal_errors(true);
+    $doc = new \DOMDocument();
+    $doc->loadHTML($html, LIBXML_NOWARNING | LIBXML_NOERROR);
+    libxml_clear_errors();
+
+    $base = parse_url($base_url);
+    $base_host = !empty($base['host']) ? $base['host'] : '';
+
+    // <link href>, <script src>, <img src>, <source src>
+    $tag_attrs = [
+        'link' => 'href',
+        'script' => 'src',
+        'img' => 'src',
+        'source' => 'src',
+    ];
+
+    foreach ($tag_attrs as $tag => $attr) {
+        $elements = $doc->getElementsByTagName($tag);
+        foreach ($elements as $el) {
+            $val = $el->getAttribute($attr);
+            if (empty($val)) {
+                continue;
+            }
+            fn_mwl_xlsx_collect_asset($val, $base_url, $base_host, $assets);
+        }
+    }
+
+    // srcset attributes (img, source)
+    foreach (['img', 'source'] as $tag) {
+        $elements = $doc->getElementsByTagName($tag);
+        foreach ($elements as $el) {
+            $srcset = $el->getAttribute('srcset');
+            if (empty($srcset)) {
+                continue;
+            }
+            // srcset: "url1 1x, url2 2x" or "url1 300w, url2 600w"
+            foreach (explode(',', $srcset) as $part) {
+                $part = trim($part);
+                $src = preg_split('/\s+/', $part)[0] ?? '';
+                if (!empty($src)) {
+                    fn_mwl_xlsx_collect_asset($src, $base_url, $base_host, $assets);
+                }
+            }
+        }
+    }
+
+    // Inline <style> url() references
+    $style_elements = $doc->getElementsByTagName('style');
+    foreach ($style_elements as $el) {
+        $css = $el->textContent;
+        if (preg_match_all('~url\(\s*[\'"]?(?!data:|https?://|//)([^\'")\s]+)[\'"]?\s*\)~', $css, $m)) {
+            foreach ($m[1] as $ref) {
+                fn_mwl_xlsx_collect_asset($ref, $base_url, $base_host, $assets);
+            }
+        }
+    }
+
+    return $assets;
+}
+
+/**
+ * Add a URL to the assets map if it's a same-host or relative resource.
+ */
+function fn_mwl_xlsx_collect_asset($val, $base_url, $base_host, &$assets)
+{
+    // Skip data URIs and protocol-relative to other hosts
+    if (strpos($val, 'data:') === 0) {
+        return;
+    }
+
+    // Resolve the URL
+    $absolute = fn_mwl_xlsx_resolve_url($val, $base_url);
+
+    // Only download same-host resources
+    $parsed = parse_url($absolute);
+    $host = !empty($parsed['host']) ? $parsed['host'] : '';
+    if ($host && $host !== $base_host) {
+        return;
+    }
+
+    // Derive local path from URL path
+    $path = !empty($parsed['path']) ? ltrim($parsed['path'], '/') : '';
+    if (empty($path) || $path === '/' || substr($path, -1) === '/') {
+        return;
+    }
+
+    // Skip HTML pages (no extension or .html/.htm)
+    $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+    if (empty($ext) || in_array($ext, ['html', 'htm', 'php'])) {
+        return;
+    }
+
+    $assets[$absolute] = $path;
+}
+
+/**
+ * Rewrite asset paths in HTML to point to local files at runtime.
+ *
+ * @param string $html Original HTML
+ * @param string $base_url Source URL the page was downloaded from
+ * @return string HTML with paths rewritten to /var/files/mainpage_replace/
+ */
+function fn_mwl_xlsx_rewrite_mainpage_paths($html, $base_url)
+{
+    $base = parse_url($base_url);
+    $base_host = !empty($base['host']) ? $base['host'] : '';
+    $scheme = !empty($base['scheme']) ? $base['scheme'] : 'https';
+    $web_path = fn_mwl_xlsx_mainpage_replace_web_path();
+
+    // Collect all assets to build replacement map
+    $assets = fn_mwl_xlsx_extract_assets($html, $base_url);
+
+    // Build replacement map: original_attr_value => local_path
+    $replacements = [];
+    foreach ($assets as $absolute_url => $local_path) {
+        $local = $web_path . $local_path;
+
+        // Add the absolute URL form
+        $replacements[$absolute_url] = $local;
+
+        // Also add common variants the HTML might use
+        $parsed = parse_url($absolute_url);
+        $url_path = !empty($parsed['path']) ? $parsed['path'] : '';
+
+        // Absolute path form: /path/to/file
+        if ($url_path && !isset($replacements[$url_path])) {
+            $replacements[$url_path] = $local;
+        }
+
+        // Protocol-relative form: //host/path
+        if ($base_host && $url_path) {
+            $proto_relative = '//' . $base_host . $url_path;
+            if (!isset($replacements[$proto_relative])) {
+                $replacements[$proto_relative] = $local;
+            }
+        }
+
+        // Full URL with scheme
+        if ($url_path) {
+            $full = $scheme . '://' . $base_host . $url_path;
+            if (!isset($replacements[$full])) {
+                $replacements[$full] = $local;
+            }
+        }
+    }
+
+    // Sort by key length descending to avoid partial replacements
+    uksort($replacements, function ($a, $b) {
+        return strlen($b) - strlen($a);
+    });
+
+    // Apply replacements
+    if (!empty($replacements)) {
+        $html = str_replace(array_keys($replacements), array_values($replacements), $html);
+    }
+
+    return $html;
 }
