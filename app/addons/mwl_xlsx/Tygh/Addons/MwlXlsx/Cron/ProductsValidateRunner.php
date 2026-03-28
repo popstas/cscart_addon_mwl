@@ -27,12 +27,14 @@ class ProductsValidateRunner
             'en'
         );
 
-        $total_checked = (int) db_get_field(
-            'SELECT COUNT(DISTINCT vgp.product_id) '
-            . 'FROM ?:product_variation_group_products vgp '
-            . 'JOIN ?:products p ON p.product_id = vgp.product_id AND p.status != ?s '
-            . 'WHERE vgp.parent_product_id = vgp.product_id '
-            . 'AND vgp.parent_product_id != 0',
+        $unique_products = (int) db_get_field(
+            'SELECT COUNT(*) FROM ?:products p '
+            . 'WHERE p.status != ?s '
+            . 'AND (p.product_id NOT IN (SELECT product_id FROM ?:product_variation_group_products) '
+            . '     OR p.product_id IN ('
+            . '         SELECT product_id FROM ?:product_variation_group_products '
+            . '         WHERE parent_product_id = product_id AND parent_product_id != 0'
+            . '     ))',
             'D'
         );
 
@@ -69,29 +71,21 @@ class ProductsValidateRunner
         $duplicates_found = count($duplicates);
 
         echo sprintf(
-            'products_validate: checked %d products, found %d duplicates',
-            $total_checked,
+            'products_validate: %d unique products, found %d duplicates',
+            $unique_products,
             $duplicates_found
         ) . PHP_EOL;
 
         $metrics = [
-            'total_checked' => $total_checked,
-            'duplicates_found' => $duplicates_found,
+            'unique_products' => $unique_products,
+            'duplicate_names' => $duplicates_found,
         ];
 
-        // Output scalar metric lines
-        foreach ($metrics as $name => $value) {
-            fn_mwl_xlsx_output_metric($mode, $name, $value);
-        }
-
-        // JSON line includes duplicate_names for parsers consuming stdout
-        $json_metrics = $metrics;
-        $json_metrics['duplicate_names'] = $duplicate_names;
-        fn_mwl_xlsx_output_json($mode, $json_metrics);
+        fn_mwl_xlsx_output_metrics($mode, $metrics);
 
         fn_mwl_xlsx_append_log(sprintf(
             '[products_validate] Metrics: %s',
-            json_encode($json_metrics, JSON_UNESCAPED_UNICODE)
+            json_encode($metrics, JSON_UNESCAPED_UNICODE)
         ));
 
         return [CONTROLLER_STATUS_NO_CONTENT];
