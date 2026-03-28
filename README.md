@@ -339,6 +339,14 @@ The `patches/` directory contains patches for CS-Cart core files that optimize i
 * **Deletion**: Calls `fn_delete_product($product_id)` for each candidate and removes lingering SEO names. Each deleted, skipped, or failed product ID is printed to STDOUT (`[deleted]`, `[skip]`, `[error]`) and appended to `var/log/mwl_xlsx.log`.
 * **Safety**: Before deletion each product is re-checked against the same tables to avoid race conditions. The run finishes with a summary of deleted, skipped, and failed products.
 
+### Validate duplicate default variations
+
+* **Entry point**: `php admin.php --dispatch=mwl_xlsx.products_validate` (CLI/cron only).
+* **Purpose**: Detects products that share the same name but each act as a default variation (`parent_product_id = product_id`, `parent_product_id != 0`) in their variation groups. This is a read-only validation step — it logs warnings but does not modify any data.
+* **Scope**: Checks all non-disabled (`status != 'D'`) products that are default variations. Groups results by product name and reports those with more than one default variation.
+* **Output**: For each duplicate, prints a warning with the product name, count, product IDs, product codes, and variation group codes. Finishes with a summary of total products checked and duplicates found.
+* **Pipeline**: Intended to run as the last step (step 7) in the sync-shop import pipeline after all product data has been imported.
+
 ### Planfix integration modes
 
 The add-on exposes three Planfix-facing controller modes. All of them live under the
