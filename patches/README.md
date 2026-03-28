@@ -22,6 +22,22 @@ Handles all feature types:
 
 **Result**: ~87% reduction in `fn_exim_set_product_features` time (98.36s → ~12.6s for 3227 products). Most features are unchanged during re-imports.
 
+### remove-lower-variant-lookup.patch
+
+**Target file**: `app/schemas/exim/products.functions.php`
+**Function**: `fn_exim_save_product_features_values`
+
+**Problem**: The variant lookup query uses `LOWER(variant) IN (?a)` in the WHERE clause. The `LOWER()` wrapper prevents MySQL from using the index on the `variant` column, forcing full table scans on every variant lookup during import.
+
+**Solution**: Remove `LOWER()` from the WHERE clause only. The `variant` column uses `utf8mb3_general_ci` collation which is case-insensitive, so `LOWER()` is unnecessary for matching. Keep `LOWER()` in the SELECT clause so the returned hash keys remain lowercase for consistency with PHP-side `fn_strtolower()` lookups.
+
+**Prerequisite**: The `csc_product_feature_variant_descriptions` table must use a case-insensitive collation (e.g., `utf8mb3_general_ci`). Verify with:
+```sql
+SHOW TABLE STATUS LIKE 'csc_product_feature_variant_descriptions';
+```
+
+**Result**: ~7% reduction in `fn_exim_set_product_features` time (90.81s -> 85.37s for 409 products).
+
 ## How to Apply
 
 1. **Backup the original file** (if not already backed up):
