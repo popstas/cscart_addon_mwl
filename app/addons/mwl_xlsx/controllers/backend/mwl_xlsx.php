@@ -6,6 +6,7 @@ use Tygh\Storage;
 use Tygh\Addons\MwlXlsx\Service\SettingsBackup;
 use Tygh\Addons\MwlXlsx\Cron\DeleteUnusedProductsRunner;
 use Tygh\Addons\MwlXlsx\Cron\FiltersSyncRunner;
+use Tygh\Addons\MwlXlsx\Cron\ProductsValidateRunner;
 use Tygh\Addons\MwlXlsx\Cron\PublishDownRunner;
 use Tygh\Addons\MwlXlsx\Import\ImportPrepareRunner;
 
@@ -46,6 +47,12 @@ if ($mode === 'delete_unused_products') {
     $runner = new DeleteUnusedProductsRunner();
 
     return $runner->run($dry_run, $mode);
+}
+
+if ($mode === 'products_validate') {
+    $runner = new ProductsValidateRunner();
+
+    return $runner->run($mode);
 }
 
 if ($mode === 'dev_reload_langs') {
