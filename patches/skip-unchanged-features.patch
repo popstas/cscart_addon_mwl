@@ -1,0 +1,75 @@
+--- a/app/functions/fn.features.php
++++ b/app/functions/fn.features.php
+@@ -150,6 +150,21 @@
+         'lang_code'  => $lang_code,
+     ];
+ 
++    // Optimization: fetch current feature values to skip unchanged ones
++    $_current_values = db_get_hash_array(
++        'SELECT feature_id, variant_id, value, value_int FROM ?:product_features_values WHERE product_id = ?i AND lang_code = ?s',
++        'feature_id',
++        $product_id,
++        $lang_code
++    );
++    // For MULTIPLE_CHECKBOX: fetch all variant_ids grouped by feature_id
++    $_current_checkbox_variants = db_get_hash_multi_array(
++        'SELECT feature_id, variant_id FROM ?:product_features_values WHERE product_id = ?i AND lang_code = ?s',
++        array('feature_id', 'variant_id'),
++        $product_id,
++        $lang_code
++    );
++
+     foreach ($product_features as $feature_id => $value) {
+         // Check if feature is applicable for this product
+         $_params = [
+@@ -180,6 +195,51 @@
+         unset($i_data['value_int']);
+         $feature_type = fn_get_product_feature_type_by_feature_id($feature_id);
+ 
++        // Optimization: skip unchanged features
++        $current = isset($_current_values[$feature_id]) ? $_current_values[$feature_id] : null;
++        if ($current !== null && empty($add_new_variant[$feature_id])) {
++            $skip = false;
++            if ($feature_type === ProductFeatures::DATE) {
++                if (!empty($value) && (int) $current['value_int'] === (int) fn_parse_date($value)) {
++                    $skip = true;
++                } elseif (empty($value) && empty($current['value_int'])) {
++                    $skip = true;
++                }
++            } elseif ($feature_type === ProductFeatures::MULTIPLE_CHECKBOX) {
++                $current_variant_ids = isset($_current_checkbox_variants[$feature_id])
++                    ? array_map('intval', array_keys($_current_checkbox_variants[$feature_id]))
++                    : [];
++                $incoming_variant_ids = is_array($value) ? array_map('intval', array_values($value)) : [];
++                sort($current_variant_ids);
++                sort($incoming_variant_ids);
++                if ($current_variant_ids === $incoming_variant_ids) {
++                    $skip = true;
++                }
++            } elseif (in_array($feature_type, array(ProductFeatures::TEXT_SELECTBOX, ProductFeatures::NUMBER_SELECTBOX, ProductFeatures::EXTENDED))) {
++                if (!empty($value) && $value !== 'disable_select' && (int) $current['variant_id'] === (int) $value) {
++                    $skip = true;
++                } elseif ((empty($value) || $value === 'disable_select') && empty($current['variant_id'])) {
++                    $skip = true;
++                }
++            } elseif ($feature_type === ProductFeatures::NUMBER_FIELD) {
++                if ((string) $current['value_int'] === (string) $value) {
++                    $skip = true;
++                }
++            } elseif ($feature_type === ProductFeatures::TEXT_FIELD) {
++                if ((string) $current['value'] === (string) $value) {
++                    $skip = true;
++                }
++            } else {
++                // Unknown feature type: always write to be safe
++                $skip = false;
++            }
++
++            if ($skip) {
++                continue;
++            }
++        }
++
+         // Delete variants in current language
+         if ($feature_type === ProductFeatures::TEXT_FIELD) {
+             db_query('DELETE FROM ?:product_features_values WHERE feature_id = ?i AND product_id = ?i AND lang_code = ?s', $feature_id, $product_id, $lang_code);

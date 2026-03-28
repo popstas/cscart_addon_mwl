@@ -281,6 +281,12 @@ WHERE pfv.product_id = <your_product_id>
 - Features have wrong `purpose` → Verify `purpose` in `cscart_product_features` table (must be `group_catalog_item` or `group_variation_catalog_item`)
 - Old product not removed despite duplicate → Check that old product ID is in "truly existing" list (not in new_product_ids)
 
+### Import optimization patches
+
+The `patches/` directory contains patches for CS-Cart core files that optimize import performance. These are applied directly to the CS-Cart installation, not through the add-on hook system.
+
+- **skip-unchanged-features.patch**: Optimizes `fn_update_product_features_value` in `app/functions/fn.features.php` to skip DELETE+INSERT for features whose values haven't changed during re-import. Reduces `fn_exim_set_product_features` processing time by ~87%. See `patches/README.md` for apply/revert instructions.
+
 ### Price filter sync
 
 * **Entry point**: `php admin.php --dispatch=mwl_xlsx.filters_sync` (CLI/cron only). When called from a browser the controller exits early with a warning.
