@@ -1,0 +1,23 @@
+--- a/app/schemas/exim/products.functions.php
++++ b/app/schemas/exim/products.functions.php
+@@ -2025,6 +2025,12 @@
+ function fn_exim_find_feature($name, $type, $group_id, $lang_code, $company_id = null, $field_name = 'internal_name')
+ {
++    static $_cache = [];
++    $cache_key = "$name|$type|$group_id|$lang_code|$company_id|$field_name";
++    if (isset($_cache[$cache_key])) {
++        return $_cache[$cache_key];
++    }
++
+     $current_company_id = Registry::get('runtime.company_id');
+     $is_simple_ultimate = Registry::get('runtime.simple_ultimate');
+
+@@ -2051,5 +2057,7 @@
+         Registry::set('runtime.company_id', $current_company_id);
+     }
+
+-    return $result;
++    $_cache[$cache_key] = $result;
++
++    return $result;
+ }

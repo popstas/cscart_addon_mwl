@@ -22,6 +22,17 @@ Handles all feature types:
 
 **Result**: ~87% reduction in `fn_exim_set_product_features` time (98.36s → ~12.6s for 3227 products). Most features are unchanged during re-imports.
 
+### cache-exim-find-feature.patch
+
+**Target file**: `app/schemas/exim/products.functions.php`
+**Function**: `fn_exim_find_feature`
+
+**Problem**: `fn_exim_find_feature` is called up to 3 times per feature per product (~59K calls for 1309 products), but only ~36 unique features exist. Each call executes a DB query with JOINs, even though results are deterministic for the same input parameters.
+
+**Solution**: Add a static cache keyed by `$name|$type|$group_id|$lang_code|$company_id|$field_name`. On cache hit, return immediately without DB query. On cache miss, execute the query and store the result. The static variable auto-clears when the PHP process ends.
+
+**Result**: ~8% reduction in `fn_exim_set_product_features` time (98.39s -> 90.81s for 409 products).
+
 ### remove-lower-variant-lookup.patch
 
 **Target file**: `app/schemas/exim/products.functions.php`
