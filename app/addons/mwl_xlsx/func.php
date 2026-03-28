@@ -8,6 +8,7 @@ use Tygh\Addons\MwlXlsx\Planfix\IntegrationSettings;
 use Tygh\Addons\MwlXlsx\Planfix\LinkRepository;
 use Tygh\Addons\MwlXlsx\Planfix\StatusMapRepository;
 use Tygh\Addons\MwlXlsx\Planfix\McpClient;
+use Tygh\Addons\MwlXlsx\Import\MwlImportProfiler;
 use Tygh\Addons\MwlXlsx\Planfix\PlanfixService;
 use Tygh\Addons\MwlXlsx\Planfix\WebhookHandler;
 use Tygh\Addons\MwlXlsx\Security\AccessService;
@@ -1109,6 +1110,22 @@ function fn_mwl_xlsx_exim_import_images_pre(
     $import_options,
     &$perform_import
 ) {
+    $profiler = MwlImportProfiler::instance();
+    if ($profiler->isEnabled() && $object === 'product' && !empty($object_id)) {
+        $profiler->startProduct($object_id);
+        $profiler->stepStart('image_check');
+    }
+
+    // Allow skipping all image imports via CLI: --skip_images=1
+    if (!empty($_REQUEST['skip_images'])) {
+        $perform_import = false;
+        if ($profiler->isEnabled()) {
+            $profiler->increment('image_skipped');
+            $profiler->stepEnd('image_check');
+        }
+        return;
+    }
+
     if ($object !== 'product' || empty($object_id)) {
         return;
     }
@@ -1117,22 +1134,41 @@ function fn_mwl_xlsx_exim_import_images_pre(
     if (!empty($main_pair)) {
         $perform_import = false;
         echo 'image_exists' . PHP_EOL;
-
+        if ($profiler->isEnabled()) {
+            $profiler->increment('image_exists');
+            $profiler->stepEnd('image_check');
+        }
         return;
     }
 
     if (!$detailed_file) {
         $perform_import = false;
         echo 'no_image' . PHP_EOL;
+        if ($profiler->isEnabled()) {
+            $profiler->increment('no_image');
+            $profiler->stepEnd('image_check');
+        }
         return;
     }
 
     echo 'image_import' . PHP_EOL;
-    // $additional_pairs = fn_get_image_pairs($object_id, 'product', 'A', true, true);
-    // if (!empty($additional_pairs)) {
-    //     error_log(print_r($additional_pairs, true));
-    //     $perform_import = false;
-    // }
+    if ($profiler->isEnabled()) {
+        $profiler->increment('image_import');
+        $profiler->stepEnd('image_check');
+        $profiler->stepStart('image_save');
+    }
+}
+
+/**
+ * Hook handler: tracks image save timing for import profiler.
+ */
+function fn_mwl_xlsx_update_image(&$image_data, $image_id, $image_type, $images_path, $_data, $mime_type, $is_clone)
+{
+    $profiler = MwlImportProfiler::instance();
+    if ($profiler->isEnabled()) {
+        $profiler->stepEnd('image_save');
+        $profiler->stepStart('image_save');
+    }
 }
 
 /**
@@ -1994,6 +2030,12 @@ function fn_mwl_xlsx_update_product_features_value_pre($product_id, &$product_fe
  */
 function fn_mwl_xlsx_import_post($pattern, $import_data, $options, $result, $processed_data)
 {
+    $profiler = MwlImportProfiler::instance();
+    if ($profiler->isEnabled()) {
+        $profiler->endProduct();
+        $profiler->stepStart('post_processing');
+    }
+
     fn_mwl_xlsx_log_debug('========================================');
     fn_mwl_xlsx_log_debug('Hook import_post CALLED!');
     fn_mwl_xlsx_log_debug('Pattern section: ' . (isset($pattern['section']) ? $pattern['section'] : 'NOT SET'));
@@ -2285,6 +2327,11 @@ function fn_mwl_xlsx_import_post($pattern, $import_data, $options, $result, $pro
     
     fn_mwl_xlsx_log_debug('Post-import feature values fix completed');
     fn_mwl_xlsx_log_debug('========================================');
+
+    if ($profiler->isEnabled()) {
+        $profiler->stepEnd('post_processing');
+        $profiler->writeReport();
+    }
 }
 
 /**

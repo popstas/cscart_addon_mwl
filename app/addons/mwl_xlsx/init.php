@@ -37,6 +37,7 @@ fn_register_hooks(
     'init_templater_post',
     'change_order_status_post',
     'exim_import_images_pre',
+    'update_image',
     'variation_group_add_products_to_group',
     'variation_group_save_group',
     'update_product_features_value_pre',
