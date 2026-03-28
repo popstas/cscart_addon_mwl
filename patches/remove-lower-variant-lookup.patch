@@ -1,0 +1,11 @@
+--- a/app/schemas/exim/products.functions.php
++++ b/app/schemas/exim/products.functions.php
+@@ -1910,7 +1910,7 @@
+         $existent_feature_variants = db_get_hash_multi_array(
+             'SELECT pfvd.variant_id, LOWER(variant) as variant, feature_id FROM ?:product_feature_variant_descriptions AS pfvd ' .
+             'LEFT JOIN ?:product_feature_variants AS pfv ON pfv.variant_id = pfvd.variant_id ' .
+-            'WHERE feature_id IN (?n) AND LOWER(variant) IN (?a) AND lang_code = ?s',
++            'WHERE feature_id IN (?n) AND variant IN (?a) AND lang_code = ?s',
+             ['feature_id', 'variant'],
+             $feature_ids,
+             $variant_names,
