@@ -154,6 +154,7 @@ function fn_mwl_exim_skip_unchanged_products($primary_object_id, $object, $patte
 
     $skip_record = true;
     $processed_data['S']++;
+    fn_set_progress('echo', 'Skipping ' . $pattern['name'] . ' <b>' . $product_id . '</b>. ', false);
 
     $profiler->stepEnd('early_check');
     $profiler->increment('early_check_skipped');
