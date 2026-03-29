@@ -49,6 +49,27 @@ SHOW TABLE STATUS LIKE 'csc_product_feature_variant_descriptions';
 
 **Result**: ~7% reduction in `fn_exim_set_product_features` time (90.81s -> 85.37s for 409 products).
 
+### profile-exim-import-loop.patch
+
+**Target file**: `app/functions/fn.exim.php`
+**Function**: `fn_import`
+
+**Problem**: No visibility into where time is spent inside the core import loop. The existing `MwlImportProfiler` only instruments addon hooks (image check, import_post), not the core exim steps.
+
+**Solution**: Add profiling instrumentation around each major step of the `fn_import()` loop, gated by `$_REQUEST['profile_import']`. Zero overhead when the flag is not set.
+
+**Instrumented steps**:
+- `find_product` — primary_object_id lookup (DB query to find existing product by alt keys)
+- `pre_insert` — pre_inserting_groups processing
+- `db_update` — main products table INSERT/UPDATE
+- `post_insert` — post_inserting_groups and import_after_process_data
+- `reference_tables` — descriptions, prices, and other reference table updates
+- `processing_groups` — features, images, categories, and other process_put handlers
+
+Also calls `startProduct()`/`endProduct()` per product so the profiler can track per-product timings.
+
+**Result**: Run with `--profile_import=1` to get a full breakdown of import time by step in the profile report.
+
 ## How to Apply
 
 1. **Backup the original file** (if not already backed up):

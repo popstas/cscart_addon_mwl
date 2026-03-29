@@ -2071,6 +2071,10 @@ function fn_mwl_xlsx_import_post($pattern, $import_data, $options, $result, $pro
     if (empty($groups_to_fix)) {
         fn_mwl_xlsx_log_debug('No groups to fix found, skipping post-processing');
         fn_mwl_xlsx_log_debug('========================================');
+        if ($profiler->isEnabled()) {
+            $profiler->stepEnd('post_processing');
+            $profiler->writeReport();
+        }
         return;
     }
     

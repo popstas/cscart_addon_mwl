@@ -1,0 +1,148 @@
+--- a/app/functions/fn.exim.php
++++ b/app/functions/fn.exim.php
+@@ -31,6 +31,7 @@
+ use Tygh\Languages\Languages;
+
+ //
++use Tygh\Addons\MwlXlsx\Import\MwlImportProfiler;
+ // Export data using pattern
+
+ /**
+@@ -605,6 +606,8 @@
+     $main_lang = reset($multi_lang);
+
++    $_mwl_profile = !empty($_REQUEST['profile_import']);
++
+     foreach ($import_data as $k => $v) {
+
+         //If the required field is empty skip this record
+@@ -644,6 +647,10 @@
+             $_primary_fields[$real_field] = $v[$main_lang][$real_field];
+         }
+
++        if ($_mwl_profile) {
++            MwlImportProfiler::instance()->stepStart('find_product');
++        }
++
+         $skip_get_primary_object_id = false;
+
+         if (!empty($pattern['import_get_primary_object_id'])) {
+@@ -673,6 +680,14 @@
+             $primary_object_id = db_get_row('SELECT ' . implode(', ', $pattern['key']) . ' FROM ?:' . $pattern['table'] . ' WHERE ?p', $where);
+         }
+
++        if ($_mwl_profile) {
++            $__profiler = MwlImportProfiler::instance();
++            $__profiler->stepEnd('find_product');
++            if (!empty($primary_object_id['product_id'])) {
++                $__profiler->startProduct($primary_object_id['product_id']);
++            }
++        }
++
+         $skip_record = $stop_import = false;
+
+         if (!empty($pattern['import_process_data'])) {
+@@ -691,12 +706,22 @@
+             fn_exim_processing('import', $pattern['import_process_data'], $options, $data_import_process_data);
+         }
+
++        if ($_mwl_profile) {
++            MwlImportProfiler::instance()->stepStart('pre_insert');
++        }
++
+         fn_exim_import_prepare_groups($v[$main_lang], $pre_inserting_groups, $options, $skip_record, $stop_import);
+
++        if ($_mwl_profile) {
++            MwlImportProfiler::instance()->stepEnd('pre_insert');
++        }
++
+         if ($stop_import) {
+             break;
+         }
+
+         if ($skip_record) {
++            if ($_mwl_profile) {
++                MwlImportProfiler::instance()->endProduct();
++            }
+             continue;
+         }
+
+@@ -704,6 +729,10 @@
+         $primary_object_ids[$k] = $primary_object_id;
+         if (!(isset($pattern['import_skip_db_processing']) && $pattern['import_skip_db_processing'])) {
+
++            if ($_mwl_profile) {
++                MwlImportProfiler::instance()->stepStart('db_update');
++            }
++
+             fn_set_progress('echo', __('importing_data'));
+             if (empty($primary_object_id)) {
+
+@@ -758,8 +787,16 @@
+                 $primary_object_ids[$k] = $primary_object_id;
+             }
++
++            if ($_mwl_profile) {
++                MwlImportProfiler::instance()->stepEnd('db_update');
++            }
+         }
+
++        if ($_mwl_profile) {
++            MwlImportProfiler::instance()->stepStart('post_insert');
++        }
++
+         $skip_db_processing_record = false;
+
+         fn_exim_import_prepare_groups($v[$main_lang], $post_inserting_groups, $options, $skip_db_processing_record);
+@@ -778,10 +815,20 @@
+             fn_exim_processing('import', $pattern['import_after_process_data'], $options, $data_import_after_process_data);
+         }
+
++        if ($_mwl_profile) {
++            MwlImportProfiler::instance()->stepEnd('post_insert');
++        }
++
+         if ($skip_db_processing_record) {
++            if ($_mwl_profile) {
++                MwlImportProfiler::instance()->endProduct();
++            }
+             continue;
+         }
+
++        if ($_mwl_profile) {
++            MwlImportProfiler::instance()->stepStart('reference_tables');
++        }
++
+         if (!(isset($pattern['import_skip_db_processing']) && $pattern['import_skip_db_processing'])) {
+             // Update referenced tables
+             fn_set_progress('echo', __('updating_links') . '... ', false);
+@@ -855,6 +902,14 @@
+             }
+         }
+
++        if ($_mwl_profile) {
++            MwlImportProfiler::instance()->stepEnd('reference_tables');
++        }
++
++        if ($_mwl_profile) {
++            MwlImportProfiler::instance()->stepStart('processing_groups');
++        }
++
+         if (!empty($processing_groups)) {
+
+             foreach ($processing_groups as $group) {
+@@ -968,6 +1023,14 @@
+             }
+         }
+     }
++
++        if ($_mwl_profile) {
++            MwlImportProfiler::instance()->stepEnd('processing_groups');
++        }
++
++        if ($_mwl_profile) {
++            MwlImportProfiler::instance()->endProduct();
++        }
++    }
+
+     $final_import_notification = __('text_exim_data_imported', array(
