@@ -70,6 +70,30 @@ Also calls `startProduct()`/`endProduct()` per product so the profiler can track
 
 **Result**: Run with `--profile_import=1` to get a full breakdown of import time by step in the profile report.
 
+### indexes.sql
+
+**Target table**: `cscart_products`
+
+**Problem**: The import's `find_product` step does `SELECT product_id FROM cscart_products WHERE product_code = ?s AND company_id = ?i` for every row in the CSV. Without an index on `product_code`, MySQL performs a full table scan (type=ALL) on every lookup. At 4220 products this consumed 112.5s (63% of total import time).
+
+**Solution**:
+```sql
+ALTER TABLE cscart_products ADD INDEX idx_product_code (product_code);
+```
+
+**Result**: `find_product` dropped from 112.5s to 3.05s (0.027s → 0.0007s per product) — **37x faster**. Total import time dropped from 179.4s to 30.9s.
+
+### cache-feature-applicable.patch
+
+**Target file**: `app/functions/fn.features.php`
+**Function**: `fn_update_product_features_value`
+
+**Problem**: Inside the feature update loop, `fn_get_product_features()` and `fn_get_product_feature_type_by_feature_id()` are called for every feature of every product. `fn_get_product_features()` is a heavy function with hooks, LastView, and JOINs. With 10 features × 136 new products = 1360 redundant calls, since feature applicability and types don't change between products.
+
+**Solution**: Add static caches for both functions, keyed by `feature_id`. First call populates the cache, subsequent calls return instantly.
+
+**Result**: ~10% reduction in `fn_exim_set_product_features` per-product time (0.176s → 0.158s). Modest gain because the remaining time is in actual INSERT/UPDATE queries for feature values.
+
 ## How to Apply
 
 1. **Backup the original file** (if not already backed up):
