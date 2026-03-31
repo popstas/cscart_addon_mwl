@@ -43,22 +43,43 @@ function fn_mwl_exim_values_equal($import_val, $db_val)
  * @param string $lang_code
  * @return array|false
  */
+function fn_mwl_exim_flush_skipped_timestamps($product_id = null)
+{
+    static $_pending = [];
+
+    if ($product_id !== null) {
+        $_pending[] = $product_id;
+    }
+
+    if (($product_id === null && !empty($_pending)) || count($_pending) >= 500) {
+        db_query('UPDATE ?:products SET updated_timestamp = ?i WHERE product_id IN (?n)', TIME, $_pending);
+        $_pending = [];
+    }
+}
+
 function fn_mwl_exim_get_product_current_data($product_id, $lang_code)
 {
-    return db_get_row(
-        'SELECT p.product_code, p.status, p.list_price, p.amount, p.min_qty, p.max_qty, '
-        . 'p.weight, p.qty_step, p.list_qty_count, p.shipping_freight, p.tracking, '
-        . 'p.free_shipping, p.zero_price_action, p.is_edp, p.edp_shipping, '
-        . 'p.out_of_stock_actions, p.usergroup_ids, p.options_type, p.exceptions_type, '
-        . 'd.product, '
-        . 'pp.price '
-        . 'FROM ?:products p '
-        . 'LEFT JOIN ?:product_descriptions d ON d.product_id = p.product_id AND d.lang_code = ?s '
-        . 'LEFT JOIN ?:product_prices pp ON pp.product_id = p.product_id AND pp.lower_limit = 1 AND pp.usergroup_id = 0 '
-        . 'WHERE p.product_id = ?i',
-        $lang_code,
-        $product_id
-    );
+    static $_cache = null;
+    static $_cache_lang = null;
+
+    if ($_cache === null || $_cache_lang !== $lang_code) {
+        $_cache_lang = $lang_code;
+        $_cache = db_get_hash_array(
+            'SELECT p.product_id, p.product_code, p.status, p.list_price, p.amount, p.min_qty, p.max_qty, '
+            . 'p.weight, p.qty_step, p.list_qty_count, p.shipping_freight, p.tracking, '
+            . 'p.free_shipping, p.zero_price_action, p.is_edp, p.edp_shipping, '
+            . 'p.out_of_stock_actions, p.usergroup_ids, p.options_type, p.exceptions_type, '
+            . 'd.product, '
+            . 'pp.price '
+            . 'FROM ?:products p '
+            . 'LEFT JOIN ?:product_descriptions d ON d.product_id = p.product_id AND d.lang_code = ?s '
+            . 'LEFT JOIN ?:product_prices pp ON pp.product_id = p.product_id AND pp.lower_limit = 1 AND pp.usergroup_id = 0',
+            'product_id',
+            $lang_code
+        );
+    }
+
+    return isset($_cache[$product_id]) ? $_cache[$product_id] : [];
 }
 
 /**
@@ -149,12 +170,11 @@ function fn_mwl_exim_skip_unchanged_products($primary_object_id, $object, $patte
         return;
     }
 
-    // No changes — only update timestamp
-    db_query('UPDATE ?:products SET updated_timestamp = ?i WHERE product_id = ?i', TIME, $product_id);
+    // No changes — batch update timestamp instead of per-product
+    fn_mwl_exim_flush_skipped_timestamps($product_id);
 
     $skip_record = true;
     $processed_data['S']++;
-    fn_set_progress('echo', 'Skipping ' . $pattern['name'] . ' <b>' . $product_id . '</b>. ', false);
 
     $profiler->stepEnd('early_check');
     $profiler->increment('early_check_skipped');

@@ -2030,6 +2030,9 @@ function fn_mwl_xlsx_update_product_features_value_pre($product_id, &$product_fe
  */
 function fn_mwl_xlsx_import_post($pattern, $import_data, $options, $result, $processed_data)
 {
+    // Flush remaining skipped product timestamps
+    fn_mwl_exim_flush_skipped_timestamps();
+
     $profiler = MwlImportProfiler::instance();
     if ($profiler->isEnabled()) {
         $profiler->endProduct();
