@@ -204,6 +204,9 @@ class ImportPrepareRunner
         ];
         fn_mwl_xlsx_output_metrics('import_prepare', $metrics);
 
+        // Signal to variation_group_add_products_to_group hook that features are already synced
+        \Tygh\Registry::set('mwl_xlsx.import_prepare_done', true);
+
         if ($debug && $total_warnings > 0) {
             fn_mwl_xlsx_log_debug("Warnings: {$total_warnings} (features not found - not variation features)");
         }
