@@ -265,11 +265,11 @@ function define_patches() {
         }',
         ],
         [
-            'desc' => 'Add endProduct on skip_record',
+            'desc' => 'Add endProduct and progress echo on skip_record',
             'file' => 'app/functions/fn.exim.php',
             'check' => 'MwlImportProfiler::instance()->endProduct()',
-            'old' => "        if (\$skip_record) {\n            continue;\n        }",
-            'new' => "        if (\$skip_record) {\n            if (\$_mwl_profile) {\n                MwlImportProfiler::instance()->endProduct();\n            }\n            continue;\n        }",
+            'old' => "        if (\$skip_record) {\n            if (\$_mwl_profile) {\n                MwlImportProfiler::instance()->endProduct();\n            }\n            continue;\n        }",
+            'new' => "        if (\$skip_record) {\n            fn_set_progress('echo', 'Skipping ' . \$pattern['name'] . ' <b>' . implode(',', \$primary_object_id) . '</b>. ', false);\n            if (\$_mwl_profile) {\n                MwlImportProfiler::instance()->endProduct();\n            }\n            continue;\n        }",
         ],
         [
             'desc' => 'Add db_update profiling start',
