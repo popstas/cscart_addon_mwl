@@ -163,6 +163,9 @@ class DeleteUnusedProductsRunner
         $skipped_products = [];
         $errors = [];
         $planned_products = [];
+        $start_time = microtime(true);
+        $processed = 0;
+        $total_candidates = count($unused_product_ids);
 
         $check_references = static function (int $product_id) use ($existing_tables): array {
             $references = [];
@@ -204,10 +207,22 @@ class DeleteUnusedProductsRunner
 
             if ($dry_run) {
                 $planned_products[] = $product_id;
+                $processed++;
 
                 $planned_message = __('mwl_xlsx.delete_unused_products_dry_run_entry', ['[product_id]' => $product_id]);
                 echo '[dry-run] ' . $planned_message . PHP_EOL;
                 fn_mwl_xlsx_append_log('[delete_unused] ' . $planned_message);
+
+                if ($processed % 10 === 0) {
+                    $elapsed_now = microtime(true) - $start_time;
+                    $avg = $elapsed_now / $processed;
+                    $remaining = $total_candidates - $processed;
+                    $eta = $remaining * $avg;
+                    echo sprintf(
+                        '[progress] %d/%d checked, avg: %.2fs, elapsed: %.1fs, ETA: %.1fs',
+                        $processed, $total_candidates, $avg, $elapsed_now, $eta
+                    ) . PHP_EOL;
+                }
 
                 continue;
             }
@@ -220,6 +235,18 @@ class DeleteUnusedProductsRunner
                 fn_mwl_xlsx_append_log('[delete_unused] ' . $deleted_message);
 
                 $deleted_products[] = $product_id;
+                $processed++;
+
+                if ($processed % 10 === 0) {
+                    $elapsed = microtime(true) - $start_time;
+                    $avg = $elapsed / $processed;
+                    $remaining = $total_candidates - $processed;
+                    $eta = $remaining * $avg;
+                    echo sprintf(
+                        '[progress] %d/%d deleted, avg: %.2fs, elapsed: %.1fs, ETA: %.1fs',
+                        $processed, $total_candidates, $avg, $elapsed, $eta
+                    ) . PHP_EOL;
+                }
 
                 continue;
             }
@@ -231,12 +258,17 @@ class DeleteUnusedProductsRunner
             $errors[] = $product_id;
         }
 
+        $elapsed = microtime(true) - $start_time;
+        $delete_avg = $processed > 0 ? (int) round(($elapsed / $processed) * 1000) : 0;
+
         $metrics = [
             'disabled' => count($all_product_ids),
             'referenced_disabled' => $referenced_disabled_count,
             'deleted' => count($deleted_products),
             'skipped' => count($skipped_products),
             'errors' => count($errors),
+            'elapsed' => round($elapsed, 1),
+            'delete_avg' => $delete_avg,
         ];
         fn_mwl_xlsx_output_metrics($mode, $metrics);
 
@@ -256,6 +288,8 @@ class DeleteUnusedProductsRunner
             'deleted' => count($deleted_products),
             'skipped' => count($skipped_products),
             'errors' => count($errors),
+            'elapsed' => round($elapsed, 1),
+            'delete_avg' => $delete_avg,
             'dry_run' => $dry_run,
             'deleted_product_ids' => $deleted_products,
             'skipped_product_ids' => $skipped_products,
