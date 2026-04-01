@@ -96,27 +96,56 @@ ALTER TABLE cscart_products ADD INDEX idx_product_code (product_code);
 
 ## How to Apply
 
-1. **Backup the original file** (if not already backed up):
-   ```bash
-   cp app/functions/fn.features.php app/functions/fn.features.php.bak
-   ```
+### Via `apply_patch.php` (recommended)
 
-2. **Apply the patch** from the CS-Cart root directory:
-   ```bash
-   patch -p1 < /path/to/patches/skip-unchanged-features.patch
-   ```
+The `apply_patch.php` script applies patches via PHP string replacement. It runs as the web server user, so it has write access to core files. Backups are created automatically (`.bak`).
 
-   Or manually: the patch adds two blocks to `fn_update_product_features_value`:
-   - Before the `foreach` loop: two SELECT queries to fetch current values
-   - Inside the loop after `fn_get_product_feature_type_by_feature_id`: comparison logic that `continue`s if value is unchanged
+**Dry-run** (check without applying):
+```bash
+curl "https://<domain>/_dev/addons/mwl_xlsx/patches/apply_patch.php?patch=skip-unchanged-features&dry-run=1"
+```
 
-3. **Verify**: Run a full import and check that:
-   - Import completes without errors
-   - Product feature values are correct (spot-check a few products)
-   - Features that DO change are still updated properly
+**Apply a single patch:**
+```bash
+curl "https://<domain>/_dev/addons/mwl_xlsx/patches/apply_patch.php?patch=skip-unchanged-features"
+```
+
+**Apply all patches at once:**
+```bash
+curl "https://<domain>/_dev/addons/mwl_xlsx/patches/apply_patch.php?patch=all"
+```
+
+**Revert a patch:**
+```bash
+curl "https://<domain>/_dev/addons/mwl_xlsx/patches/apply_patch.php?patch=skip-unchanged-features&revert=1"
+```
+
+Available patch names: `skip-unchanged-features`, `cache-exim-find-feature`, `remove-lower-variant-lookup`, `profile-exim-import-loop`, `all`.
+
+The script is idempotent — re-running reports "Already applied" without making changes.
+
+### Via `patch` command (alternative)
+
+From the CS-Cart root directory:
+```bash
+patch -p1 < /path/to/patches/skip-unchanged-features.patch
+```
+
+### Verify
+
+After applying, run a full import and check that:
+- Import completes without errors
+- Product feature values are correct (spot-check a few products)
+- Features that DO change are still updated properly
 
 ## How to Revert
 
+Via `apply_patch.php`:
+```bash
+curl "https://<domain>/_dev/addons/mwl_xlsx/patches/apply_patch.php?patch=skip-unchanged-features&revert=1"
+```
+
+Or from backup:
 ```bash
 cp app/functions/fn.features.php.bak app/functions/fn.features.php
 ```

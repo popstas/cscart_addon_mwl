@@ -22,7 +22,7 @@
      foreach ($product_features as $feature_id => $value) {
          // Check if feature is applicable for this product
          $_params = [
-@@ -180,6 +195,51 @@
+@@ -180,6 +195,50 @@
          unset($i_data['value_int']);
          $feature_type = fn_get_product_feature_type_by_feature_id($feature_id);
  
