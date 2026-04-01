@@ -444,6 +444,16 @@ class FilterSyncService
             return null;
         }
 
+        $current_name_ru = db_get_field(
+            "SELECT filter FROM ?:product_filter_descriptions WHERE filter_id = ?i AND lang_code = ?s",
+            $filter_id,
+            self::RUSSIAN_LANG_CODE
+        );
+
+        if ($current_name_ru === $name_ru) {
+            return null;
+        }
+
         $result = fn_update_product_filter([
             'filter' => $name_ru,
             'filter_type' => $filter_type,

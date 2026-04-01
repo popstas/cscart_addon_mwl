@@ -99,17 +99,23 @@ class ProductsValidateRunner
     /**
      * Find ungrouped products that share a name with grouped products,
      * and attach them to the existing group.
+     *
+     * Only attaches if the product's SEO name matches the group code
+     * (SEO name is a prefix of group code), to avoid attaching
+     * different media outlets that happen to share the same name.
      */
     private function attachUngroupedProducts(): int
     {
         $mixed = db_get_array(
             'SELECT pd.product AS name, '
+            . 'vg.code AS group_code, '
             . 'MIN(vgp.group_id) AS group_id, '
             . 'GROUP_CONCAT(CASE WHEN vgp.group_id IS NULL AND p.status != ?s THEN p.product_id END) AS ungrouped_ids, '
             . 'GROUP_CONCAT(CASE WHEN vgp.group_id IS NULL AND p.status != ?s THEN p.product_code END) AS ungrouped_codes '
             . 'FROM ?:products p '
             . 'JOIN ?:product_descriptions pd ON pd.product_id = p.product_id AND pd.lang_code = ?s '
             . 'LEFT JOIN ?:product_variation_group_products vgp ON vgp.product_id = p.product_id '
+            . 'LEFT JOIN ?:product_variation_groups vg ON vg.id = vgp.group_id '
             . 'GROUP BY pd.product '
             . 'HAVING SUM(vgp.group_id IS NULL AND p.status != ?s) > 0 AND SUM(vgp.group_id IS NOT NULL) > 0 '
             . 'ORDER BY pd.product',
@@ -128,14 +134,56 @@ class ProductsValidateRunner
 
         foreach ($mixed as $row) {
             $group_id = (int) $row['group_id'];
+            $group_code = (string) ($row['group_code'] ?? '');
             $ungrouped_ids = array_filter(array_map('intval', explode(',', $row['ungrouped_ids'])));
 
             if (empty($ungrouped_ids) || !$group_id) {
                 continue;
             }
 
+            // Filter: only attach products whose product_code prefix (source-vendor_id)
+            // matches at least one existing product in the group.
+            // This prevents attaching different media outlets that happen to share the same name.
+            $group_prefixes = db_get_fields(
+                "SELECT DISTINCT SUBSTRING_INDEX(p.product_code, '-', 2) "
+                . "FROM ?:product_variation_group_products vgp "
+                . "JOIN ?:products p ON p.product_id = vgp.product_id "
+                . "WHERE vgp.group_id = ?i",
+                $group_id
+            );
+
+            $filtered_ids = [];
+            foreach ($ungrouped_ids as $pid) {
+                $product_code = (string) db_get_field(
+                    "SELECT product_code FROM ?:products WHERE product_id = ?i",
+                    $pid
+                );
+
+                // Extract source-vendor_id prefix (e.g., "pn-51345" from "pn-51345-abc12")
+                $parts = explode('-', $product_code);
+                $prefix = count($parts) >= 2 ? $parts[0] . '-' . $parts[1] : $product_code;
+
+                if (in_array($prefix, $group_prefixes, true)) {
+                    $filtered_ids[] = $pid;
+                } else {
+                    echo sprintf(
+                        'products_validate: skipped attaching #%d (%s) to group #%d "%s" — prefix "%s" not in group prefixes [%s]',
+                        $pid,
+                        $product_code,
+                        $group_id,
+                        $group_code,
+                        $prefix,
+                        implode(', ', $group_prefixes)
+                    ) . PHP_EOL;
+                }
+            }
+
+            if (empty($filtered_ids)) {
+                continue;
+            }
+
             try {
-                $result = $service->attachProductsToGroup($group_id, $ungrouped_ids);
+                $result = $service->attachProductsToGroup($group_id, $filtered_ids);
 
                 $statuses = $result->getData('products_status', []);
                 $attached = 0;
