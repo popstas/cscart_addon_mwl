@@ -29,5 +29,13 @@ $schema['central']['mwl_xlsx'] = [
         ],
     ],
 ];
+
+$schema['central']['customers']['items']['mwl_xlsx.invites'] = [
+    'attrs'       => ['class' => 'is-addon'],
+    'href'        => 'mwl_xlsx_invites.invites',
+    'position'    => 900,
+    'permissions' => 'view_catalog',
+];
+
 return $schema;
 
