@@ -146,9 +146,9 @@ class DeleteUnusedProductsRunner
             echo '[info] ' . $message . PHP_EOL;
 
             $metrics = [
-                'disabled' => count($all_product_ids),
+                'disabled_products' => count($all_product_ids),
                 'referenced_disabled' => $referenced_disabled_count,
-                'deleted' => 0,
+                'deleted_products' => 0,
                 'skipped' => 0,
                 'errors' => 0,
             ];
@@ -262,9 +262,9 @@ class DeleteUnusedProductsRunner
         $delete_avg = $processed > 0 ? (int) round(($elapsed / $processed) * 1000) : 0;
 
         $metrics = [
-            'disabled' => count($all_product_ids),
+            'disabled_products' => count($all_product_ids),
             'referenced_disabled' => $referenced_disabled_count,
-            'deleted' => count($deleted_products),
+            'deleted_products' => count($deleted_products),
             'skipped' => count($skipped_products),
             'errors' => count($errors),
             'elapsed' => round($elapsed, 1),
@@ -283,9 +283,9 @@ class DeleteUnusedProductsRunner
         }
 
         $log_payload = [
-            'disabled' => count($all_product_ids),
+            'disabled_products' => count($all_product_ids),
             'referenced_disabled' => $referenced_disabled_count,
-            'deleted' => count($deleted_products),
+            'deleted_products' => count($deleted_products),
             'skipped' => count($skipped_products),
             'errors' => count($errors),
             'elapsed' => round($elapsed, 1),
