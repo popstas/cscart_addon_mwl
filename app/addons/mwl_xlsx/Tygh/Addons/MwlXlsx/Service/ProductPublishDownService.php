@@ -3,6 +3,7 @@
 namespace Tygh\Addons\MwlXlsx\Service;
 
 use Tygh\Database\Connection;
+use Tygh\Registry;
 
 class ProductPublishDownService
 {
@@ -34,6 +35,18 @@ class ProductPublishDownService
         $period_seconds = max(0, $period_seconds);
         // Calculate cutoff timestamp in UTC (time() always returns UTC Unix timestamp)
         $cutoff = time() - $period_seconds;
+
+        // Use import_started_at as cutoff floor to avoid disabling products
+        // that were just imported during a long-running import
+        $import_started_at = (int) Registry::get('addons.mwl_xlsx.import_started_at');
+        if ($import_started_at > 0 && $import_started_at < $cutoff) {
+            $this->logDebug(sprintf(
+                '[publish_down] Adjusting cutoff from %s to import_started_at %s UTC (import took longer than period)',
+                gmdate('Y-m-d H:i:s', $cutoff),
+                gmdate('Y-m-d H:i:s', $import_started_at)
+            ));
+            $cutoff = $import_started_at;
+        }
 
         $limit = (int) $limit;
         $limit_clause = '';

@@ -476,6 +476,11 @@ if ($mode === 'check_group_features') {
 }
 
 if ($mode === 'import_prepare') {
+    // Save import start timestamp so publish_down can use it as cutoff floor
+    $import_started_at = time();
+    \Tygh\Settings::instance()->updateValue('import_started_at', (string) $import_started_at, 'mwl_xlsx');
+    echo "[import_prepare] Saved import_started_at = {$import_started_at} (" . gmdate('Y-m-d H:i:s', $import_started_at) . " UTC)" . PHP_EOL;
+
     $runner = new ImportPrepareRunner();
 
     return $runner->run($_REQUEST);
