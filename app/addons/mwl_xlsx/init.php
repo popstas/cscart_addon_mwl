@@ -56,6 +56,11 @@ function fn_mwl_xlsx_dispatch_assign_template($controller, $mode, $area, $contro
         return;
     }
 
+    // Logged-in users should see the normal storefront, not the static landing page
+    if (!empty(Tygh::$app['session']['auth']['user_id'])) {
+        return;
+    }
+
     $lang = defined('CART_LANGUAGE') ? CART_LANGUAGE : 'en';
     $url = trim((string) Registry::get('addons.mwl_xlsx.mainpage_replace_url_' . $lang));
     if (empty($url)) {
@@ -155,6 +160,13 @@ function fn_mwl_xlsx_before_dispatch(&$controller, &$mode, &$action, &$dispatch_
     $path = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
     if (!$path) {
         return;
+    }
+
+    // After login, redirect to /expertizeme/ instead of the storefront index
+    if ($area === 'C' && $controller === 'auth' && $mode === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (empty($_REQUEST['return_url']) || strpos($_REQUEST['return_url'], 'auth.login_form') !== false) {
+            $_REQUEST['return_url'] = '/expertizeme/';
+        }
     }
 
     if (preg_match('~/(?:[a-z]{2}/)?media-lists/(\d+)/?$~i', $path, $m)) {
