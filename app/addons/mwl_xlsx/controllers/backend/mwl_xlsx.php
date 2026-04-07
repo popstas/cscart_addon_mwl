@@ -57,8 +57,11 @@ if ($mode === 'products_validate') {
 
 if ($mode === 'dev_reload_langs') {
     // импортирует var/langs/*/addons/mwl_xlsx.po в БД
-    fn_reinstall_addon_files('mwl_xlsx');
-    fn_clear_cache(); // чтобы сразу увидеть обновления
+    // fn_reinstall_addon_files копирует шаблоны из themes_repository в design/themes,
+    // что ломает symlink-based dev setup (перезаписывает styles.less пустым файлом)
+    $addon_scheme = \Tygh\Addons\SchemesManager::getScheme('mwl_xlsx');
+    fn_update_addon_language_variables($addon_scheme);
+    fn_clear_cache();
     return [CONTROLLER_STATUS_OK, 'addons.update?addon=mwl_xlsx'];
 }
 
