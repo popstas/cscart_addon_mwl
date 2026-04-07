@@ -56,13 +56,21 @@ if ($mode === 'products_validate') {
 }
 
 if ($mode === 'dev_reload_langs') {
-    // импортирует var/langs/*/addons/mwl_xlsx.po в БД
-    // fn_reinstall_addon_files копирует шаблоны из themes_repository в design/themes,
-    // что ломает symlink-based dev setup (перезаписывает styles.less пустым файлом)
+    // fn_reinstall_addon_files без fn_install_addon_templates,
+    // которая ломает symlink-based dev setup (перезаписывает styles.less пустым файлом)
+    \Tygh\Addons\SchemesManager::clearInternalCache('mwl_xlsx');
     $addon_scheme = \Tygh\Addons\SchemesManager::getScheme('mwl_xlsx');
     fn_update_addon_language_variables($addon_scheme);
+    fn_update_addon_settings(
+        $addon_scheme,
+        true,
+        fn_get_addon_settings_values('mwl_xlsx'),
+        fn_get_addon_settings_vendor_values('mwl_xlsx')
+    );
     fn_clear_cache();
-    return [CONTROLLER_STATUS_OK, 'addons.update?addon=mwl_xlsx'];
+    fn_set_notification('N', __('notice'), 'Languages and settings reloaded');
+    echo 'Languages and settings reloaded';
+    exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'settings') {
@@ -83,19 +91,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'settings') {
 }
 
 if ($mode === 'update_mainpage') {
-    $url = trim((string) Registry::get('addons.mwl_xlsx.mainpage_replace_url'));
+    $has_url = false;
 
-    if (empty($url)) {
-        fn_set_notification('W', __('warning'), __('mwl_xlsx.mainpage_set_url_first'));
-        return [CONTROLLER_STATUS_OK, 'mwl_xlsx.settings'];
+    foreach (['en', 'ru'] as $lang) {
+        $url = trim((string) Registry::get('addons.mwl_xlsx.mainpage_replace_url_' . $lang));
+        if (empty($url)) {
+            continue;
+        }
+        $has_url = true;
+
+        $result = fn_mwl_xlsx_download_mainpage($url, $lang);
+
+        if ($result['success']) {
+            fn_set_notification('N', __('notice'), strtoupper($lang) . ': ' . __('mwl_xlsx.mainpage_updated') . ' — ' . $result['message']);
+        } else {
+            fn_set_notification('E', __('error'), strtoupper($lang) . ': ' . __('mwl_xlsx.mainpage_update_error') . ' — ' . $result['message']);
+        }
     }
 
-    $result = fn_mwl_xlsx_download_mainpage($url);
-
-    if ($result['success']) {
-        fn_set_notification('N', __('notice'), __('mwl_xlsx.mainpage_updated') . ': ' . $result['message']);
-    } else {
-        fn_set_notification('E', __('error'), __('mwl_xlsx.mainpage_update_error') . ': ' . $result['message']);
+    if (!$has_url) {
+        fn_set_notification('W', __('warning'), __('mwl_xlsx.mainpage_set_url_first'));
     }
 
     return [CONTROLLER_STATUS_OK, 'mwl_xlsx.settings'];
@@ -218,8 +233,10 @@ if ($mode === 'settings') {
 
     \Tygh::$app['view']->assign('product_features', $feature_options);
 
-    $mainpage_file = fn_mwl_xlsx_mainpage_replace_dir() . 'index.html';
-    \Tygh::$app['view']->assign('mainpage_file_exists', file_exists($mainpage_file));
+    foreach (['en', 'ru'] as $lang) {
+        $mainpage_file = fn_mwl_xlsx_mainpage_replace_dir($lang) . 'index.html';
+        \Tygh::$app['view']->assign('mainpage_file_exists_' . $lang, file_exists($mainpage_file));
+    }
 }
 
 if ($mode === 'backup_settings') {

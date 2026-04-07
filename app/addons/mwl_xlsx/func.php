@@ -2267,36 +2267,41 @@ function fn_mwl_xlsx_resolve_url($relative, $base_url)
 /**
  * Get the mainpage replace storage directory path.
  *
+ * @param string $lang_code Language code (e.g. 'en', 'ru'). If provided, returns per-language subdirectory.
  * @return string Absolute directory path with trailing slash
  */
-function fn_mwl_xlsx_mainpage_replace_dir()
+function fn_mwl_xlsx_mainpage_replace_dir($lang_code = '')
 {
-    return Registry::get('config.dir.var') . 'files/mainpage_replace/';
+    $dir = Registry::get('config.dir.var') . 'files/mainpage_replace/';
+    return $lang_code ? $dir . $lang_code . '/' : $dir;
 }
 
 /**
  * Get the web-accessible path prefix for mainpage replace assets.
  *
- * @return string Path like "/var/files/mainpage_replace/"
+ * @param string $lang_code Language code (e.g. 'en', 'ru'). If provided, returns per-language subpath.
+ * @return string Path like "/var/files/mainpage_replace/" or "/var/files/mainpage_replace/en/"
  */
-function fn_mwl_xlsx_mainpage_replace_web_path()
+function fn_mwl_xlsx_mainpage_replace_web_path($lang_code = '')
 {
-    return '/var/files/mainpage_replace/';
+    $path = '/var/files/mainpage_replace/';
+    return $lang_code ? $path . $lang_code . '/' : $path;
 }
 
 /**
  * Download a page from URL and save it with relative assets.
  *
  * @param string $url The URL to download
+ * @param string $lang_code Language code for per-language storage (e.g. 'en', 'ru')
  * @return array{success: bool, message: string}
  */
-function fn_mwl_xlsx_download_mainpage($url)
+function fn_mwl_xlsx_download_mainpage($url, $lang_code = '')
 {
     if (!filter_var($url, FILTER_VALIDATE_URL)) {
         return ['success' => false, 'message' => 'Invalid URL'];
     }
 
-    $dir = fn_mwl_xlsx_mainpage_replace_dir();
+    $dir = fn_mwl_xlsx_mainpage_replace_dir($lang_code);
     fn_mkdir($dir);
 
     // Download the HTML
@@ -2438,14 +2443,15 @@ function fn_mwl_xlsx_collect_asset($val, $base_url, $base_host, &$assets)
  *
  * @param string $html Original HTML
  * @param string $base_url Source URL the page was downloaded from
- * @return string HTML with paths rewritten to /var/files/mainpage_replace/
+ * @param string $lang_code Language code for per-language asset paths
+ * @return string HTML with paths rewritten to /var/files/mainpage_replace/{lang}/
  */
-function fn_mwl_xlsx_rewrite_mainpage_paths($html, $base_url)
+function fn_mwl_xlsx_rewrite_mainpage_paths($html, $base_url, $lang_code = '')
 {
     $base = parse_url($base_url);
     $base_host = !empty($base['host']) ? $base['host'] : '';
     $scheme = !empty($base['scheme']) ? $base['scheme'] : 'https';
-    $web_path = fn_mwl_xlsx_mainpage_replace_web_path();
+    $web_path = fn_mwl_xlsx_mainpage_replace_web_path($lang_code);
 
     // Collect all assets to build replacement map
     $assets = fn_mwl_xlsx_extract_assets($html, $base_url);

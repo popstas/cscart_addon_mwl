@@ -97,23 +97,34 @@
         </div>
 
         <div class="control-group">
-            <label class="control-label" for="elm_mainpage_replace_url">{__("mwl_xlsx.mainpage_replace_url")}:</label>
+            <label class="control-label" for="elm_mainpage_replace_url_en">{__("mwl_xlsx.mainpage_replace_url_en")}:</label>
             <div class="controls">
-                <input type="text" name="mwl_xlsx[mainpage_replace_url]" id="elm_mainpage_replace_url" value="{$mwl_xlsx.mainpage_replace_url}" size="60" />
-                <p class="muted description">{__("mwl_xlsx.mainpage_replace_url.desc")}</p>
+                <input type="text" name="mwl_xlsx[mainpage_replace_url_en]" id="elm_mainpage_replace_url_en" value="{$mwl_xlsx.mainpage_replace_url_en}" size="60" />
+                {if $mainpage_file_exists_en}
+                    <span class="label label-success">{__("mwl_xlsx.mainpage_file_exists")}</span>
+                {elseif $mwl_xlsx.mainpage_replace_url_en}
+                    <span class="label label-important">{__("mwl_xlsx.mainpage_file_missing")}</span>
+                {/if}
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label" for="elm_mainpage_replace_url_ru">{__("mwl_xlsx.mainpage_replace_url_ru")}:</label>
+            <div class="controls">
+                <input type="text" name="mwl_xlsx[mainpage_replace_url_ru]" id="elm_mainpage_replace_url_ru" value="{$mwl_xlsx.mainpage_replace_url_ru}" size="60" />
+                {if $mainpage_file_exists_ru}
+                    <span class="label label-success">{__("mwl_xlsx.mainpage_file_exists")}</span>
+                {elseif $mwl_xlsx.mainpage_replace_url_ru}
+                    <span class="label label-important">{__("mwl_xlsx.mainpage_file_missing")}</span>
+                {/if}
             </div>
         </div>
 
         <div class="control-group">
             <label class="control-label">{__("mwl_xlsx.mainpage_update")}:</label>
             <div class="controls">
-                {if $mwl_xlsx.mainpage_replace_url}
+                {if $mwl_xlsx.mainpage_replace_url_en || $mwl_xlsx.mainpage_replace_url_ru}
                     <a href="{fn_url("mwl_xlsx.update_mainpage")}" class="btn">{__("mwl_xlsx.mainpage_update")}</a>
-                    {if $mainpage_file_exists}
-                        <span class="label label-success">{__("mwl_xlsx.mainpage_file_exists")}</span>
-                    {else}
-                        <span class="label label-important">{__("mwl_xlsx.mainpage_file_missing")}</span>
-                    {/if}
                 {else}
                     <span class="muted">{__("mwl_xlsx.mainpage_set_url_first")}</span>
                 {/if}

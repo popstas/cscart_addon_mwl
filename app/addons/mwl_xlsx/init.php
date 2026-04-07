@@ -56,19 +56,20 @@ function fn_mwl_xlsx_dispatch_assign_template($controller, $mode, $area, $contro
         return;
     }
 
-    $url = trim((string) Registry::get('addons.mwl_xlsx.mainpage_replace_url'));
+    $lang = defined('CART_LANGUAGE') ? CART_LANGUAGE : 'en';
+    $url = trim((string) Registry::get('addons.mwl_xlsx.mainpage_replace_url_' . $lang));
     if (empty($url)) {
         return;
     }
 
-    $mainpage_file = fn_mwl_xlsx_mainpage_replace_dir() . 'index.html';
+    $mainpage_file = fn_mwl_xlsx_mainpage_replace_dir($lang) . 'index.html';
     if (!file_exists($mainpage_file)) {
         return;
     }
 
     // Output directly bypassing Smarty (which strips <script> tags)
     $html = file_get_contents($mainpage_file);
-    $html = fn_mwl_xlsx_rewrite_mainpage_paths($html, $url);
+    $html = fn_mwl_xlsx_rewrite_mainpage_paths($html, $url, $lang);
     echo $html;
     exit;
 }

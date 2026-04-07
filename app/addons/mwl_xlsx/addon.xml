@@ -191,8 +191,10 @@
                 <value id="mwl_xlsx.setting.show_price_hint.desc">Append an info icon next to prices that explains what the amount includes.</value>
                 <value id="mwl_xlsx.setting.auto_detect_language">Auto-detect storefront language</value>
                 <value id="mwl_xlsx.setting.auto_detect_language.desc">Redirect new visitors to the language that matches their browser preferences.</value>
-                <value id="mwl_xlsx.mainpage_replace_url">Mainpage replace URL</value>
-                <value id="mwl_xlsx.mainpage_replace_url.desc">Enter a URL to download and use as the homepage. Leave empty for the default CS-Cart homepage.</value>
+                <value id="mwl_xlsx.mainpage_replace_url_en">Mainpage replace URL (EN)</value>
+                <value id="mwl_xlsx.mainpage_replace_url_en.desc">URL to download and use as the English homepage. Leave empty for default.</value>
+                <value id="mwl_xlsx.mainpage_replace_url_ru">Mainpage replace URL (RU)</value>
+                <value id="mwl_xlsx.mainpage_replace_url_ru.desc">URL to download and use as the Russian homepage. Leave empty for default.</value>
                 <value id="mwl_xlsx.mainpage_update">Update mainpage</value>
                 <value id="mwl_xlsx.mainpage_updated">Mainpage updated successfully</value>
                 <value id="mwl_xlsx.mainpage_update_error">Failed to download mainpage from URL</value>
@@ -268,8 +270,10 @@
                 <value id="mwl_xlsx.setting.show_price_hint.desc">Добавлять значок с подсказкой о том, что входит в цену на витрине.</value>
                 <value id="mwl_xlsx.setting.auto_detect_language">Определять язык витрины автоматически</value>
                 <value id="mwl_xlsx.setting.auto_detect_language.desc">Перенаправлять новых посетителей на язык витрины, совпадающий с языком их браузера.</value>
-                <value id="mwl_xlsx.mainpage_replace_url">URL замены главной страницы</value>
-                <value id="mwl_xlsx.mainpage_replace_url.desc">Введите URL для скачивания и использования в качестве главной страницы. Оставьте пустым для стандартной главной.</value>
+                <value id="mwl_xlsx.mainpage_replace_url_en">URL замены главной (EN)</value>
+                <value id="mwl_xlsx.mainpage_replace_url_en.desc">URL для скачивания и использования в качестве англоязычной главной. Оставьте пустым для стандартной.</value>
+                <value id="mwl_xlsx.mainpage_replace_url_ru">URL замены главной (RU)</value>
+                <value id="mwl_xlsx.mainpage_replace_url_ru.desc">URL для скачивания и использования в качестве русскоязычной главной. Оставьте пустым для стандартной.</value>
                 <value id="mwl_xlsx.mainpage_update">Обновить главную</value>
                 <value id="mwl_xlsx.mainpage_updated">Главная страница обновлена</value>
                 <value id="mwl_xlsx.mainpage_update_error">Не удалось скачать главную страницу по URL</value>
@@ -407,9 +411,14 @@
                         <tooltip>mwl_xlsx.setting.auto_detect_language.desc</tooltip>
                         <value>Y</value>
                     </item>
-                    <item id="mainpage_replace_url" type="input">
-                        <name>mwl_xlsx.mainpage_replace_url</name>
-                        <tooltip>mwl_xlsx.mainpage_replace_url.desc</tooltip>
+                    <item id="mainpage_replace_url_en" type="input">
+                        <name>mwl_xlsx.mainpage_replace_url_en</name>
+                        <tooltip>mwl_xlsx.mainpage_replace_url_en.desc</tooltip>
+                        <value></value>
+                    </item>
+                    <item id="mainpage_replace_url_ru" type="input">
+                        <name>mwl_xlsx.mainpage_replace_url_ru</name>
+                        <tooltip>mwl_xlsx.mainpage_replace_url_ru.desc</tooltip>
                         <value></value>
                     </item>
                 </items>
