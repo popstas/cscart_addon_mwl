@@ -91,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'settings') {
 }
 
 if ($mode === 'update_mainpage') {
+    set_time_limit(600);
     $has_url = false;
 
     foreach (['en', 'ru'] as $lang) {
@@ -100,7 +101,8 @@ if ($mode === 'update_mainpage') {
         }
         $has_url = true;
 
-        $result = fn_mwl_xlsx_download_mainpage($url, $lang);
+        $fast = !empty($_REQUEST['fast']) || in_array('--fast', $_SERVER['argv'] ?? []);
+        $result = fn_mwl_xlsx_download_mainpage($url, $lang, $fast);
 
         if ($result['success']) {
             fn_set_notification('N', __('notice'), strtoupper($lang) . ': ' . __('mwl_xlsx.mainpage_updated') . ' — ' . $result['message']);

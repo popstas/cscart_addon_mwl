@@ -2295,7 +2295,7 @@ function fn_mwl_xlsx_mainpage_replace_web_path($lang_code = '')
  * @param string $lang_code Language code for per-language storage (e.g. 'en', 'ru')
  * @return array{success: bool, message: string}
  */
-function fn_mwl_xlsx_download_mainpage($url, $lang_code = '')
+function fn_mwl_xlsx_download_mainpage($url, $lang_code = '', $fast = false)
 {
     if (!filter_var($url, FILTER_VALIDATE_URL)) {
         return ['success' => false, 'message' => 'Invalid URL'];
@@ -2304,7 +2304,7 @@ function fn_mwl_xlsx_download_mainpage($url, $lang_code = '')
     $dir = fn_mwl_xlsx_mainpage_replace_dir($lang_code);
     fn_mkdir($dir);
 
-    // Download the HTML
+    // Download the HTML (always re-download)
     $html = Http::get($url);
     if (empty($html)) {
         return ['success' => false, 'message' => 'Failed to download page'];
@@ -2315,12 +2315,42 @@ function fn_mwl_xlsx_download_mainpage($url, $lang_code = '')
 
     // Download assets
     $downloaded = 0;
+    $skipped = 0;
+    $css_sub_assets = 0;
+    $webpack_chunks = 0;
+    $base = parse_url($url);
+    $base_origin = (!empty($base['scheme']) ? $base['scheme'] : 'https') . '://' . $base['host'];
+    $base_host = $base['host'];
+    $web_path = fn_mwl_xlsx_mainpage_replace_web_path($lang_code);
+
     foreach ($assets as $asset_url => $local_path) {
         $asset_dir = dirname($dir . $local_path);
         fn_mkdir($asset_dir);
 
-        $content = Http::get($asset_url);
+        // In fast mode, skip static files that already exist (always re-download CSS/JS for processing)
+        $ext = strtolower(pathinfo($local_path, PATHINFO_EXTENSION));
+        if ($fast && file_exists($dir . $local_path) && !in_array($ext, ['css', 'js'])) {
+            $skipped++;
+            continue;
+        }
+
+        $content = Http::get($asset_url, [], ['execution_timeout' => 10]);
         if (!empty($content)) {
+            // For CSS files, download url() referenced assets and rewrite paths
+            if ($ext === 'css') {
+                $before = $downloaded;
+                $content = fn_mwl_xlsx_process_css_assets($content, $asset_url, $base_host, $base_origin, $dir, $web_path, $downloaded, $fast);
+                $css_sub_assets += $downloaded - $before;
+            }
+
+            // For JS files, download webpack chunks and rewrite chunk paths
+            if ($ext === 'js') {
+                $before = $downloaded;
+                fn_mwl_xlsx_download_webpack_chunks($content, $asset_url, $base_origin, $dir, $downloaded);
+                $webpack_chunks += $downloaded - $before;
+                $content = fn_mwl_xlsx_rewrite_js_chunk_paths($content, $web_path);
+            }
+
             file_put_contents($dir . $local_path, $content);
             $downloaded++;
         }
@@ -2329,7 +2359,9 @@ function fn_mwl_xlsx_download_mainpage($url, $lang_code = '')
     // Save original HTML
     file_put_contents($dir . 'index.html', $html);
 
-    return ['success' => true, 'message' => "Downloaded page + $downloaded assets"];
+    $msg = "Downloaded page + $downloaded assets (CSS sub-assets: $css_sub_assets, webpack chunks: $webpack_chunks, skipped: $skipped)";
+
+    return ['success' => true, 'message' => $msg];
 }
 
 /**
@@ -2351,12 +2383,13 @@ function fn_mwl_xlsx_extract_assets($html, $base_url)
     $base = parse_url($base_url);
     $base_host = !empty($base['host']) ? $base['host'] : '';
 
-    // <link href>, <script src>, <img src>, <source src>
+    // <link href>, <script src>, <img src>, <source src>, <video src>
     $tag_attrs = [
         'link' => 'href',
         'script' => 'src',
         'img' => 'src',
         'source' => 'src',
+        'video' => 'src',
     ];
 
     foreach ($tag_attrs as $tag => $attr) {
@@ -2436,6 +2469,135 @@ function fn_mwl_xlsx_collect_asset($val, $base_url, $base_host, &$assets)
     }
 
     $assets[$absolute] = $path;
+}
+
+/**
+ * Download webpack dynamic chunks referenced in a JS file.
+ * Parses patterns like: "path/prefix/do." + {0:"tt_form", 1:"tt_slider", ...}[t] + ".js"
+ *
+ * @param string $js_content JS file content
+ * @param string $js_url Absolute URL of the JS file
+ * @param string $base_origin Scheme + host
+ * @param string $dir Local directory to save assets to
+ * @param int &$downloaded Counter
+ */
+function fn_mwl_xlsx_download_webpack_chunks($js_content, $js_url, $base_origin, $dir, &$downloaded)
+{
+    // Match webpack chunk mapping: "some/path/prefix." + {0:"name1", 1:"name2", ...}
+    if (!preg_match('~"([^"]+)"\s*\+\s*\{(\d+:"[^"]+?"(?:,\d+:"[^"]+?")*)\}~', $js_content, $m)) {
+        return;
+    }
+
+    $path_prefix = $m[1]; // e.g. "g/s3/mosaic/js/do/redesign/do."
+    $chunk_map_str = $m[2]; // e.g. '0:"tt_form",1:"tt_slider",...'
+
+    // Parse chunk names
+    preg_match_all('~\d+:"([^"]+)"~', $chunk_map_str, $names);
+    if (empty($names[1])) {
+        return;
+    }
+
+    foreach ($names[1] as $chunk_name) {
+        $chunk_path = $path_prefix . $chunk_name . '.js';
+        $chunk_url = $base_origin . '/' . $chunk_path;
+
+        $local_file = $dir . $chunk_path;
+        if (file_exists($local_file)) {
+            continue;
+        }
+
+        $chunk_dir = dirname($local_file);
+        fn_mkdir($chunk_dir);
+
+        $content = Http::get($chunk_url, [], ['execution_timeout' => 10]);
+        if (!empty($content)) {
+            file_put_contents($local_file, $content);
+            $downloaded++;
+        }
+    }
+}
+
+/**
+ * Rewrite webpack chunk paths in a JS file to point to local copies.
+ *
+ * @param string $js_content JS content
+ * @param string $web_path Local web path prefix (e.g. "/var/files/mainpage_replace/en/")
+ * @return string JS with rewritten chunk paths
+ */
+function fn_mwl_xlsx_rewrite_js_chunk_paths($js_content, $web_path)
+{
+    // Set webpack publicPath so chunks load from the local directory
+    // s.p="" => s.p="/var/files/mainpage_replace/en/"
+    $js_content = str_replace('s.p=""', 's.p="' . $web_path . '"', $js_content);
+    // Disable runtime publicPath override (module 7772 sets r.p="/" on non-localhost)
+    $js_content = str_replace(':r.p="/"', ':0', $js_content);
+    $js_content = str_replace(':r.p="./"', ':0', $js_content);
+    return $js_content;
+}
+
+/**
+ * Download assets referenced via url() in a CSS file and rewrite paths to local copies.
+ *
+ * @param string $css CSS content
+ * @param string $css_url Absolute URL of the CSS file (for resolving relative refs)
+ * @param string $base_host Host to match for same-host check
+ * @param string $base_origin Scheme + host (e.g. "https://welcome.pressfinity.com")
+ * @param string $dir Local directory to save assets to
+ * @param string $web_path Web-accessible path prefix (e.g. "/var/files/mainpage_replace/en/")
+ * @param int &$downloaded Counter of downloaded assets
+ * @return string CSS with rewritten url() paths
+ */
+function fn_mwl_xlsx_process_css_assets($css, $css_url, $base_host, $base_origin, $dir, $web_path, &$downloaded, $fast = false)
+{
+    // Match url() references, skip data: URIs
+    if (!preg_match_all('~url\(\s*[\'"]?(?!data:)([^\'")\s]+)[\'"]?\s*\)~', $css, $matches)) {
+        return $css;
+    }
+
+    $replacements = [];
+    foreach ($matches[1] as $ref) {
+        // Resolve to absolute URL
+        $absolute = fn_mwl_xlsx_resolve_url($ref, $css_url);
+        $parsed = parse_url($absolute);
+        $host = !empty($parsed['host']) ? $parsed['host'] : '';
+
+        // Only same-host resources
+        if ($host && $host !== $base_host) {
+            continue;
+        }
+
+        $path = !empty($parsed['path']) ? ltrim($parsed['path'], '/') : '';
+        if (empty($path) || substr($path, -1) === '/') {
+            continue;
+        }
+
+        // Download the asset (skip if already exists)
+        $local = $web_path . $path;
+        $replacements[$ref] = $local;
+
+        if (file_exists($dir . $path)) {
+            continue;
+        }
+
+        $asset_dir = dirname($dir . $path);
+        fn_mkdir($asset_dir);
+        $content = Http::get($absolute, [], ['timeout' => 10]);
+        if (!empty($content)) {
+            file_put_contents($dir . $path, $content);
+            $downloaded++;
+        }
+    }
+
+    // Apply replacements in CSS (longest first)
+    uksort($replacements, function ($a, $b) {
+        return strlen($b) - strlen($a);
+    });
+
+    foreach ($replacements as $original => $local) {
+        $css = str_replace($original, $local, $css);
+    }
+
+    return $css;
 }
 
 /**

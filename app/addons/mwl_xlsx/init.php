@@ -75,6 +75,8 @@ function fn_mwl_xlsx_dispatch_assign_template($controller, $mode, $area, $contro
     // Output directly bypassing Smarty (which strips <script> tags)
     $html = file_get_contents($mainpage_file);
     $html = fn_mwl_xlsx_rewrite_mainpage_paths($html, $url, $lang);
+    // Cache-bust local assets using file modification time
+    $html = str_replace('?rnd=', '?rnd=' . filemtime($mainpage_file) . '_', $html);
     echo $html;
     exit;
 }
