@@ -286,8 +286,24 @@ function fn_mwl_xlsx_update_profile($action, $user_data, $current_user_data)
         fn_change_usergroup_status('A', $user_id, $usergroup_id, []);
     }
 
-    // Send password setup link if checkbox was checked
+    // Send password setup link if checkbox was checked (7 days TTL, same as bulk invite)
     if (!empty($_REQUEST['send_password_setup_link']) && !empty($user_data['email'])) {
-        fn_recover_password_generate_key($user_data['email'], true);
+        $ttl = defined('SECONDS_IN_DAY') ? 7 * SECONDS_IN_DAY : 7 * 24 * 60 * 60;
+        $ekey = fn_generate_ekey($user_id, RECOVERY_PASSWORD_EKEY_TYPE, $ttl);
+        if ($ekey) {
+            /** @var \Tygh\Notifications\EventDispatcher $event_dispatcher */
+            $event_dispatcher = Tygh::$app['event.dispatcher'];
+            /** @var \Tygh\Storefront\Storefront $storefront */
+            $storefront = Tygh::$app['storefront'];
+
+            $event_dispatcher->dispatch(
+                'profile.password_recover.' . strtolower($user_data['user_type']),
+                [
+                    'user_data'     => $user_data,
+                    'ekey'          => $ekey,
+                    'storefront_id' => $storefront->storefront_id,
+                ]
+            );
+        }
     }
 }
