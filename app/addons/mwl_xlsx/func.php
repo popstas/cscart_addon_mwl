@@ -2272,7 +2272,7 @@ function fn_mwl_xlsx_resolve_url($relative, $base_url)
  */
 function fn_mwl_xlsx_mainpage_replace_dir($lang_code = '')
 {
-    $dir = Registry::get('config.dir.var') . 'files/mainpage_replace/';
+    $dir = Registry::get('config.dir.root') . '/files/mainpage_replace/';
     return $lang_code ? $dir . $lang_code . '/' : $dir;
 }
 
@@ -2284,7 +2284,7 @@ function fn_mwl_xlsx_mainpage_replace_dir($lang_code = '')
  */
 function fn_mwl_xlsx_mainpage_replace_web_path($lang_code = '')
 {
-    $path = '/var/files/mainpage_replace/';
+    $path = '/files/mainpage_replace/';
     return $lang_code ? $path . $lang_code . '/' : $path;
 }
 
