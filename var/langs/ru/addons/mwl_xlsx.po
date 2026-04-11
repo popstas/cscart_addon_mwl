@@ -772,3 +772,167 @@ msgctxt "Languages::mwl_xlsx.delete_unused_products_errors_list"
 msgid "Failed product IDs: [ids]."
 msgstr "ID товаров с ошибками: [ids]."
 
+
+msgctxt "Languages::mwl_xlsx.currencies_path"
+msgid "Путь к JSON валют"
+msgstr "Путь к JSON валют"
+
+msgctxt "Languages::mwl_xlsx.description"
+msgid "Create and manage multiple media lists."
+msgstr "Создание и управление несколькими подборками."
+
+msgctxt "Languages::mwl_xlsx.google_drive_folder_id"
+msgid "Google Drive folder ID (optional, Shared Drive supported)"
+msgstr "ID папки Google Диска (необязательно, поддерживаются Общие диски)"
+
+msgctxt "Languages::mwl_xlsx.mainpage_file_exists"
+msgid "File downloaded"
+msgstr "Файл скачан"
+
+msgctxt "Languages::mwl_xlsx.mainpage_file_missing"
+msgid "File not found"
+msgstr "Файл не найден"
+
+msgctxt "Languages::mwl_xlsx.mainpage_replace_url_en"
+msgid "Mainpage replace URL (EN)"
+msgstr "URL замены главной (EN)"
+
+msgctxt "Languages::mwl_xlsx.mainpage_replace_url_en.desc"
+msgid "URL to download and use as the English homepage. Leave empty for default."
+msgstr "URL для скачивания и использования в качестве англоязычной главной. Оставьте пустым для стандартной."
+
+msgctxt "Languages::mwl_xlsx.mainpage_replace_url_ru"
+msgid "Mainpage replace URL (RU)"
+msgstr "URL замены главной (RU)"
+
+msgctxt "Languages::mwl_xlsx.mainpage_replace_url_ru.desc"
+msgid "URL to download and use as the Russian homepage. Leave empty for default."
+msgstr "URL для скачивания и использования в качестве русскоязычной главной. Оставьте пустым для стандартной."
+
+msgctxt "Languages::mwl_xlsx.mainpage_set_url_first"
+msgid "Set URL first"
+msgstr "Сначала укажите URL"
+
+msgctxt "Languages::mwl_xlsx.mainpage_update"
+msgid "Update mainpage"
+msgstr "Обновить главную"
+
+msgctxt "Languages::mwl_xlsx.mainpage_update_error"
+msgid "Failed to download mainpage from URL"
+msgstr "Не удалось скачать главную страницу по URL"
+
+msgctxt "Languages::mwl_xlsx.mainpage_updated"
+msgid "Mainpage updated successfully"
+msgstr "Главная страница обновлена"
+
+msgctxt "Languages::mwl_xlsx.name"
+msgid "Media Lists"
+msgstr "Несколько подборок"
+
+msgctxt "Languages::mwl_xlsx.notify_email"
+msgid "Email для уведомлений"
+msgstr "Email для уведомлений"
+
+msgctxt "Languages::mwl_xlsx.notify_via"
+msgid "Способ уведомления"
+msgstr "Способ уведомления"
+
+msgctxt "Languages::mwl_xlsx.planfix_auto_task_statuses"
+msgid "Statuses for automatic task creation"
+msgstr "Статусы для автосоздания задач"
+
+msgctxt "Languages::mwl_xlsx.planfix_auto_task_statuses.desc"
+msgid "List of CS-Cart statuses that trigger automatic Planfix task creation (comma or newline separated)."
+msgstr "Список статусов CS-Cart, при которых автоматически создаются задачи в Planfix (разделяйте запятыми или переводами строки)."
+
+msgctxt "Languages::mwl_xlsx.planfix_direction_default"
+msgid "Default task direction"
+msgstr "Направление по умолчанию"
+
+msgctxt "Languages::mwl_xlsx.planfix_direction_default.desc"
+msgid "Direction that will be assigned to new tasks when MCP does not provide one."
+msgstr "Направление, которое будет присваиваться новым задачам, если MCP не передаёт значение."
+
+msgctxt "Languages::mwl_xlsx.planfix_mcp_auth_token"
+msgid "MCP auth token"
+msgstr "Токен авторизации MCP"
+
+msgctxt "Languages::mwl_xlsx.planfix_mcp_auth_token.desc"
+msgid "Token used to authorize requests to the MCP endpoint."
+msgstr "Токен, используемый для авторизации запросов к MCP."
+
+msgctxt "Languages::mwl_xlsx.planfix_mcp_endpoint"
+msgid "MCP endpoint URL"
+msgstr "URL MCP-эндпоинта"
+
+msgctxt "Languages::mwl_xlsx.planfix_mcp_endpoint.desc"
+msgid "Base URL for the MCP integration endpoint."
+msgstr "Базовый адрес эндпоинта MCP для интеграции."
+
+msgctxt "Languages::mwl_xlsx.planfix_origin"
+msgid "Planfix origin"
+msgstr "Адрес Planfix"
+
+msgctxt "Languages::mwl_xlsx.planfix_origin.desc"
+msgid "Base Planfix URL (example: https://example.planfix.com). Example task link: https://example.planfix.com/task/12345 where 12345 is the planfix_object_id."
+msgstr "Базовый адрес Planfix (пример: https://example.planfix.com). Пример ссылки на задачу: https://example.planfix.com/task/12345, где 12345 — planfix_object_id."
+
+msgctxt "Languages::mwl_xlsx.planfix_sync_comments"
+msgid "Sync comments with Planfix"
+msgstr "Синхронизировать комментарии"
+
+msgctxt "Languages::mwl_xlsx.planfix_sync_comments.desc"
+msgid "Enable synchronization of CS-Cart comments with Planfix."
+msgstr "Включите синхронизацию комментариев из CS-Cart с Planfix."
+
+msgctxt "Languages::mwl_xlsx.planfix_sync_payments"
+msgid "Sync payments with Planfix"
+msgstr "Синхронизировать платежи"
+
+msgctxt "Languages::mwl_xlsx.planfix_sync_payments.desc"
+msgid "Enable synchronization of payment information with Planfix."
+msgstr "Включите синхронизацию информации об оплате с Planfix."
+
+msgctxt "Languages::mwl_xlsx.planfix_webhook_allowlist_ips"
+msgid "Webhook IP allowlist"
+msgstr "Allowlist IP вебхука"
+
+msgctxt "Languages::mwl_xlsx.planfix_webhook_allowlist_ips.desc"
+msgid "Optional list of IP addresses allowed to call the webhook (comma or newline separated). Leave empty to allow all."
+msgstr "Необязательный список IP-адресов, которым разрешён доступ к вебхуку (разделяйте запятыми или переводами строки). Оставьте пустым, чтобы разрешить всем."
+
+msgctxt "Languages::mwl_xlsx.planfix_webhook_basic_login"
+msgid "Webhook Basic Auth login"
+msgstr "Логин Basic Auth вебхука"
+
+msgctxt "Languages::mwl_xlsx.planfix_webhook_basic_login.desc"
+msgid "Login for protecting the incoming webhook with HTTP Basic authentication."
+msgstr "Логин для защиты входящего вебхука базовой HTTP-аутентификацией."
+
+msgctxt "Languages::mwl_xlsx.planfix_webhook_basic_password"
+msgid "Webhook Basic Auth password"
+msgstr "Пароль Basic Auth вебхука"
+
+msgctxt "Languages::mwl_xlsx.planfix_webhook_basic_password.desc"
+msgid "Password for protecting the incoming webhook with HTTP Basic authentication."
+msgstr "Пароль для защиты входящего вебхука базовой HTTP-аутентификацией."
+
+msgctxt "Languages::mwl_xlsx.setting.compact_price_slider_labels"
+msgid "Compact price slider labels"
+msgstr "Компактные подписи ценового слайдера"
+
+msgctxt "Languages::mwl_xlsx.setting.compact_price_slider_labels.desc"
+msgid "Show min/max slider labels in a compact format without affecting filter values."
+msgstr "Показывать min/max у слайдера в коротком формате, не влияя на значения фильтра."
+
+msgctxt "Languages::mwl_xlsx.telegram_bot_token"
+msgid "Токен Telegram бота"
+msgstr "Токен Telegram бота"
+
+msgctxt "Languages::mwl_xlsx.telegram_chat_id"
+msgid "ID чата Telegram"
+msgstr "ID чата Telegram"
+
+msgctxt "Languages::mwl_xlsx.xlsx_templates"
+msgid "XLSX Шаблоны"
+msgstr "XLSX Шаблоны"

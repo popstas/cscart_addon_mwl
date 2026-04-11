@@ -798,3 +798,143 @@ msgctxt "Languages::mwl_xlsx.delete_unused_products_errors_list"
 msgid "Failed product IDs: [ids]."
 msgstr "Failed product IDs: [ids]."
 
+
+msgctxt "Languages::mwl_xlsx.description"
+msgid "Create and manage multiple media lists."
+msgstr "Create and manage multiple media lists."
+
+msgctxt "Languages::mwl_xlsx.google_drive_folder_id"
+msgid "Google Drive folder ID (optional, Shared Drive supported)"
+msgstr "Google Drive folder ID (optional, Shared Drive supported)"
+
+msgctxt "Languages::mwl_xlsx.mainpage_file_exists"
+msgid "File downloaded"
+msgstr "File downloaded"
+
+msgctxt "Languages::mwl_xlsx.mainpage_file_missing"
+msgid "File not found"
+msgstr "File not found"
+
+msgctxt "Languages::mwl_xlsx.mainpage_replace_url_en"
+msgid "Mainpage replace URL (EN)"
+msgstr "Mainpage replace URL (EN)"
+
+msgctxt "Languages::mwl_xlsx.mainpage_replace_url_en.desc"
+msgid "URL to download and use as the English homepage. Leave empty for default."
+msgstr "URL to download and use as the English homepage. Leave empty for default."
+
+msgctxt "Languages::mwl_xlsx.mainpage_replace_url_ru"
+msgid "Mainpage replace URL (RU)"
+msgstr "Mainpage replace URL (RU)"
+
+msgctxt "Languages::mwl_xlsx.mainpage_replace_url_ru.desc"
+msgid "URL to download and use as the Russian homepage. Leave empty for default."
+msgstr "URL to download and use as the Russian homepage. Leave empty for default."
+
+msgctxt "Languages::mwl_xlsx.mainpage_set_url_first"
+msgid "Set URL first"
+msgstr "Set URL first"
+
+msgctxt "Languages::mwl_xlsx.mainpage_update"
+msgid "Update mainpage"
+msgstr "Update mainpage"
+
+msgctxt "Languages::mwl_xlsx.mainpage_update_error"
+msgid "Failed to download mainpage from URL"
+msgstr "Failed to download mainpage from URL"
+
+msgctxt "Languages::mwl_xlsx.mainpage_updated"
+msgid "Mainpage updated successfully"
+msgstr "Mainpage updated successfully"
+
+msgctxt "Languages::mwl_xlsx.name"
+msgid "Media Lists"
+msgstr "Media Lists"
+
+msgctxt "Languages::mwl_xlsx.planfix_auto_task_statuses"
+msgid "Statuses for automatic task creation"
+msgstr "Statuses for automatic task creation"
+
+msgctxt "Languages::mwl_xlsx.planfix_auto_task_statuses.desc"
+msgid "List of CS-Cart statuses that trigger automatic Planfix task creation (comma or newline separated)."
+msgstr "List of CS-Cart statuses that trigger automatic Planfix task creation (comma or newline separated)."
+
+msgctxt "Languages::mwl_xlsx.planfix_direction_default"
+msgid "Default task direction"
+msgstr "Default task direction"
+
+msgctxt "Languages::mwl_xlsx.planfix_direction_default.desc"
+msgid "Direction that will be assigned to new tasks when MCP does not provide one."
+msgstr "Direction that will be assigned to new tasks when MCP does not provide one."
+
+msgctxt "Languages::mwl_xlsx.planfix_mcp_auth_token"
+msgid "MCP auth token"
+msgstr "MCP auth token"
+
+msgctxt "Languages::mwl_xlsx.planfix_mcp_auth_token.desc"
+msgid "Token used to authorize requests to the MCP endpoint."
+msgstr "Token used to authorize requests to the MCP endpoint."
+
+msgctxt "Languages::mwl_xlsx.planfix_mcp_endpoint"
+msgid "MCP endpoint URL"
+msgstr "MCP endpoint URL"
+
+msgctxt "Languages::mwl_xlsx.planfix_mcp_endpoint.desc"
+msgid "Base URL for the MCP integration endpoint."
+msgstr "Base URL for the MCP integration endpoint."
+
+msgctxt "Languages::mwl_xlsx.planfix_origin"
+msgid "Planfix origin"
+msgstr "Planfix origin"
+
+msgctxt "Languages::mwl_xlsx.planfix_origin.desc"
+msgid "Base Planfix URL (example: https://example.planfix.com). Example task link: https://example.planfix.com/task/12345 where 12345 is the planfix_object_id."
+msgstr "Base Planfix URL (example: https://example.planfix.com). Example task link: https://example.planfix.com/task/12345 where 12345 is the planfix_object_id."
+
+msgctxt "Languages::mwl_xlsx.planfix_sync_comments"
+msgid "Sync comments with Planfix"
+msgstr "Sync comments with Planfix"
+
+msgctxt "Languages::mwl_xlsx.planfix_sync_comments.desc"
+msgid "Enable synchronization of CS-Cart comments with Planfix."
+msgstr "Enable synchronization of CS-Cart comments with Planfix."
+
+msgctxt "Languages::mwl_xlsx.planfix_sync_payments"
+msgid "Sync payments with Planfix"
+msgstr "Sync payments with Planfix"
+
+msgctxt "Languages::mwl_xlsx.planfix_sync_payments.desc"
+msgid "Enable synchronization of payment information with Planfix."
+msgstr "Enable synchronization of payment information with Planfix."
+
+msgctxt "Languages::mwl_xlsx.planfix_webhook_allowlist_ips"
+msgid "Webhook IP allowlist"
+msgstr "Webhook IP allowlist"
+
+msgctxt "Languages::mwl_xlsx.planfix_webhook_allowlist_ips.desc"
+msgid "Optional list of IP addresses allowed to call the webhook (comma or newline separated). Leave empty to allow all."
+msgstr "Optional list of IP addresses allowed to call the webhook (comma or newline separated). Leave empty to allow all."
+
+msgctxt "Languages::mwl_xlsx.planfix_webhook_basic_login"
+msgid "Webhook Basic Auth login"
+msgstr "Webhook Basic Auth login"
+
+msgctxt "Languages::mwl_xlsx.planfix_webhook_basic_login.desc"
+msgid "Login for protecting the incoming webhook with HTTP Basic authentication."
+msgstr "Login for protecting the incoming webhook with HTTP Basic authentication."
+
+msgctxt "Languages::mwl_xlsx.planfix_webhook_basic_password"
+msgid "Webhook Basic Auth password"
+msgstr "Webhook Basic Auth password"
+
+msgctxt "Languages::mwl_xlsx.planfix_webhook_basic_password.desc"
+msgid "Password for protecting the incoming webhook with HTTP Basic authentication."
+msgstr "Password for protecting the incoming webhook with HTTP Basic authentication."
+
+msgctxt "Languages::mwl_xlsx.setting.compact_price_slider_labels"
+msgid "Compact price slider labels"
+msgstr "Compact price slider labels"
+
+msgctxt "Languages::mwl_xlsx.setting.compact_price_slider_labels.desc"
+msgid "Show min/max slider labels in a compact format without affecting filter values."
+msgstr "Show min/max slider labels in a compact format without affecting filter values."
