@@ -2277,10 +2277,61 @@ function fn_mwl_xlsx_mainpage_replace_dir($lang_code = '')
 }
 
 /**
+ * Proxy /-/x-api/ requests to the mainpage source domain.
+ * This avoids CORS issues since the browser sees a same-origin request.
+ */
+function fn_mwl_xlsx_proxy_api_request($path)
+{
+    $lang = defined('CART_LANGUAGE') ? CART_LANGUAGE : 'en';
+    $url = trim((string) Registry::get('addons.mwl_xlsx.mainpage_replace_url_' . $lang));
+    if (empty($url)) {
+        header('HTTP/1.1 502 Bad Gateway');
+        exit;
+    }
+
+    $base = parse_url($url);
+    $origin = (!empty($base['scheme']) ? $base['scheme'] : 'https') . '://' . $base['host'];
+    $query = $_SERVER['QUERY_STRING'] ?? '';
+    $target = $origin . $path . ($query ? '?' . $query : '');
+
+    $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+    $body = ($method === 'POST') ? file_get_contents('php://input') : '';
+    $content_type = $_SERVER['CONTENT_TYPE'] ?? 'application/x-www-form-urlencoded';
+
+    $ch = curl_init($target);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 15,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: ' . $content_type,
+            'Referer: ' . $origin . '/',
+        ],
+    ]);
+
+    if ($method === 'POST') {
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+    }
+
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $response_ct = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+    curl_close($ch);
+
+    header('HTTP/1.1 ' . $http_code);
+    if ($response_ct) {
+        header('Content-Type: ' . $response_ct);
+    }
+    echo $response;
+    exit;
+}
+
+/**
  * Get the web-accessible path prefix for mainpage replace assets.
  *
  * @param string $lang_code Language code (e.g. 'en', 'ru'). If provided, returns per-language subpath.
- * @return string Path like "/var/files/mainpage_replace/" or "/var/files/mainpage_replace/en/"
+ * @return string Path like "/files/mainpage_replace/" or "/files/mainpage_replace/en/"
  */
 function fn_mwl_xlsx_mainpage_replace_web_path($lang_code = '')
 {

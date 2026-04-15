@@ -195,6 +195,10 @@
                 <value id="mwl_xlsx.mainpage_replace_url_en.desc">URL to download and use as the English homepage. Leave empty for default.</value>
                 <value id="mwl_xlsx.mainpage_replace_url_ru">Mainpage replace URL (RU)</value>
                 <value id="mwl_xlsx.mainpage_replace_url_ru.desc">URL to download and use as the Russian homepage. Leave empty for default.</value>
+                <value id="mwl_xlsx.mainpage_replace_mode">Mainpage replace mode</value>
+                <value id="mwl_xlsx.mainpage_replace_mode.desc">Choose how to process storefront main page replacement for guests.</value>
+                <value id="mwl_xlsx.mainpage_replace_mode.assign">Assign local template</value>
+                <value id="mwl_xlsx.mainpage_replace_mode.mainpage_redirect">302 redirect to source URL</value>
                 <value id="mwl_xlsx.mainpage_update">Update mainpage</value>
                 <value id="mwl_xlsx.mainpage_updated">Mainpage updated successfully</value>
                 <value id="mwl_xlsx.mainpage_update_error">Failed to download mainpage from URL</value>
@@ -274,6 +278,10 @@
                 <value id="mwl_xlsx.mainpage_replace_url_en.desc">URL для скачивания и использования в качестве англоязычной главной. Оставьте пустым для стандартной.</value>
                 <value id="mwl_xlsx.mainpage_replace_url_ru">URL замены главной (RU)</value>
                 <value id="mwl_xlsx.mainpage_replace_url_ru.desc">URL для скачивания и использования в качестве русскоязычной главной. Оставьте пустым для стандартной.</value>
+                <value id="mwl_xlsx.mainpage_replace_mode">Режим замены главной</value>
+                <value id="mwl_xlsx.mainpage_replace_mode.desc">Выберите, как заменять главную страницу витрины для гостей.</value>
+                <value id="mwl_xlsx.mainpage_replace_mode.assign">Подмена локальным шаблоном</value>
+                <value id="mwl_xlsx.mainpage_replace_mode.mainpage_redirect">302-редирект на исходный URL</value>
                 <value id="mwl_xlsx.mainpage_update">Обновить главную</value>
                 <value id="mwl_xlsx.mainpage_updated">Главная страница обновлена</value>
                 <value id="mwl_xlsx.mainpage_update_error">Не удалось скачать главную страницу по URL</value>
@@ -420,6 +428,19 @@
                         <name>mwl_xlsx.mainpage_replace_url_ru</name>
                         <tooltip>mwl_xlsx.mainpage_replace_url_ru.desc</tooltip>
                         <value></value>
+                    </item>
+                    <item id="mainpage_replace_mode" type="selectbox">
+                        <name>mwl_xlsx.mainpage_replace_mode</name>
+                        <tooltip>mwl_xlsx.mainpage_replace_mode.desc</tooltip>
+                        <variants>
+                            <item id="assign">
+                                <name>mwl_xlsx.mainpage_replace_mode.assign</name>
+                            </item>
+                            <item id="mainpage_redirect">
+                                <name>mwl_xlsx.mainpage_replace_mode.mainpage_redirect</name>
+                            </item>
+                        </variants>
+                        <value>assign</value>
                     </item>
                 </items>
             </section>

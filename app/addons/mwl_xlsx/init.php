@@ -67,6 +67,12 @@ function fn_mwl_xlsx_dispatch_assign_template($controller, $mode, $area, $contro
         return;
     }
 
+    $replace_mode = (string) Registry::get('addons.mwl_xlsx.mainpage_replace_mode');
+    if ($replace_mode === 'mainpage_redirect') {
+        header('Location: ' . $url, true, 302);
+        exit;
+    }
+
     $mainpage_file = fn_mwl_xlsx_mainpage_replace_dir($lang) . 'index.html';
     if (!file_exists($mainpage_file)) {
         return;
@@ -169,6 +175,12 @@ function fn_mwl_xlsx_before_dispatch(&$controller, &$mode, &$action, &$dispatch_
         if (empty($_REQUEST['return_url']) || strpos($_REQUEST['return_url'], 'auth.login_form') !== false) {
             $_REQUEST['return_url'] = '/expertizeme/';
         }
+    }
+
+    // Proxy /-/x-api/ requests to the mainpage source domain (form submissions, captcha, etc.)
+    if (strpos($path, '/-/x-api/') === 0) {
+        fn_mwl_xlsx_proxy_api_request($path);
+        // never returns
     }
 
     if (preg_match('~/(?:[a-z]{2}/)?media-lists/(\d+)/?$~i', $path, $m)) {
